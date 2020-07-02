@@ -13,7 +13,6 @@ import (
 	"github.com/szxby/tools/log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/szxby/tools/log"
 )
 
 func login(c *gin.Context) {
