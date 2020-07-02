@@ -14,6 +14,12 @@ func bind(server *gin.Engine) {
 	server.POST("/matchReport", matchReport)
 	server.POST("/matchList", matchList)
 	server.POST("/matchDetail", matchDetail)
+	server.GET("/flowdata/history", flowDataHistory)
+	server.POST("/flowdata/payment", flowDataPayment)
+	server.POST("/flowdata/refund", flowDataRefund)
+	server.POST("/flowdata/payments", flowDataPayments)
+	server.POST("/flowdata/refunds", flowDataRefunds)
+	server.GET("/flowdata/export", flowDataExport)
 }
 
 type loginData struct {

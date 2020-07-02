@@ -32,3 +32,68 @@ type MatchManager struct {
 	Sort        int    `bson:"sort"`        // 赛事排序
 	State       int    `bson:"state"`       // 赛事状态
 }
+
+const (
+	FlowDataStatusNormal = 0
+	FlowDataStatusAction = 1
+	FlowDataStatusOver   = 2
+	FlowDataStatusBack   = 3
+)
+
+type FlowData struct {
+	ID           int `bson:"_id"`
+	Userid       int
+	Accountid    int
+	ChangeAmount float64
+	FlowType     int
+	MatchType    string
+	MatchID      string
+	Status       int
+	CreatedAt    int64
+	FlowIDs      []int
+	Realname     string
+	TakenFee     float64
+	AtferTaxFee  float64
+	Desc         string
+}
+
+type UserData struct {
+	UserID            int `bson:"_id"`
+	AccountID         int
+	Nickname          string
+	Headimgurl        string
+	Sex               int // 1 男性，2 女性
+	LoginIP           string
+	Token             string
+	ExpireAt          int64 // token 过期时间
+	Role              int   // 1 玩家、2 代理、3 管理员、4 超管
+	Username          string
+	Password          string
+	Coupon            int64 // 点券
+	Wins              int   // 胜场
+	CreatedAt         int64
+	UpdatedAt         int64
+	PlayTimes         int     //当天对局次数
+	Online            bool    //玩家是否在线
+	Channel           int     //渠道号。0：圈圈   1：搜狗   2:IOS
+	Fee               float64 //税后余额
+	SignTimes         int
+	DailySign         bool
+	DailySignDeadLine int64
+	LastTakenMail     int64
+	RealName          string
+	IDCardNo          string
+	BankCardNo        string
+	SetNickNameCount  int
+	TakenFee          float64
+	FirstLogin        bool
+}
+
+type BankCard struct {
+	Userid      int
+	BankName    string
+	BankCardNo  string
+	Province    string
+	City        string
+	OpeningBank string
+}

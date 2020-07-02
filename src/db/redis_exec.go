@@ -1,6 +1,8 @@
 package db
 
-import "github.com/szxby/tools/log"
+import (
+	"github.com/szxby/tools/log"
+)
 
 // 设定好redis的key
 const (
@@ -25,10 +27,10 @@ func RedisGetToken(token string) int {
 		log.Error("get token fail:%v", err)
 		return -1
 	}
-	role, ok := data.(int)
+	role, ok := data.([]uint8)
 	if !ok {
 		log.Error("unknown token %v, role:%v", token, data)
 		return -1
 	}
-	return role
+	return int(role[0])
 }
