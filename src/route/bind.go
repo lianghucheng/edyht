@@ -6,6 +6,7 @@ import (
 
 func bind(server *gin.Engine) {
 	server.POST("/login", login)
+	server.OPTIONS("/login", login)
 	server.POST("/matchManagerList", matchManagerList)
 	server.POST("/addMatch", addMatch)
 	server.POST("/editMatch", editMatch)
