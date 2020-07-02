@@ -4,10 +4,9 @@ import (
 	"bs/config"
 	"bs/db"
 	"bs/util"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/szxby/tools/log"
+	"net/http"
 )
 
 var server *gin.Engine
@@ -51,6 +50,7 @@ func tokenAuthMiddleWare() gin.HandlerFunc {
 
 		if path != "/login" {
 			role := db.RedisGetToken(token)
+			log.Debug("redis中的权限  %v", role)
 			if role == -1 {
 				log.Debug("ivalid token: %v", token)
 				c.JSON(http.StatusOK, gin.H{

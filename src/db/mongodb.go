@@ -209,6 +209,10 @@ func initCollection() {
 	if err != nil {
 		log.Fatal("ensure uid index error: %v", err)
 	}
+	err = db.EnsureCounter(DB, "counters", "flowdata")
+	if err != nil {
+		log.Fatal("ensure counter error: %v", err)
+	}
 }
 
 // GetDB return init mongodb
@@ -216,6 +220,6 @@ func GetDB() *DialContext {
 	return mongoDB
 }
 
-func mongoDBNextSeq(id string) (int, error) {
-	return mongoDB.NextSeq(DB, "counters", id)
+func MongoDBNextSeq(id string) (int, error) {
+	return mongoDB.NextSeq(GDB, "counters", id)
 }
