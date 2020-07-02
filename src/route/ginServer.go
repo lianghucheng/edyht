@@ -63,6 +63,8 @@ func tokenAuthMiddleWare() gin.HandlerFunc {
 				return
 			}
 			tag := checkRole(role, path)
+			// 接收操作后，刷新token
+			refreshToken(token, role)
 			if !tag {
 				log.Debug("ivalid role:%v go path:%v", token, path)
 				c.JSON(http.StatusOK, gin.H{
