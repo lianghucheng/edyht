@@ -8,6 +8,15 @@ const (
 	Normal
 )
 
+// 赛事状态
+const (
+	Signing = iota // 报名中
+	Playing        // 比赛中
+	Ending         // 结算中
+	Cancel         // 下架赛事
+	Delete         // 删除赛事
+)
+
 // User 用户类
 type User struct {
 	Account  string `bson:"account"`
