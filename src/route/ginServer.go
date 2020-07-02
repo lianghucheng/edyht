@@ -46,6 +46,7 @@ func ipAuthMiddleWare() gin.HandlerFunc {
 func tokenAuthMiddleWare() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "content-type")
 		token := c.GetHeader("token")
 		path := c.Request.URL.Path
 

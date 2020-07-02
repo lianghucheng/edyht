@@ -15,6 +15,7 @@ import (
 
 func login(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "content-type")
 	code := util.OK
 	desc := "OK"
 	resp := ""
