@@ -7,9 +7,10 @@ import (
 	"bs/rpc"
 	"bs/util"
 	"encoding/json"
-	"github.com/szxby/tools/log"
 	"net/http"
 	"time"
+
+	"github.com/szxby/tools/log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/szxby/tools/log"
@@ -38,12 +39,7 @@ func login(c *gin.Context) {
 		desc = "用户不存在"
 		return
 	}
-<<<<<<< HEAD
 	if user.Password != util.CalculateHash(data.Password) {
-=======
-	if user.Password != util.CalculateHash(data.Pass) {
-		log.Debug(util.CalculateHash(data.Pass))
->>>>>>> 5860ec9285e6561468ebe697ae2e7244761219cd
 		code = util.Retry
 		desc = "密码错误"
 		return

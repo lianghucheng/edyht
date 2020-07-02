@@ -4,15 +4,13 @@ import (
 	"bs/param"
 	"bs/util"
 	"encoding/json"
-<<<<<<< HEAD
 	"time"
 
-=======
->>>>>>> 5860ec9285e6561468ebe697ae2e7244761219cd
+	"strconv"
+
 	"github.com/szxby/tools/log"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"strconv"
 )
 
 // GetUser 获取用户信息
