@@ -1,11 +1,18 @@
 package util
 
+import "os"
+
 // 后台账号管理员分组
 const (
 	Admin = iota
 	Business
 	Operate
 	Normal
+)
+
+// 文件目录
+const (
+	MatchIconDir = string(os.PathSeparator) + "upload" + string(os.PathSeparator) + "matchIcon" + string(os.PathSeparator)
 )
 
 // 赛事状态

@@ -3,6 +3,7 @@ package util
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 
@@ -43,7 +44,13 @@ func PostToGame(url string, contentType string, send interface{}) error {
 	code, ok := ret["code"].(float64)
 	if !ok || code != 0 {
 		log.Error("call game fail :%v", ret)
-		return err
+		retMsg := "操作失败，请重试！"
+		if ret["desc"] != nil {
+			if msg, ok := ret["desc"].(string); ok {
+				retMsg = msg
+			}
+		}
+		return errors.New(retMsg)
 	}
 	return nil
 }

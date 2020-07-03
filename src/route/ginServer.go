@@ -4,9 +4,10 @@ import (
 	"bs/config"
 	"bs/db"
 	"bs/util"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/szxby/tools/log"
-	"net/http"
 )
 
 var server *gin.Engine
@@ -46,7 +47,7 @@ func ipAuthMiddleWare() gin.HandlerFunc {
 func tokenAuthMiddleWare() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "content-type")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "*")
 		token := c.GetHeader("token")
 		path := c.Request.URL.Path
 
@@ -56,7 +57,7 @@ func tokenAuthMiddleWare() gin.HandlerFunc {
 			if role == -1 {
 				log.Debug("ivalid token: %v", token)
 				c.JSON(http.StatusOK, gin.H{
-					"code": util.Retry,
+					"code": util.TokenExpire,
 					"desc": "当前会话已过期，请重新登录！",
 				})
 				c.Abort()

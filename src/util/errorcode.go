@@ -4,4 +4,5 @@ package util
 const (
 	OK = iota
 	Retry
+	TokenExpire
 )

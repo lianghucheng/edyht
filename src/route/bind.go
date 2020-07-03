@@ -11,8 +11,7 @@ func bind(server *gin.Engine) {
 	server.POST("/addMatch", addMatch)
 	server.POST("/editMatch", editMatch)
 	server.POST("/showHall", showHall)
-	server.POST("/cancelMatch", cancelMatch)
-	server.POST("/deleteMatch", deleteMatch)
+	server.POST("/optMatch", optMatch)
 	server.POST("/matchReport", matchReport)
 	server.POST("/matchList", matchList)
 	server.POST("/matchDetail", matchDetail)
@@ -22,6 +21,9 @@ func bind(server *gin.Engine) {
 	server.POST("/flowdata/payments", flowDataPayments)
 	server.POST("/flowdata/refunds", flowDataRefunds)
 	server.GET("/flowdata/export", flowDataExport)
+
+	server.GET("/download/matchIcon/*action", downloadMatchIcon)
+	server.POST("/upload/matchIcon", uploadMatchIcon)
 }
 
 type loginData struct {
@@ -38,7 +40,7 @@ type addManagerReq struct {
 	MatchID     string   `json:"MatchID" binding:"required"`     // 赛事id号
 	MatchType   string   `json:"MatchType" binding:"required"`   // 赛事类型
 	MatchName   string   `json:"MatchName" binding:"required"`   // 赛事名称
-	MatchDesc   string   `json:"MatchDesc" binding:"required"`   // 赛事描述
+	MatchDesc   string   `json:"MatchDesc"`                      // 赛事描述
 	Round       int      `json:"Round" binding:"required"`       // 赛制几局
 	Card        int      `json:"Card" binding:"required"`        // 赛制几副
 	StartType   int      `json:"StartType" binding:"required"`   // 比赛开始类型
@@ -50,9 +52,9 @@ type addManagerReq struct {
 	EnterFee    int64    `json:"EnterFee" binding:"required"`    // 报名费
 	ShelfTime   int64    `json:"ShelfTime" binding:"required"`   // 上架时间
 	Sort        int      `json:"Sort" binding:"required"`        // 赛事排序
-	AwardDesc   string   `json:"AwardDesc" binding:"required"`   // 奖励描述
+	AwardDesc   string   `json:"AwardDesc"`                      // 奖励描述
 	AwardList   string   `json:"AwardList" binding:"required"`   // 奖励列表
-	TablePlayer int      `json:"TablePlayer" binding:"required"` // 一桌的游戏人数
+	TablePlayer int      `json:"TablePlayer"`                    // 一桌的游戏人数
 	OfficalIDs  []string `json:"OfficalIDs"`                     // 后台配置的可用比赛id号
 }
 
@@ -62,16 +64,17 @@ type editManagerReq struct {
 	Eliminate  []int  `json:"Eliminate"`                     // 每轮淘汰人数
 	EnterFee   int64  `json:"EnterFee" binding:"required"`   // 报名费
 	AwardList  string `json:"AwardList" binding:"required"`  // 奖励列表
-	MatchIcon  string `json:"MatchIcon" binding:"required"`  // 赛事图标
+	MatchIcon  string `json:"MatchIcon"`                     // 赛事图标
 }
 
 type showHallReq struct {
-	MatchID  string `json:"MatchID" binding:"required"`  // 赛事id号
-	ShowHall bool   `json:"ShowHall" binding:"required"` // 是否首页展示
+	MatchID  string `json:"MatchID" binding:"required"` // 赛事id号
+	ShowHall bool   `json:"ShowHall"`                   // 是否首页展示
 }
 
 type optMatchReq struct {
 	MatchID string `json:"MatchID" binding:"required"` // 赛事id号
+	Opt     int    `json:"Opt" binding:"required"`     // 操作代码符，1上架赛事，2下架赛事，3删除赛事
 }
 
 type matchReportReq struct {

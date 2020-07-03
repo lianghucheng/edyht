@@ -4,10 +4,14 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"math/rand"
+	"os"
+	"path/filepath"
+
+	"github.com/szxby/tools/log"
 )
 
 const (
-	key = "uPpqu1JEjhHUzgKxAljqfY6RZEIiEJEe568QUJEFbIkyWIUz1lKqvP1e21pXjRk1"
+	key = "7inrmpd5DSQTfDxnAnOH"
 )
 
 // CalculateHash calculate hash
@@ -26,4 +30,19 @@ func RandomString(len int) string {
 		bytes[i] = byte(b)
 	}
 	return string(bytes)
+}
+
+// CheckDir 检查目录是否存在，不存在创建
+func CheckDir(dir string) {
+	local, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Error("get local fail %v", err)
+		return
+	}
+	_, err = os.Stat(local + MatchIconDir)
+	if os.IsNotExist(err) {
+		if err := os.MkdirAll(local+MatchIconDir, os.ModePerm); err != nil {
+			log.Error("make dir fail %v", err)
+		}
+	}
 }

@@ -27,44 +27,54 @@ func GetUser(account string) (user *util.User) {
 }
 
 // GetMatchManagerList 获取比赛类型列表
-func GetMatchManagerList(page int, count int) ([][]byte, int) {
+func GetMatchManagerList(page int, count int) ([]map[string]interface{}, int) {
 	s := gameDB.Ref()
 	defer gameDB.UnRef(s)
-	one := util.MatchManager{}
-	list := [][]byte{}
-	total, _ := s.DB(GDB).C("matchmanager").Find(bson.M{"state": bson.M{"lt": util.Delete}}).Count()
+	// one := map[string]interface{}{}
+	list := []map[string]interface{}{}
+	total, _ := s.DB(GDB).C("matchmanager").Find(bson.M{"state": bson.M{"$lt": util.Delete}}).Count()
 	// iter := s.DB(GDB).C("matchmanager").Find(bson.M{"state": bson.M{"gte": 0}}).Sort("-shelftime").Skip((page - 1) * count).Limit(count).Iter()
-	iter := s.DB(GDB).C("matchmanager").Pipe([]bson.M{
-		{"$match": bson.M{"state": bson.M{"$gte": 0}}},
+	err := s.DB(GDB).C("matchmanager").Pipe([]bson.M{
+		{"$match": bson.M{"state": bson.M{"$lt": util.Delete}}},
 		{"$skip": (page - 1) * count},
 		{"$limit": count},
 		{"$project": bson.M{
-			"MatchID":   "$matchid",
-			"MatchType": "$matchtype",
-			"MatchIcon": "$matchicon",
-			"RoundNum":  "$roundnum",
-			"StartTime": "$starttime",
-			"StartType": "$matchdesc",
-			"MatchInfo": "$recommend",
-			"Eliminate": "$eliminate",
-			"EnterFee":  "$enterfee",
-			"UseCount":  "$usematch",
-			"LastMatch": bson.M{"$subtract": []interface{}{"$totalmatch", "$usermatch"}},
-			"ShelfTime": "$shelftime",
-			"ShowHall":  "$showhall",
-			"Sort":      "$sort",
+			"MatchID":     "$matchid",
+			"MatchName":   "$matchname",
+			"MatchType":   "$matchtype",
+			"MatchIcon":   "$matchicon",
+			"RoundNum":    "$roundnum",
+			"StartTime":   "$starttime",
+			"StartType":   "$starttype",
+			"LimitPlayer": "$limitplayer",
+			"Recommend":   "$recommend",
+			"Eliminate":   "$eliminate",
+			"EnterFee":    "$enterfee",
+			"UseCount":    "$usematch",
+			"LastMatch":   bson.M{"$subtract": []interface{}{"$totalmatch", "$usematch"}},
+			"ShelfTime":   "$shelftime",
+			"ShowHall":    "$showhall",
+			"Sort":        "$sort",
+			"State":       "$state",
+			"_id":         0,
 		}},
-		{"$sort": "-shelftime"},
-	}).Iter()
-	for iter.Next(&one) {
-		tmp, _ := json.Marshal(one)
-		list = append(list, tmp)
+		{"$sort": bson.M{"Sort": 1}},
+	}).All(&list)
+	// for iter.Next(&one) {
+	// 	// tmp, _ := json.Marshal(one)
+	// 	log.Debug("check:%v", one)
+	// 	list = append(list, one)
+	// }
+	// ret, err := json.Marshal(list)
+	if err != nil {
+		log.Error("get match manager fail %v", err)
+		return nil, 0
 	}
 	return list, total
 }
 
 // GetMatchReport 获取比赛报表
-func GetMatchReport(matchID string, start, end int64) [][]byte {
+func GetMatchReport(matchID string, start, end int64) []map[string]interface{} {
 	s := gameDB.Ref()
 	defer gameDB.UnRef(s)
 
@@ -76,14 +86,19 @@ func GetMatchReport(matchID string, start, end int64) [][]byte {
 	}
 
 	// 查询时间范围内的数据总合
-	allReport := struct {
-		AllSignPlayer int
-		AllSignFee    float64
-		AllAward      float64
-		AllLast       float64
-	}{}
+	// allReport := struct {
+	// 	AllSignPlayer int
+	// 	AllSignFee    float64
+	// 	AllAward      float64
+	// 	AllLast       float64
+	// }{}
+	allReport := map[string]interface{}{}
+	allReport["AllSignPlayer"] = int(0)
+	allReport["AllSignFee"] = float64(0)
+	allReport["AllAward"] = float64(0)
+	allReport["AllLast"] = float64(0)
 
-	result := make([][]byte, len)
+	result := make([]map[string]interface{}, 0)
 	for i := start; i+oneDay <= end; i += oneDay {
 		one := map[string]interface{}{}
 		err := s.DB(GDB).C("match").Pipe([]bson.M{
@@ -111,25 +126,26 @@ func GetMatchReport(matchID string, start, end int64) [][]byte {
 			log.Error("get report fail:%v", err)
 			return nil
 		}
-		data, err := json.Marshal(one)
-		if err != nil {
-			log.Error("get report fail:%v", err)
-			return nil
-		}
-		result = append(result, data)
+		// data, err := json.Marshal(one)
+		// if err != nil {
+		// 	log.Error("get report fail:%v", err)
+		// 	return nil
+		// }
+		result = append(result, one)
 		// 数据汇总
-		allReport.AllSignPlayer += one["allSign"].(int)
-		allReport.AllSignFee += one["allSignFee"].(float64)
-		allReport.AllAward += one["allMoney"].(float64)
-		allReport.AllLast += one["lastMoney"].(float64)
+		allReport["AllSignPlayer"] = allReport["AllSignPlayer"].(int) + one["allSign"].(int)
+		allReport["AllSignFee"] = allReport["AllSignFee"].(float64) + one["allSignFee"].(float64)
+		allReport["AllAward"] = allReport["AllAward"].(float64) + one["allMoney"].(float64)
+		allReport["AllLast"] = allReport["AllLast"].(float64) + one["lastMoney"].(float64)
 	}
 	// 最后一位保存汇总数据
-	all, err := json.Marshal(allReport)
-	if err != nil {
-		log.Error("get report fail:%v", err)
-		return nil
-	}
-	result = append(result, all)
+	// all, err := json.Marshal(allReport)
+	// if err != nil {
+	// 	log.Error("get report fail:%v", err)
+	// 	return nil
+	// }
+	result = append(result, allReport)
+	// ret, _ := json.Marshal(result)
 	return result
 }
 
@@ -140,7 +156,7 @@ func GetMatch(matchID string) []byte {
 
 	one := map[string]interface{}{}
 	err := s.DB(GDB).C("match").Pipe([]bson.M{
-		{"$match": bson.M{"matchid": matchID}},
+		{"$match": bson.M{"sonmatchid": matchID}},
 		{"$project": bson.M{
 			"MatchType":  "$matchtype",
 			"MatchName":  "$matchname",
@@ -172,7 +188,7 @@ func GetMatch(matchID string) []byte {
 }
 
 // GetMatchList 获取某个时间段的赛事
-func GetMatchList(matchType string, start, end int64) [][]byte {
+func GetMatchList(matchType string, start, end int64) []map[string]interface{} {
 	s := gameDB.Ref()
 	defer gameDB.UnRef(s)
 
@@ -183,7 +199,7 @@ func GetMatchList(matchType string, start, end int64) [][]byte {
 		return nil
 	}
 
-	var result [][]byte
+	var result []map[string]interface{}
 	one := map[string]interface{}{}
 	var iter *mgo.Iter
 	if len(matchType) == 0 {
@@ -192,7 +208,7 @@ func GetMatchList(matchType string, start, end int64) [][]byte {
 			{"$project": bson.M{
 				"MatchType":  "$matchtype",
 				"MatchName":  "$matchname",
-				"MatchID":    "$matchid",
+				"MatchID":    "$sonmatchid",
 				"CreateTime": "$createtime",
 				"RoundNum":   "$roundnum",
 				"StartType":  "$matchdesc",
@@ -221,13 +237,22 @@ func GetMatchList(matchType string, start, end int64) [][]byte {
 		}).Iter()
 	}
 	for iter.Next(&one) {
-		data, err := json.Marshal(one)
-		if err != nil {
-			log.Error("get report fail:%v", err)
-			return nil
-		}
-		result = append(result, data)
+		// data, err := json.Marshal(one)
+		// if err != nil {
+		// 	log.Error("get report fail:%v", err)
+		// 	return nil
+		// }
+		result = append(result, one)
 	}
+	log.Debug("result:%v", result)
+	if len(result) == 0 {
+		return nil
+	}
+	// ret, err := json.Marshal(result)
+	// if err != nil {
+	// 	log.Error("get report fail:%v", err)
+	// 	return nil
+	// }
 	return result
 }
 
@@ -238,10 +263,11 @@ func GetMatchDetail(matchID string) []byte {
 
 	one := map[string]interface{}{}
 	err := s.DB(GDB).C("match").Pipe([]bson.M{
-		{"$match": bson.M{"matchid": matchID}},
+		{"$match": bson.M{"sonmatchid": matchID}},
 		{"$project": bson.M{
 			"Rank":        "$rank",
 			"MatchRecord": "$matchrecord",
+			"_id":         0,
 		}},
 		// {"$group": bson.M{
 		// 	"_id": "$matchid", "RecordTime": bson.M{"$first": "$RecordTime"}, "allMoney": bson.M{"$sum": "$Money"},

@@ -38,7 +38,7 @@ func RedisGetToken(token string) int {
 }
 
 // RedisSetReport 设置report
-func RedisSetReport(data [][]byte, matchID, start, end string) {
+func RedisSetReport(data []byte, matchID, start, end string) {
 	_, err := Do("Set", MatchReportKey+matchID+start+end, data, "EX", expireTime)
 	if err != nil {
 		log.Error("set report fail:%v", err)
@@ -48,7 +48,7 @@ func RedisSetReport(data [][]byte, matchID, start, end string) {
 }
 
 // RedisGetReport 获取report
-func RedisGetReport(matchID, start, end string) [][]byte {
+func RedisGetReport(matchID, start, end string) []byte {
 	data, err := Do("Get", MatchReportKey+matchID+start+end)
 	if err != nil {
 		log.Error("get report fail:%v", err)
@@ -57,7 +57,7 @@ func RedisGetReport(matchID, start, end string) [][]byte {
 	if data == nil {
 		return nil
 	}
-	ret, ok := data.([][]byte)
+	ret, ok := data.([]byte)
 	if !ok {
 		log.Error("get report fail %v", ret)
 		return nil
@@ -66,7 +66,7 @@ func RedisGetReport(matchID, start, end string) [][]byte {
 }
 
 // RedisSetMatchList 设置matchlist
-func RedisSetMatchList(data [][]byte, matchType, start, end string) {
+func RedisSetMatchList(data []byte, matchType, start, end string) {
 	_, err := Do("Set", MatchListKey+matchType+start+end, data, "EX", expireTime)
 	if err != nil {
 		log.Error("set matchList fail:%v", err)
@@ -76,13 +76,13 @@ func RedisSetMatchList(data [][]byte, matchType, start, end string) {
 }
 
 // RedisGetMatchList 获取matchlist
-func RedisGetMatchList(matchType, start, end string) [][]byte {
+func RedisGetMatchList(matchType, start, end string) []byte {
 	data, err := Do("Get", MatchListKey+matchType+start+end)
 	if err != nil {
 		log.Error("set matchList fail:%v", err)
 		return nil
 	}
-	ret, ok := data.([][]byte)
+	ret, ok := data.([]byte)
 	if !ok {
 		log.Error("get report fail %v", ret)
 		return nil

@@ -8,6 +8,9 @@ import (
 	"bs/util"
 	"encoding/json"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/szxby/tools/log"
@@ -134,7 +137,7 @@ func editMatch(c *gin.Context) {
 		return
 	}
 }
-func cancelMatch(c *gin.Context) {
+func optMatch(c *gin.Context) {
 	code := util.OK
 	desc := "下架赛事成功！"
 	defer func() {
@@ -149,28 +152,7 @@ func cancelMatch(c *gin.Context) {
 		desc = err.Error()
 		return
 	}
-	if err := util.PostToGame(config.GetConfig().GameServer+"/cancelMatch", JSON, data); err != nil {
-		code = util.Retry
-		desc = err.Error()
-		return
-	}
-}
-func deleteMatch(c *gin.Context) {
-	code := util.OK
-	desc := "删除赛事成功！"
-	defer func() {
-		c.JSON(http.StatusOK, gin.H{
-			"code": code,
-			"desc": desc,
-		})
-	}()
-	data := optMatchReq{}
-	if err := c.ShouldBind(&data); err != nil {
-		code = util.Retry
-		desc = err.Error()
-		return
-	}
-	if err := util.PostToGame(config.GetConfig().GameServer+"/deleteMatch", JSON, data); err != nil {
+	if err := util.PostToGame(config.GetConfig().GameServer+"/optMatch", JSON, data); err != nil {
 		code = util.Retry
 		desc = err.Error()
 		return
@@ -179,8 +161,8 @@ func deleteMatch(c *gin.Context) {
 func matchReport(c *gin.Context) {
 	code := util.OK
 	desc := "OK"
-	var list [][]byte
-	var all []byte
+	var list interface{}
+	var all interface{}
 	total := 0
 	defer func() {
 		c.JSON(http.StatusOK, gin.H{
@@ -220,7 +202,15 @@ func matchReport(c *gin.Context) {
 	last := data.Page * data.Count
 
 	// 查看redis中是否有缓存
-	if ret := db.RedisGetReport(data.MatchID, data.Start, data.End); ret != nil {
+	if retRedis := db.RedisGetReport(data.MatchID, data.Start, data.End); retRedis != nil {
+		ret := []map[string]interface{}{}
+		err := json.Unmarshal(retRedis, &ret)
+		if err != nil {
+			log.Error("unmarshal fail %v", err)
+			code = util.Retry
+			desc = "查询出错!"
+			return
+		}
 		total = len(ret) - 1
 		if (data.Page-1)*data.Count >= total {
 			log.Error("error page:%v,count:%v", data.Page, data.Count)
@@ -254,13 +244,15 @@ func matchReport(c *gin.Context) {
 
 	// ok
 	// 数据存入redis
-	db.RedisSetReport(result, data.MatchID, data.Start, data.End)
+	sendRedis, _ := json.Marshal(result)
+	db.RedisSetReport(sendRedis, data.MatchID, data.Start, data.End)
 	if last > total {
 		last = total
 	}
 	list = result[(data.Page-1)*data.Count : last]
 	all = result[len(result)-1]
 }
+
 func matchList(c *gin.Context) {
 	code := util.OK
 	desc := "OK"
@@ -286,7 +278,6 @@ func matchList(c *gin.Context) {
 		return
 	}
 	// 按照matchtype和时间查询
-
 	if data.Page <= 0 || data.Count <= 0 {
 		log.Error("error page:%v,count:%v", data.Page, data.Count)
 		code = util.Retry
@@ -309,7 +300,9 @@ func matchList(c *gin.Context) {
 
 	last := data.Page * data.Count
 	// 查看redis中是否有缓存
-	if ret := db.RedisGetMatchList(data.MatchType, data.Start, data.End); ret != nil {
+	if redisData := db.RedisGetMatchList(data.MatchType, data.Start, data.End); redisData != nil {
+		ret := []map[string]interface{}{}
+		json.Unmarshal(redisData, &ret)
 		total = len(ret)
 		if (data.Page-1)*data.Count >= total {
 			log.Error("error page:%v,count:%v", data.Page, data.Count)
@@ -341,7 +334,8 @@ func matchList(c *gin.Context) {
 
 	// ok
 	// 数据存入redis
-	db.RedisSetMatchList(result, data.MatchType, data.Start, data.End)
+	sendRedis, _ := json.Marshal(result)
+	db.RedisSetMatchList(sendRedis, data.MatchType, data.Start, data.End)
 	if last > total {
 		last = total
 	}
@@ -611,4 +605,55 @@ func flowDataExport(c *gin.Context) {
 
 	resp = fes
 	return
+}
+
+func uploadMatchIcon(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	var resp string
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+			"url":  resp,
+		})
+	}()
+	file, err := c.FormFile("image")
+	if err != nil {
+		log.Error("get file fail %v", err)
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	fileName := util.RandomString(5) + strconv.FormatInt(time.Now().Unix(), 10) + ".png"
+	util.CheckDir(util.MatchIconDir)
+	local, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Error("get local fail %v", err)
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	if err := c.SaveUploadedFile(file, local+util.MatchIconDir+fileName); err != nil {
+		log.Error("save file fail %v", err)
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	resp = local + util.MatchIconDir + fileName
+}
+
+func downloadMatchIcon(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	var resp string
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+			"url":  resp,
+		})
+	}()
+	path := c.Request.URL
+	log.Debug("check:%v", path)
 }
