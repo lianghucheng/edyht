@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/szxby/tools/log"
@@ -344,7 +345,7 @@ func matchList(c *gin.Context) {
 func matchDetail(c *gin.Context) {
 	code := util.OK
 	desc := "OK"
-	var resp []byte
+	var resp interface{}
 	defer func() {
 		c.JSON(http.StatusOK, gin.H{
 			"code": code,
@@ -640,20 +641,58 @@ func uploadMatchIcon(c *gin.Context) {
 		desc = err.Error()
 		return
 	}
-	resp = local + util.MatchIconDir + fileName
+	resp = config.GetConfig().LocalIP + config.GetConfig().Port + "/download/matchIcon/" + fileName
 }
 
 func downloadMatchIcon(c *gin.Context) {
 	code := util.OK
 	desc := "OK"
-	var resp string
-	defer func() {
+	// var resp string
+	// defer func() {
+	// 	c.JSON(http.StatusOK, gin.H{
+	// 		"code": code,
+	// 		"desc": desc,
+	// 	})
+	// }()
+	path := c.Request.URL.Path
+	// log.Debug("check:%v", path)
+	index := strings.LastIndex(path, "/")
+	if index == -1 || index >= len(path)-1 {
+		code = util.Retry
+		desc = "请求url错误！"
+
 		c.JSON(http.StatusOK, gin.H{
 			"code": code,
 			"desc": desc,
-			"url":  resp,
 		})
-	}()
-	path := c.Request.URL
-	log.Debug("check:%v", path)
+		return
+	}
+	reqImage := path[index+1:]
+	local, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Error("get local fail %v", err)
+		code = util.Retry
+		desc = err.Error()
+
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+		return
+	}
+	filePath := local + util.MatchIconDir + reqImage
+	_, err = os.Stat(filePath)
+	if err != nil {
+		log.Error("image file err:%v", err)
+		code = util.Retry
+		desc = "请求url错误！"
+
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+		return
+	}
+	// ok
+	http.ServeFile(c.Writer, c.Request, filePath)
 }

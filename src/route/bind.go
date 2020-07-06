@@ -62,7 +62,7 @@ type editManagerReq struct {
 	MatchID    string `json:"MatchID" binding:"required"`    // 赛事id号
 	TotalMatch int    `json:"TotalMatch" binding:"required"` // 后台配置的该种比赛可创建的比赛次数
 	Eliminate  []int  `json:"Eliminate"`                     // 每轮淘汰人数
-	EnterFee   int64  `json:"EnterFee" binding:"required"`   // 报名费
+	EnterFee   *int64 `json:"EnterFee" binding:"required"`   // 报名费
 	AwardList  string `json:"AwardList" binding:"required"`  // 奖励列表
 	MatchIcon  string `json:"MatchIcon"`                     // 赛事图标
 }

@@ -20,6 +20,7 @@ type JSONConfig struct {
 	MongoAddr  string   `json:"MongoAddr"`  // mongo地址
 	GameMongo  string   `json:"GameMongo"`  // mongo地址
 	GameServer string   `json:"GameServer"` // 游戏服地址
+	LocalIP    string   `json:"LocalIP"`    // 游戏服地址
 }
 
 // Enviroment develop----0 release----1

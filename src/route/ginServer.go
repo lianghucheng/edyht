@@ -5,6 +5,7 @@ import (
 	"bs/db"
 	"bs/util"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/szxby/tools/log"
@@ -50,8 +51,11 @@ func tokenAuthMiddleWare() gin.HandlerFunc {
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "*")
 		token := c.GetHeader("token")
 		path := c.Request.URL.Path
-
-		if path != "/login" {
+		if path == "/favicon.ico" {
+			c.Abort()
+			return
+		}
+		if path != "/login" && strings.Index(path, "/download/matchIcon/") == -1 {
 			role := db.RedisGetToken(token)
 			log.Debug("redis中的权限  %v", role)
 			if role == -1 {

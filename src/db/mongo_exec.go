@@ -56,6 +56,8 @@ func GetMatchManagerList(page int, count int) ([]map[string]interface{}, int) {
 			"ShowHall":    "$showhall",
 			"Sort":        "$sort",
 			"State":       "$state",
+			"AwardList":   "$awardlist",
+			"TotalMatch":  "$totalmatch",
 			"_id":         0,
 		}},
 		{"$sort": bson.M{"Sort": 1}},
@@ -98,9 +100,11 @@ func GetMatchReport(matchID string, start, end int64) []map[string]interface{} {
 	allReport["AllAward"] = float64(0)
 	allReport["AllLast"] = float64(0)
 
+	// log.Debug("check,%v,%v", start, end)
 	result := make([]map[string]interface{}, 0)
-	for i := start; i+oneDay <= end; i += oneDay {
+	for i := start; i+oneDay <= end; i = i + oneDay {
 		one := map[string]interface{}{}
+		// log.Debug("check,%v,%v", i, i+oneDay)
 		err := s.DB(GDB).C("match").Pipe([]bson.M{
 			{"$match": bson.M{"matchid": matchID}},
 			{"$match": bson.M{"createtime": bson.M{"$gt": i, "$lte": i + oneDay}}},
@@ -122,15 +126,13 @@ func GetMatchReport(matchID string, start, end int64) []map[string]interface{} {
 				"lastMoney": bson.M{"$sum": "$LastMoney"}}},
 			// {"$sort": bson.M{"count": -1}},
 		}).One(&one)
+		if err == mgo.ErrNotFound {
+			continue
+		}
 		if err != nil {
 			log.Error("get report fail:%v", err)
 			return nil
 		}
-		// data, err := json.Marshal(one)
-		// if err != nil {
-		// 	log.Error("get report fail:%v", err)
-		// 	return nil
-		// }
 		result = append(result, one)
 		// 数据汇总
 		allReport["AllSignPlayer"] = allReport["AllSignPlayer"].(int) + one["allSign"].(int)
@@ -158,15 +160,16 @@ func GetMatch(matchID string) []byte {
 	err := s.DB(GDB).C("match").Pipe([]bson.M{
 		{"$match": bson.M{"sonmatchid": matchID}},
 		{"$project": bson.M{
-			"MatchType":  "$matchtype",
-			"MatchName":  "$matchname",
-			"MatchID":    "$matchid",
-			"CreateTime": "$createtime",
-			"RoundNum":   "$roundnum",
-			"StartType":  "$matchdesc",
-			"MatchInfo":  "$recommend",
-			"Eliminate":  "$eliminate",
-			"EnterFee":   "$enterfee",
+			"MatchType":   "$matchtype",
+			"MatchName":   "$matchname",
+			"MatchID":     "$sonmatchid",
+			"CreateTime":  "$createtime",
+			"RoundNum":    "$roundnum",
+			"LimitPlayer": "$limitplayer",
+			"Recommend":   "$recommend",
+			"StartType":   "$starttype",
+			"Eliminate":   "$eliminate",
+			"EnterFee":    "$enterfee",
 		}},
 		// {"$group": bson.M{
 		// 	"_id": "$matchid", "RecordTime": bson.M{"$first": "$RecordTime"}, "allMoney": bson.M{"$sum": "$Money"},
@@ -206,15 +209,17 @@ func GetMatchList(matchType string, start, end int64) []map[string]interface{} {
 		iter = s.DB(GDB).C("match").Pipe([]bson.M{
 			{"$match": bson.M{"createtime": bson.M{"$gt": start, "$lte": end}}},
 			{"$project": bson.M{
-				"MatchType":  "$matchtype",
-				"MatchName":  "$matchname",
-				"MatchID":    "$sonmatchid",
-				"CreateTime": "$createtime",
-				"RoundNum":   "$roundnum",
-				"StartType":  "$matchdesc",
-				"MatchInfo":  "$recommend",
-				"Eliminate":  "$eliminate",
-				"EnterFee":   "$enterfee",
+				"MatchType":   "$matchtype",
+				"MatchName":   "$matchname",
+				"MatchID":     "$sonmatchid",
+				"CreateTime":  "$createtime",
+				"RoundNum":    "$roundnum",
+				"LimitPlayer": "$limitplayer",
+				"Recommend":   "$recommend",
+				"StartType":   "$starttype",
+				"Eliminate":   "$eliminate",
+				"EnterFee":    "$enterfee",
+				"_id":         0,
 			}},
 			{"$sort": bson.M{"CreateTime": 1}},
 		}).Iter()
@@ -223,15 +228,17 @@ func GetMatchList(matchType string, start, end int64) []map[string]interface{} {
 			{"$match": bson.M{"matchtype": matchType}},
 			{"$match": bson.M{"createtime": bson.M{"$gt": start, "$lte": end}}},
 			{"$project": bson.M{
-				"MatchType":  "$matchtype",
-				"MatchName":  "$matchname",
-				"MatchID":    "$matchid",
-				"CreateTime": "$createtime",
-				"RoundNum":   "$roundnum",
-				"StartType":  "$matchdesc",
-				"MatchInfo":  "$recommend",
-				"Eliminate":  "$eliminate",
-				"EnterFee":   "$enterfee",
+				"MatchType":   "$matchtype",
+				"MatchName":   "$matchname",
+				"MatchID":     "$sonmatchid",
+				"CreateTime":  "$createtime",
+				"RoundNum":    "$roundnum",
+				"LimitPlayer": "$limitplayer",
+				"Recommend":   "$recommend",
+				"StartType":   "$starttype",
+				"Eliminate":   "$eliminate",
+				"EnterFee":    "$enterfee",
+				"_id":         0,
 			}},
 			{"$sort": bson.M{"CreateTime": 1}},
 		}).Iter()
@@ -257,7 +264,7 @@ func GetMatchList(matchType string, start, end int64) []map[string]interface{} {
 }
 
 // GetMatchDetail 获取一局战绩详情
-func GetMatchDetail(matchID string) []byte {
+func GetMatchDetail(matchID string) map[string]interface{} {
 	s := gameDB.Ref()
 	defer gameDB.UnRef(s)
 
@@ -280,12 +287,12 @@ func GetMatchDetail(matchID string) []byte {
 		log.Error("get detail fail %v", err)
 		return nil
 	}
-	data, err := json.Marshal(one)
-	if err != nil {
-		log.Error("get detail fail %v", err)
-		return nil
-	}
-	return data
+	// data, err := json.Marshal(one)
+	// if err != nil {
+	// 	log.Error("get detail fail %v", err)
+	// 	return nil
+	// }
+	return one
 }
 
 func readOneByQuery(rt interface{}, query bson.M, coll string) {
