@@ -20,6 +20,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+
 func login(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	c.Writer.Header().Set("Access-Control-Allow-Headers", "content-type")
@@ -610,20 +611,23 @@ func flowDataExport(c *gin.Context) {
 	fes := feResp.FlowExports
 
 	for _, v := range *fds {
-		ud := db.ReadUserDataByUID(v.Userid)
-		bc := db.ReadBankCardByID(ud.UserID)
-		temp := param.FlowExports{
-			Accountid:    ud.AccountID,
-			PhoneNum:     ud.Username,
-			Realname:     ud.RealName,
-			BankCardNo:   ud.BankCardNo,
-			OpenBankName: bc.OpeningBank,
-			ChangeAmount: v.ChangeAmount,
+		if v.Status == 1 {
+			ud := db.ReadUserDataByUID(v.Userid)
+			bc := db.ReadBankCardByID(ud.UserID)
+			temp := param.FlowExports{
+				Accountid:    ud.AccountID,
+				PhoneNum:     ud.Username,
+				Realname:     ud.RealName,
+				BankCardNo:   ud.BankCardNo,
+				OpenBankName: bc.OpeningBank,
+				ChangeAmount: v.ChangeAmount,
+			}
+			*fes = append(*fes, temp)
 		}
-		*fes = append(*fes, temp)
 	}
 
 	resp = fes
+	db.RedisSetTokenExport(c.GetHeader("token"), true)
 	return
 }
 

@@ -22,6 +22,7 @@ type JSONConfig struct {
 	GameServer string   `json:"GameServer"` // 游戏服地址
 	LocalIP    string   `json:"LocalIP"`    // 本地ip
 	PassURL    []string `json:"PassURL"`    // 跳过验证
+	ExportURL  []string `json:"ExportURL"`  // 批量打款操作
 }
 
 // Enviroment develop----0 release----1

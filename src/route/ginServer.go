@@ -56,6 +56,7 @@ func tokenAuthMiddleWare() gin.HandlerFunc {
 		}
 		if path != "/login" && !PassTokenAuth(path) {
 			role := db.RedisGetToken(token)
+			db.RedisDelTokenExport(token)
 			log.Debug("redis中的权限  %v", role)
 			if role == -1 {
 				log.Debug("ivalid token: %v", token)
@@ -78,6 +79,14 @@ func tokenAuthMiddleWare() gin.HandlerFunc {
 				c.Abort()
 				return
 			}
+		}
+
+		if !ExportFiter(path, token) {
+			c.JSON(http.StatusOK, gin.H{
+				"code": util.Retry,
+				"desc": "不能批量操作！",
+			})
+			return
 		}
 	}
 }

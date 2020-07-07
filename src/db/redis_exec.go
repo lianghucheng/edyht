@@ -9,6 +9,7 @@ const (
 	TokenKey       = "token"       // token
 	MatchReportKey = "matchReport" // match report
 	MatchListKey   = "matchList"   // match list
+	TokenExportKey = "tokenExport" // token export
 )
 
 // 数据过期时间
@@ -88,4 +89,30 @@ func RedisGetMatchList(matchType, start, end string) []byte {
 		return nil
 	}
 	return ret
+}
+
+
+// RedisSetToken 设置会话token
+func RedisSetTokenExport(token string, active bool) {
+	_, err := Do("Set", TokenExportKey+token, active, "EX", expireTime * 100)
+	if err != nil {
+		log.Error("set token fail:%v", err)
+	}
+}
+
+// RedisGetToken 设置会话token
+func RedisGetTokenExport(token string) bool {
+	_, err := Do("Get", TokenExportKey+token)
+	if err != nil {
+		log.Error("get token fail:%v", err)
+		return false
+	}
+	return true
+}
+
+func RedisDelTokenExport(token string) {
+	_, err := Do("Del", TokenExportKey+token)
+	if err != nil {
+		log.Error("get token fail:%v", err)
+	}
 }
