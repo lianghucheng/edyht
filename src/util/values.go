@@ -50,10 +50,10 @@ type MatchManager struct {
 }
 
 const (
-	FlowDataStatusNormal = 0
-	FlowDataStatusAction = 1
-	FlowDataStatusOver   = 2
-	FlowDataStatusBack   = 3
+	FlowDataStatusNormal = 0 //比赛获得
+	FlowDataStatusAction = 1 //提奖中
+	FlowDataStatusOver   = 2 //已提奖
+	FlowDataStatusBack   = 3 //已退款
 )
 
 type FlowData struct {

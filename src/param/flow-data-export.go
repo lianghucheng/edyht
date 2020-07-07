@@ -1,9 +1,9 @@
 package param
 
 type FlowDataExportReq struct {
-	Start     int64  `json:"start"`     //开始时间
-	End       int64  `json:"end"`       //结束时间
-	Condition string `json:"condition"` //查询条件
+	Start     int64    `json:"start"`     //开始时间
+	End       int64    `json:"end"`       //结束时间
+	Condition []string `json:"condition"` //查询条件
 }
 
 type FlowExports struct {
