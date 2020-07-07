@@ -23,7 +23,7 @@
         "RedisDB":3,
         "MongoAddr":"mongodb://mongouser:eiTV^45i@10.66.129.0:27017",
         "GameMongo":"mongodb://mongouser:eiTV^45i@10.66.129.0:27017",
-        "GameServer":"123.207.12.67:9084",
+        "GameServer":"http://123.207.12.67:9084",
         "LocalIP":"http://123.207.12.67",
         "PassURL":["/getGameVersion","/download/matchIcon"],
         "ExportURL": ["/flowdata/refunds", "/flowdata/payments"],
