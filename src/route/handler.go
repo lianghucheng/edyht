@@ -696,3 +696,18 @@ func downloadMatchIcon(c *gin.Context) {
 	// ok
 	http.ServeFile(c.Writer, c.Request, filePath)
 }
+
+func getGameVersion(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	var version, url string
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code":    code,
+			"desc":    desc,
+			"version": version,
+			"url":     url,
+		})
+	}()
+	version, url = db.GetGameVersion()
+}

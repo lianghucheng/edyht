@@ -436,3 +436,26 @@ func ReadBankCardByID(id int) *util.BankCard {
 	readOneByQuery(bc, bson.M{"userid": id}, "bankcard")
 	return bc
 }
+
+// GetGameVersion 获取游戏版本号,下载地址
+func GetGameVersion() (version string, url string) {
+	s := mongoDB.Ref()
+	defer mongoDB.UnRef(s)
+	data := map[string]interface{}{}
+	s.DB(DB).C("GameConfig").Find(bson.M{"GameName": "edy"}).One(&data)
+	if data["GameVersion"] == nil || data["URL"] == nil {
+		log.Error("no config:%v", data)
+		return
+	}
+	version, ok := data["GameVersion"].(string)
+	if !ok {
+		log.Error("no config:%v", data)
+		return
+	}
+	url, ok = data["URL"].(string)
+	if !ok {
+		log.Error("no config:%v", data)
+		return
+	}
+	return
+}
