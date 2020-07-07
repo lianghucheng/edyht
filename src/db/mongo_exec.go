@@ -375,7 +375,7 @@ func ReadExports(r *param.FlowDataExportReq) *[]util.FlowData {
 func getQueryByHistoryReq(r *param.FlowDataHistoryReq) bson.M {
 	query := bson.M{}
 	if r.Start != 0 || r.End != 0 {
-		query = bson.M{"createdat": bson.M{"$gte": r.Start, "$lt": r.End}}
+		query = bson.M{"createdat": bson.M{"$gte": r.Start, "$lt": r.End + 86400}}
 	}
 
 	if len(r.Condition) > 0 {

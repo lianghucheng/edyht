@@ -395,13 +395,17 @@ func flowDataHistory(c *gin.Context) {
 func uflow2Pflow(c *[]util.FlowData) *[]param.FlowData {
 	rt := new([]param.FlowData)
 	for _, v := range *c {
+		stat := 0
+		if v.FlowType != 1 {
+			stat = v.Status
+		}
 		temp := param.FlowData{
 			ID:           v.ID,
 			Accountid:    v.Accountid,
 			ChangeAmount: v.ChangeAmount,
 			FlowType:     v.FlowType,
 			MatchID:      v.MatchID,
-			Status:       v.Status,
+			Status:       stat,
 			CreatedAt:    v.CreatedAt,
 			Realname:     v.Realname,
 			TakenFee:     v.TakenFee,
