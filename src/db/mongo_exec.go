@@ -379,11 +379,22 @@ func getQueryByHistoryReq(r *param.FlowDataHistoryReq) bson.M {
 	}
 
 	if len(r.Condition) > 0 {
-		accountid, _ := strconv.Atoi(r.Condition)
-		status, _ := strconv.Atoi(r.Condition)
-		query["$or"] = []bson.M{
-			{"accountid": accountid},
-			{"status": status},
+		accountid := 0
+		status := 0
+		if len(r.Condition) >= 2 {
+			accountid, _ = strconv.Atoi(r.Condition[1])
+			status, _ = strconv.Atoi(r.Condition[0])
+			query["accountid"] = accountid
+			query["status"] = status
+		} else {
+			c, _ := strconv.Atoi(r.Condition[0])
+			if c > 10 {
+				accountid = c
+				query["accountid"] = accountid
+			} else {
+				status = c
+				query["status"] = status
+			}
 		}
 	}
 	return query
@@ -396,11 +407,21 @@ func getQueryByExortReq(r *param.FlowDataExportReq) bson.M {
 	}
 
 	if len(r.Condition) > 0 {
-		accountid, _ := strconv.Atoi(r.Condition)
-		status, _ := strconv.Atoi(r.Condition)
-		query["$or"] = []bson.M{
-			{"accountid": accountid},
-			{"status": status},
+		accountid := 0
+		status := 0
+		if len(r.Condition) >= 2 {
+			accountid, _ = strconv.Atoi(r.Condition[1])
+			status, _ = strconv.Atoi(r.Condition[0])
+			query["accountid"] = accountid
+			query["status"] = status
+		} else {
+			c, _ := strconv.Atoi(r.Condition[0])
+			if c > 10 {
+				accountid = c
+				query["accountid"] = accountid
+			} else {
+				query["status"] = status
+			}
 		}
 	}
 	return query

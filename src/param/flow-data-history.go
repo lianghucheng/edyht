@@ -1,11 +1,11 @@
 package param
 
 type FlowDataHistoryReq struct {
-	Start     int64  `json:"start"`     //开始时间
-	End       int64  `json:"end"`       //结束时间
-	Per       int    `json:"per"`       //页数
-	Page      int    `json:"page"`      //页码
-	Condition string `json:"condition"` //查询条件
+	Start     int64    `json:"start"`     //开始时间
+	End       int64    `json:"end"`       //结束时间
+	Per       int      `json:"per"`       //页数
+	Page      int      `json:"page"`      //页码
+	Condition []string `json:"condition"` //查询条件
 }
 
 type FlowData struct {

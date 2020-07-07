@@ -7,6 +7,7 @@ import (
 	"bs/rpc"
 	"bs/util"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -44,6 +45,7 @@ func login(c *gin.Context) {
 		desc = "用户不存在"
 		return
 	}
+	log.Debug("【密码错误】%v   %v", user.Password, util.CalculateHash(data.Password))
 	if user.Password != util.CalculateHash(data.Password) {
 		code = util.Retry
 		desc = "密码错误"
@@ -374,6 +376,7 @@ func flowDataHistory(c *gin.Context) {
 		})
 	}()
 	data := c.Request.FormValue("data")
+	log.Debug("【流水数据查询】%v", data)
 	flowDataReq := new(param.FlowDataHistoryReq)
 	if err := json.Unmarshal([]byte(data), flowDataReq); err != nil {
 		log.Error(err.Error())
@@ -429,7 +432,11 @@ func flowDataPayment(c *gin.Context) {
 			"desc": desc,
 		})
 	}()
-	data := c.Request.FormValue("data")
+	data, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
 	pm := new(param.FlowDataPaymentReq)
 	if err := json.Unmarshal([]byte(data), pm); err != nil {
 		log.Error(err.Error())
@@ -450,7 +457,11 @@ func flowDataRefund(c *gin.Context) {
 			"desc": desc,
 		})
 	}()
-	data := c.Request.FormValue("data")
+	data, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
 	refund := new(param.FlowDataRefundReq)
 	if err := json.Unmarshal([]byte(data), refund); err != nil {
 		log.Error(err.Error())
@@ -487,7 +498,11 @@ func flowDataPayments(c *gin.Context) {
 			"desc": desc,
 		})
 	}()
-	data := c.Request.FormValue("data")
+	data, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
 	pms := new(param.FlowDataPaymentsReq)
 	if err := json.Unmarshal([]byte(data), pms); err != nil {
 		log.Error(err.Error())
@@ -510,7 +525,11 @@ func flowDataRefunds(c *gin.Context) {
 			"desc": desc,
 		})
 	}()
-	data := c.Request.FormValue("data")
+	data, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
 	refunds := new(param.FlowDataRefundsReq)
 	if err := json.Unmarshal([]byte(data), refunds); err != nil {
 		log.Error(err.Error())
