@@ -179,7 +179,7 @@ func (c *DialContext) EnsureUniqueIndex(db string, collection string, key []stri
 var mongoDB, gameDB *DialContext
 
 // database name
-const (
+var (
 	DB  = "backstage"
 	GDB = "ddz-match"
 )
@@ -201,6 +201,8 @@ func init() {
 		gameDB = mongoDB
 	}
 	initCollection()
+	DB = config.GetConfig().BackDB
+	GDB = config.GetConfig().GameDB
 }
 
 func initCollection() {

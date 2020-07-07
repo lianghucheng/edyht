@@ -11,7 +11,9 @@
         "GameServer":"http://127.0.0.1:9084",
         "LocalIP":"http://192.168.1.172",
         "PassURL":["/getGameVersion","/download/matchIcon"],
-        "ExportURL": ["/flowdata/refunds", "/flowdata/payments"]
+        "ExportURL": ["/flowdata/refunds", "/flowdata/payments"],
+        "BackDB":"backstage",
+        "GameDB":"ddz-match"
     },
     "release":{
         "IpList":["172.17.0.1","127.0.0.1","192.168.1.201"],
@@ -19,11 +21,13 @@
         "RedisAddr":"123.207.12.67:6379",
         "RedisPass":"",
         "RedisDB":3,
-        "MongoAddr":"mongodb://youxibi_db:fnkrJH9vjcn73993@111.230.39.198:27017",
-        "GameMongo":"mongodb://youxibi_db:fnkrJH9vjcn73993@111.230.39.198:27017",
-        "GameServer":"111.231.252.178:8087",
-        "LocalIP":"http://192.168.1.172",
+        "MongoAddr":"mongodb://mongouser:eiTV^45i@10.66.129.0:27017",
+        "GameMongo":"mongodb://mongouser:eiTV^45i@10.66.129.0:27017",
+        "GameServer":"123.207.12.67:9084",
+        "LocalIP":"http://123.207.12.67",
         "PassURL":["/getGameVersion","/download/matchIcon"],
-        "ExportURL": ["/flowdata/refunds", "/flowdata/payments"]
+        "ExportURL": ["/flowdata/refunds", "/flowdata/payments"],
+        "BackDB":"backstage",
+        "GameDB":"edy"
     }
 }

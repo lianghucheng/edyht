@@ -23,6 +23,8 @@ type JSONConfig struct {
 	LocalIP    string   `json:"LocalIP"`    // 本地ip
 	PassURL    []string `json:"PassURL"`    // 跳过验证
 	ExportURL  []string `json:"ExportURL"`  // 批量打款操作
+	BackDB     string   `json:"BackDB"`     // 后台数据库
+	GameDB     string   `json:"GameDB"`     // 游戏数据库
 }
 
 // Enviroment develop----0 release----1
