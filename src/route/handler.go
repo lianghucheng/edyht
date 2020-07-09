@@ -20,7 +20,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
 func login(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	c.Writer.Header().Set("Access-Control-Allow-Headers", "content-type")
@@ -183,6 +182,7 @@ func matchReport(c *gin.Context) {
 		desc = err.Error()
 		return
 	}
+	log.Debug("get report:%+v", data)
 	if data.Page <= 0 || data.Count <= 0 {
 		log.Error("error page:%v,count:%v", data.Page, data.Count)
 		code = util.Retry
@@ -234,6 +234,11 @@ func matchReport(c *gin.Context) {
 	if result == nil {
 		code = util.Retry
 		desc = "查询出错请重试！"
+		return
+	}
+	if len(result) == 1 {
+		all = result[0]
+		list = []map[string]interface{}{}
 		return
 	}
 
@@ -322,9 +327,13 @@ func matchList(c *gin.Context) {
 	}
 
 	result := db.GetMatchList(data.MatchType, begin.Unix(), over.Unix())
-	if result == nil {
-		code = util.Retry
-		desc = "查询出错请重试！"
+	// if result == nil {
+	// 	code = util.Retry
+	// 	desc = "查询出错请重试！"
+	// 	return
+	// }
+	if len(result) == 0 {
+		resp = []map[string]interface{}{}
 		return
 	}
 

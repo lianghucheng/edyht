@@ -4,7 +4,7 @@ import (
 	"bs/param"
 	"bs/util"
 	"encoding/json"
-	"time"
+	"fmt"
 
 	"strconv"
 
@@ -102,15 +102,18 @@ func GetMatchReport(matchID string, start, end int64) []map[string]interface{} {
 
 	// log.Debug("check,%v,%v", start, end)
 	result := make([]map[string]interface{}, 0)
-	for i := start; i+oneDay <= end; i = i + oneDay {
+	for i := start; i <= end; i = i + oneDay {
 		one := map[string]interface{}{}
+		// rt := time.Unix(i, 0).Format("2006-01-02")
 		// log.Debug("check,%v,%v", i, i+oneDay)
 		err := s.DB(GDB).C("match").Pipe([]bson.M{
 			{"$match": bson.M{"matchid": matchID}},
+			// {"$match": bson.M{"createtime": bson.M{"$gt": fmt.Sprintf("$%v", i), "$lte": fmt.Sprintf("$%v", i+oneDay)}}},
 			{"$match": bson.M{"createtime": bson.M{"$gt": i, "$lte": i + oneDay}}},
 			{"$project": bson.M{
-				"RecordTime":  time.Unix(i, 0).Format("2006-01-02"),
-				"SignInCount": bson.M{"$size": "$signinplayers"}, "_id": 0, "matchid": "1001",
+				// "RecordTime":  fmt.Sprintf("$%v", time.Unix(i, 0).Format("2006-01-02")),
+				"RecordTime":  "$createtime",
+				"SignInCount": bson.M{"$size": "$signinplayers"}, "_id": 0, "matchid": fmt.Sprintf("$%v", matchID),
 				"SignFee":  bson.M{"$multiply": []interface{}{bson.M{"$size": "$signinplayers"}, bson.M{"$divide": []interface{}{"$enterfee", 10}}}},
 				"AwardNum": bson.M{"$size": "$award"},
 				"Money":    "$moneyaward",
@@ -133,12 +136,16 @@ func GetMatchReport(matchID string, start, end int64) []map[string]interface{} {
 			log.Error("get report fail:%v", err)
 			return nil
 		}
-		result = append(result, one)
 		// 数据汇总
 		allReport["AllSignPlayer"] = allReport["AllSignPlayer"].(int) + one["allSign"].(int)
 		allReport["AllSignFee"] = allReport["AllSignFee"].(float64) + one["allSignFee"].(float64)
 		allReport["AllAward"] = allReport["AllAward"].(float64) + one["allMoney"].(float64)
 		allReport["AllLast"] = allReport["AllLast"].(float64) + one["lastMoney"].(float64)
+
+		one["allSignFee"] = util.Decimal(one["allSignFee"].(float64))
+		one["allMoney"] = util.Decimal(one["allMoney"].(float64))
+		one["lastMoney"] = util.Decimal(one["lastMoney"].(float64))
+		result = append(result, one)
 	}
 	// 最后一位保存汇总数据
 	// all, err := json.Marshal(allReport)
@@ -146,6 +153,10 @@ func GetMatchReport(matchID string, start, end int64) []map[string]interface{} {
 	// 	log.Error("get report fail:%v", err)
 	// 	return nil
 	// }
+
+	allReport["AllSignFee"] = util.Decimal(allReport["AllSignFee"].(float64))
+	allReport["AllAward"] = util.Decimal(allReport["AllAward"].(float64))
+	allReport["AllLast"] = util.Decimal(allReport["AllLast"].(float64))
 	result = append(result, allReport)
 	// ret, _ := json.Marshal(result)
 	return result
@@ -207,7 +218,7 @@ func GetMatchList(matchType string, start, end int64) []map[string]interface{} {
 	var iter *mgo.Iter
 	if len(matchType) == 0 {
 		iter = s.DB(GDB).C("match").Pipe([]bson.M{
-			{"$match": bson.M{"createtime": bson.M{"$gt": start, "$lte": end}}},
+			{"$match": bson.M{"createtime": bson.M{"$gt": start, "$lte": end + oneDay}}},
 			{"$project": bson.M{
 				"MatchType":   "$matchtype",
 				"MatchName":   "$matchname",
@@ -226,7 +237,7 @@ func GetMatchList(matchType string, start, end int64) []map[string]interface{} {
 	} else {
 		iter = s.DB(GDB).C("match").Pipe([]bson.M{
 			{"$match": bson.M{"matchtype": matchType}},
-			{"$match": bson.M{"createtime": bson.M{"$gt": start, "$lte": end}}},
+			{"$match": bson.M{"createtime": bson.M{"$gt": start, "$lte": end + oneDay}}},
 			{"$project": bson.M{
 				"MatchType":   "$matchtype",
 				"MatchName":   "$matchname",
@@ -250,11 +261,12 @@ func GetMatchList(matchType string, start, end int64) []map[string]interface{} {
 		// 	return nil
 		// }
 		result = append(result, one)
+		one = map[string]interface{}{}
 	}
 	log.Debug("result:%v", result)
-	if len(result) == 0 {
-		return nil
-	}
+	// if len(result) == 0 {
+	// 	return nil
+	// }
 	// ret, err := json.Marshal(result)
 	// if err != nil {
 	// 	log.Error("get report fail:%v", err)
