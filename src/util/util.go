@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/szxby/tools/log"
 )
@@ -45,4 +46,9 @@ func CheckDir(dir string) {
 			log.Error("make dir fail %v", err)
 		}
 	}
+}
+
+func Decimal(value float64) float64 {
+	value, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", value), 64)
+	return value
 }

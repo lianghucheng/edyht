@@ -398,6 +398,10 @@ func getQueryByHistoryReq(r *param.FlowDataHistoryReq) bson.M {
 				query["status"] = status
 			}
 		}
+
+		if status != 0 {
+			query["flowtype"] = 2
+		}
 	}
 	return query
 }

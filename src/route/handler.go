@@ -402,14 +402,14 @@ func uflow2Pflow(c *[]util.FlowData) *[]param.FlowData {
 		temp := param.FlowData{
 			ID:           v.ID,
 			Accountid:    v.Accountid,
-			ChangeAmount: v.ChangeAmount,
+			ChangeAmount: util.Decimal(v.ChangeAmount),
 			FlowType:     v.FlowType,
 			MatchID:      v.MatchID,
 			Status:       stat,
 			CreatedAt:    v.CreatedAt,
 			Realname:     v.Realname,
-			TakenFee:     v.TakenFee,
-			AtferTaxFee:  v.AtferTaxFee,
+			TakenFee:     util.Decimal(v.TakenFee),
+			AtferTaxFee:  util.Decimal(v.AtferTaxFee),
 			Desc:         v.Desc,
 		}
 		*rt = append(*rt, temp)
