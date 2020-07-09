@@ -404,13 +404,17 @@ func flowDataHistory(c *gin.Context) {
 func uflow2Pflow(c *[]util.FlowData) *[]param.FlowData {
 	rt := new([]param.FlowData)
 	for _, v := range *c {
+		stat := 0
+		if v.FlowType != 1 {
+			stat = v.Status
+		}
 		temp := param.FlowData{
 			ID:           v.ID,
 			Accountid:    v.Accountid,
 			ChangeAmount: v.ChangeAmount,
 			FlowType:     v.FlowType,
 			MatchID:      v.MatchID,
-			Status:       v.Status,
+			Status:       stat,
 			CreatedAt:    v.CreatedAt,
 			Realname:     v.Realname,
 			TakenFee:     v.TakenFee,
@@ -565,12 +569,12 @@ func therefund(id int, thedesc string) (code int, desc string) {
 	flowData.Status = util.FlowDataStatusBack
 	flowData.Desc = thedesc
 	//db.AddUserFee(flowData)
-	rpc.AddFee(flowData.Userid, flowData.ChangeAmount, "fee")
 	ud := db.ReadUserDataByUID(flowData.Userid)
 	flowData.AtferTaxFee = ud.Fee + flowData.ChangeAmount
 	//todo:出现错误中断的情况
 	db.SaveFlowData(flowData)
 	refundByFlowIDs(flowData.FlowIDs)
+	rpc.AddFee(flowData.Userid, flowData.ChangeAmount, "fee")
 	return
 }
 
@@ -585,13 +589,13 @@ func thepayment(id int, thedesc string) (code int, desc string) {
 	}
 	flowData.Status = util.FlowDataStatusOver
 	//db.AddUserTakenFee(flowData)
-	rpc.AddFee(flowData.Userid, flowData.ChangeAmount, "takenfee") //todo:不稳定
 	ud := db.ReadUserDataByUID(flowData.Userid)
 	flowData.TakenFee = ud.TakenFee + flowData.ChangeAmount
 	flowData.Desc = thedesc
 	//todo:错误出现的情况
 	db.SaveFlowData(flowData)
 	paymentByFlowIDs(flowData.FlowIDs)
+	rpc.AddFee(flowData.Userid, flowData.ChangeAmount, "takenfee") //todo:不稳定
 	return
 }
 

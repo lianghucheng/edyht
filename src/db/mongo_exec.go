@@ -385,9 +385,11 @@ func ReadExports(r *param.FlowDataExportReq) *[]util.FlowData {
 }
 
 func getQueryByHistoryReq(r *param.FlowDataHistoryReq) bson.M {
+	log.Debug("【开始时间】%v", time.Unix(r.Start,0).Format("2006-03-04 05:06"))
+	log.Debug("【结束时间】%v", time.Unix(r.End,0).Format("2006-03-04 05:06"))
 	query := bson.M{}
 	if r.Start != 0 || r.End != 0 {
-		query = bson.M{"createdat": bson.M{"$gte": r.Start, "$lt": r.End}}
+		query = bson.M{"createdat": bson.M{"$gte": r.Start, "$lt": r.End + 86400}}
 	}
 
 	if len(r.Condition) > 0 {
@@ -415,7 +417,7 @@ func getQueryByHistoryReq(r *param.FlowDataHistoryReq) bson.M {
 func getQueryByExortReq(r *param.FlowDataExportReq) bson.M {
 	query := bson.M{}
 	if r.Start != 0 || r.End != 0 {
-		query = bson.M{"createdat": bson.M{"$gte": r.Start, "$lt": r.End}}
+		query = bson.M{"createdat": bson.M{"$gte": r.Start, "$lt": r.End + 86400}}
 	}
 
 	if len(r.Condition) > 0 {
