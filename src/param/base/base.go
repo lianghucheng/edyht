@@ -12,13 +12,12 @@ func GetCountPipeline(countPipeline CountPipeline) []bson.M {
 	return pipeline
 }
 
-
 type DivPage struct {
-	Page 	int `json:"page"`
-	Per 	int `json:"per"`
+	Page int `json:"page"`
+	Per  int `json:"per"`
 }
 
-func (ctx *DivPage)GetPipeline() []bson.M {
+func (ctx *DivPage) GetPipeline() []bson.M {
 	if ctx.Page <= 0 {
 		ctx.Page = 1
 	}
@@ -26,24 +25,23 @@ func (ctx *DivPage)GetPipeline() []bson.M {
 		ctx.Per = 10
 	}
 	return []bson.M{
-		{"$skip" : (ctx.Page - 1) * ctx.Per},
+		{"$skip": (ctx.Page - 1) * ctx.Per},
 		{"$limit": ctx.Per},
 	}
 }
 
 type TimeRange struct {
-	Start 	int64 `json:"start"`
-	End 	int64 `json:"end"`
+	Start int64 `json:"start"`
+	End   int64 `json:"end"`
 }
 
-func (ctx *TimeRange)GetPipeline() []bson.M {
+func (ctx *TimeRange) GetPipeline() []bson.M {
 	return []bson.M{
 		{"$match": bson.M{"createdat": bson.M{"$gte": ctx.Start, "$lt": ctx.End + 86400}}},
 	}
 }
 
 type Condition interface {
-
 }
 
 func GetPipeline(cond Condition) []bson.M {

@@ -495,9 +495,9 @@ func ReadUserDataByUID(id int) *util.UserData {
 	return ud
 }
 
-func ReadUserDataByAID(aid int)*util.UserData {
+func ReadUserDataByAID(aid int) *util.UserData {
 	ud := new(util.UserData)
-	readByPipeline(GDB, "users", []bson.M{{"$match":bson.M{"accountid": aid}}}, ud, readTypeOne)
+	readByPipeline(GDB, "users", []bson.M{{"$match": bson.M{"accountid": aid}}}, ud, readTypeOne)
 	return ud
 }
 
@@ -530,7 +530,7 @@ func GetGameVersion() (version string, url string) {
 	return
 }
 
-func ReadOfflinePaymentList(req *param.OfflinePaymentListReq) (*[]util.OfflinePaymentCol) {
+func ReadOfflinePaymentList(req *param.OfflinePaymentListReq) *[]util.OfflinePaymentCol {
 	op := new([]util.OfflinePaymentCol)
 	readByPipeline(GDB, "offlinepayment", req.GetDataPipeline(), op, readTypeAll)
 	return op

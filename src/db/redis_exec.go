@@ -92,10 +92,9 @@ func RedisGetMatchList(matchType, start, end string) []byte {
 	return ret
 }
 
-
 // RedisSetToken 设置会话token
 func RedisSetTokenExport(token string, active bool) {
-	_, err := Do("Set", TokenExportKey+token, active, "EX", expireTime * 100)
+	_, err := Do("Set", TokenExportKey+token, active, "EX", expireTime*100)
 	if err != nil {
 		log.Error("set token fail:%v", err)
 	}
@@ -119,16 +118,16 @@ func RedisDelTokenExport(token string) {
 }
 
 func RedisSetTokenUsrn(token string, usrn string) {
-	_, err := Do("Set", TokenUsrn + token, usrn, "EX", expireTime)
+	_, err := Do("Set", TokenUsrn+token, usrn, "EX", expireTime)
 	if err != nil {
 		log.Error("set token fail: %v. ", err)
 	}
 }
 
 func RedisGetTokenUsrn(token string) string {
-	data, err := Do("Get", TokenUsrn + token)
+	data, err := Do("Get", TokenUsrn+token)
 	if err != nil {
-		log.Error("get token fail: %v. ",err)
+		log.Error("get token fail: %v. ", err)
 		return ""
 	}
 

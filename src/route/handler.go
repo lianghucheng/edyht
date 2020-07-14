@@ -762,24 +762,24 @@ func offlinePaymentList(c *gin.Context) {
 	rt := new([]param.OfflinePaymentData)
 	for _, v := range *ret {
 		temp := param.OfflinePaymentData{
-			Nickname 	:v.Nickname,
-			Accountid 	:v.Accountid,
-			ActionType 	:v.ActionType,
-			BeforFee	:v.BeforFee,
-			ChangeFee 	:v.ChangeFee,
-			AfterFee 	:v.AfterFee,
-			Createdat 	:v.Createdat,
-			Operator	:v.Operator,
-			Desc 		:v.Desc,
+			Nickname:   v.Nickname,
+			Accountid:  v.Accountid,
+			ActionType: v.ActionType,
+			BeforFee:   v.BeforFee,
+			ChangeFee:  v.ChangeFee,
+			AfterFee:   v.AfterFee,
+			Createdat:  v.Createdat,
+			Operator:   v.Operator,
+			Desc:       v.Desc,
 		}
 		*rt = append(*rt, temp)
 	}
 
 	resp = &param.OfflinePaymentListResp{
-		OfflinePaymentDatas:rt,
-		Page:oplr.Page,
-		Per:oplr.Per,
-		Total:total,
+		OfflinePaymentDatas: rt,
+		Page:                oplr.Page,
+		Per:                 oplr.Per,
+		Total:               total,
 	}
 }
 
@@ -803,7 +803,7 @@ func offlinePaymentAdd(c *gin.Context) {
 		desc = util.ErrMsg[code]
 		return
 	}
-	if ud.Fee + opar.ChangeFee < 0 {
+	if ud.Fee+opar.ChangeFee < 0 {
 		code = util.TaxFeeLack
 		desc = util.ErrMsg[code]
 		return

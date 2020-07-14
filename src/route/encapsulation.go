@@ -32,11 +32,11 @@ func PassTokenAuth(path string) bool {
 	return false
 }
 
-func ExportFiter(path,token string) bool {
+func ExportFiter(path, token string) bool {
 	defer db.RedisDelTokenExport(token)
 	for _, url := range config.GetConfig().ExportURL {
 		if url == path {
-			if db.RedisGetTokenExport(token){
+			if db.RedisGetTokenExport(token) {
 				return true
 			} else {
 				return false

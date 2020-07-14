@@ -12,9 +12,9 @@ const (
 )
 
 type AddAwardReq struct {
-	Secret 		string `json:"secret"`
-	Uid 	int `json:"uid"`
-	Amount 	float64 `json:"amount"`
+	Secret string  `json:"secret"`
+	Uid    int     `json:"uid"`
+	Amount float64 `json:"amount"`
 }
 
 func AddAward(aid int, amount float64) {
