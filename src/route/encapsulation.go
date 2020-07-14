@@ -19,6 +19,7 @@ func checkRole(role int, path string) bool {
 // refreshToken 刷新token
 func refreshToken(token string, role int) {
 	db.RedisSetToken(token, role)
+	db.RedisSetTokenUsrn(token, db.RedisGetTokenUsrn(token))
 }
 
 // PassTokenAuth 跳过验证(一些接口不需要验证身份)

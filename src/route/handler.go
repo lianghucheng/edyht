@@ -45,7 +45,6 @@ func login(c *gin.Context) {
 		desc = "用户不存在"
 		return
 	}
-	log.Debug("【密码错误】%v   %v", user.Password, util.CalculateHash(data.Password))
 	if user.Password != util.CalculateHash(data.Password) {
 		code = util.Retry
 		desc = "密码错误"
@@ -53,6 +52,7 @@ func login(c *gin.Context) {
 	}
 	token := util.RandomString(10)
 	db.RedisSetToken(token, user.Role)
+	db.RedisSetTokenUsrn(token, user.Account)
 	resp = token
 }
 func matchManagerList(c *gin.Context) {
@@ -374,6 +374,26 @@ func matchDetail(c *gin.Context) {
 	resp = db.GetMatchDetail(data.MatchID)
 }
 
+func parseJsonParam(req *http.Request, rt interface{}) (code int, desc string) {
+	code = util.Success
+	desc = util.ErrMsg[code]
+	data, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		log.Error(err.Error())
+		code = util.Fail
+		desc = util.ErrMsg[code]
+		return
+	}
+	log.Debug("【接收到的参数】%v", string(data))
+	if err := json.Unmarshal(data, rt); err != nil {
+		log.Error(err.Error())
+		code = util.FormatFail
+		desc = util.ErrMsg[code]
+		return
+	}
+	return
+}
+
 func flowDataHistory(c *gin.Context) {
 	code := util.Success
 	desc := util.ErrMsg[util.Success]
@@ -446,16 +466,9 @@ func flowDataPayment(c *gin.Context) {
 			"desc": desc,
 		})
 	}()
-	data, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		log.Error(err.Error())
-		return
-	}
 	pm := new(param.FlowDataPaymentReq)
-	if err := json.Unmarshal([]byte(data), pm); err != nil {
-		log.Error(err.Error())
-		code = util.FormatFail
-		desc = util.ErrMsg[util.FormatFail]
+	code, desc = parseJsonParam(c.Request, pm)
+	if code != util.Success {
 		return
 	}
 	code, desc = thepayment(pm.ID, pm.Desc)
@@ -471,16 +484,9 @@ func flowDataRefund(c *gin.Context) {
 			"desc": desc,
 		})
 	}()
-	data, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		log.Error(err.Error())
-		return
-	}
 	refund := new(param.FlowDataRefundReq)
-	if err := json.Unmarshal([]byte(data), refund); err != nil {
-		log.Error(err.Error())
-		code = util.FormatFail
-		desc = util.ErrMsg[util.FormatFail]
+	code, desc = parseJsonParam(c.Request, refund)
+	if code != util.Success {
 		return
 	}
 	code, desc = therefund(refund.ID, refund.Desc)
@@ -512,16 +518,9 @@ func flowDataPayments(c *gin.Context) {
 			"desc": desc,
 		})
 	}()
-	data, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		log.Error(err.Error())
-		return
-	}
 	pms := new(param.FlowDataPaymentsReq)
-	if err := json.Unmarshal([]byte(data), pms); err != nil {
-		log.Error(err.Error())
-		code = util.FormatFail
-		desc = util.ErrMsg[util.FormatFail]
+	code, desc = parseJsonParam(c.Request, pms)
+	if code != util.Success {
 		return
 	}
 	for _, id := range pms.Ids {
@@ -539,16 +538,9 @@ func flowDataRefunds(c *gin.Context) {
 			"desc": desc,
 		})
 	}()
-	data, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		log.Error(err.Error())
-		return
-	}
 	refunds := new(param.FlowDataRefundsReq)
-	if err := json.Unmarshal([]byte(data), refunds); err != nil {
-		log.Error(err.Error())
-		code = util.FormatFail
-		desc = util.ErrMsg[util.FormatFail]
+	code, desc = parseJsonParam(c.Request, refunds)
+	if code != util.Success {
 		return
 	}
 	for _, id := range refunds.Ids {
@@ -746,4 +738,93 @@ func getGameVersion(c *gin.Context) {
 		})
 	}()
 	version, url = db.GetGameVersion()
+}
+
+func offlinePaymentList(c *gin.Context) {
+	code := util.Success
+	desc := util.ErrMsg[util.Success]
+	var resp interface{}
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"decs": desc,
+			"resp": resp,
+		})
+	}()
+	oplr := new(param.OfflinePaymentListReq)
+	code, desc = parseJsonParam(c.Request, oplr)
+	if code != util.Success {
+		return
+	}
+	ret := db.ReadOfflinePaymentList(oplr)
+	total := db.ReadOfflinePaymentCount(oplr)
+
+	rt := new([]param.OfflinePaymentData)
+	for _, v := range *ret {
+		temp := param.OfflinePaymentData{
+			Nickname 	:v.Nickname,
+			Accountid 	:v.Accountid,
+			ActionType 	:v.ActionType,
+			BeforFee	:v.BeforFee,
+			ChangeFee 	:v.ChangeFee,
+			AfterFee 	:v.AfterFee,
+			Createdat 	:v.Createdat,
+			Operator	:v.Operator,
+			Desc 		:v.Desc,
+		}
+		*rt = append(*rt, temp)
+	}
+
+	resp = &param.OfflinePaymentListResp{
+		OfflinePaymentDatas:rt,
+		Page:oplr.Page,
+		Per:oplr.Per,
+		Total:total,
+	}
+}
+
+func offlinePaymentAdd(c *gin.Context) {
+	code := util.Success
+	desc := util.ErrMsg[code]
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	opar := new(param.OfflinePaymentAddReq)
+	code, desc = parseJsonParam(c.Request, opar)
+	if code != util.Success {
+		return
+	}
+	ud := db.ReadUserDataByAID(opar.Accountid)
+	if ud.UserID == 0 {
+		code = util.UserNotExist
+		desc = util.ErrMsg[code]
+		return
+	}
+	if ud.Fee + opar.ChangeFee < 0 {
+		code = util.TaxFeeLack
+		desc = util.ErrMsg[code]
+		return
+	}
+
+	admin := db.RedisGetTokenUsrn(c.GetHeader("token"))
+	offlinePaymentCol := new(util.OfflinePaymentCol)
+	offlinePaymentCol.Desc = opar.Desc
+	offlinePaymentCol.Accountid = opar.Accountid
+	offlinePaymentCol.ActionType = opar.ActionType
+	offlinePaymentCol.ChangeFee = opar.ChangeFee
+	offlinePaymentCol.Nickname = ud.Nickname
+	offlinePaymentCol.Operator = admin
+	if opar.ActionType == 0 {
+		rpc.RpcUpdateCoupon(opar.Accountid, int(opar.ChangeFee))
+		offlinePaymentCol.BeforFee = float64(ud.Coupon)
+		offlinePaymentCol.AfterFee = float64(ud.Coupon) + opar.ChangeFee
+	} else if opar.ActionType == 1 {
+		rpc.AddAward(opar.Accountid, opar.ChangeFee)
+		offlinePaymentCol.BeforFee = ud.Fee
+		offlinePaymentCol.AfterFee = ud.Fee + opar.ChangeFee
+	}
+	db.SaveOfflinePayment(offlinePaymentCol)
 }

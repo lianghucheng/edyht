@@ -53,3 +53,13 @@ func Decimal(value float64) float64 {
 	value, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", value), 64)
 	return value
 }
+
+func MergeMaps(maps ...map[string]interface{}) map[string]interface{} {
+	ret := make(map[string]interface{})
+	for _, v1 := range maps {
+		for k2, v2 := range v1 {
+			ret[k2] = v2
+		}
+	}
+	return ret
+}

@@ -113,3 +113,32 @@ type BankCard struct {
 	City        string
 	OpeningBank string
 }
+
+type OfflinePayment struct {
+	Nickname 	string`json:"nickname"`
+	Accountid 	int`json:"accountid"`
+	ActionType 	int	`json:"actiontype"`//0，点券 1，税后奖金
+	BeforFee	float64`json:"beforfee"`
+	ChangeFee 	float64`json:"changefee"`
+	AfterFee 	float64`json:"afterfee"`
+	Createdat 	int64`json:"createdat"`
+	Operator	string`json:"operator"`
+	Desc 		string`json:"desc"`
+}
+
+type OfflinePaymentCol struct {
+	ID 	int   `bson:"_id"`
+	Nickname 	string`json:"nickname"`
+	Accountid 	int`json:"accountid"`
+	ActionType 	int	`json:"actiontype"`//0，点券 1，税后奖金
+	BeforFee	float64`json:"beforfee"`
+	ChangeFee 	float64`json:"changefee"`
+	AfterFee 	float64`json:"afterfee"`
+	Createdat 	int64`json:"createdat"`
+	Operator	string`json:"operator"`
+	Desc 		string`json:"desc"`
+}
+
+type DataCount struct {
+	Count 	int
+}
