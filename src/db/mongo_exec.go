@@ -703,8 +703,8 @@ func GetUserOptLog(accountID, page, count int, start, end int64) ([]util.ItemLog
 	s := mongoDB.Ref()
 	defer mongoDB.UnRef(s)
 	ret := []util.ItemLog{}
-	total, _ := s.DB(GDB).C("itemlog").Find(bson.M{"UID": accountID, "createtime": bson.M{"$gt": start, "$lt": end}}).Count()
-	err := s.DB(GDB).C("itemlog").Find(bson.M{"UID": accountID, "createtime": bson.M{"$gt": start, "$lt": end}}).
+	total, _ := s.DB(GDB).C("itemlog").Find(bson.M{"uid": accountID, "createtime": bson.M{"$gt": start, "$lt": end}}).Count()
+	err := s.DB(GDB).C("itemlog").Find(bson.M{"uid": accountID, "createtime": bson.M{"$gt": start, "$lt": end}}).
 		Sort("-createtime").Skip((page - 1) * count).All(&ret)
 	if err != nil && err != mgo.ErrNotFound {
 		log.Error("err:%v", err)
