@@ -11,6 +11,7 @@ func bind(server *gin.Engine) {
 	server.POST("/addMatch", addMatch)
 	server.POST("/editMatch", editMatch)
 	server.POST("/showHall", showHall)
+	server.POST("/editSort", editSort)
 	server.POST("/optMatch", optMatch)
 	server.POST("/matchReport", matchReport)
 	server.POST("/matchList", matchList)
@@ -83,6 +84,11 @@ type editManagerReq struct {
 type showHallReq struct {
 	MatchID  string `json:"MatchID" binding:"required"` // 赛事id号
 	ShowHall bool   `json:"ShowHall"`                   // 是否首页展示
+}
+
+type editSortReq struct {
+	MatchID string `json:"MatchID" binding:"required"` // 赛事id号
+	Sort    int    `json:"Sort"`                       // 赛事排序
 }
 
 type optMatchReq struct {

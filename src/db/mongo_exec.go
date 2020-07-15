@@ -38,8 +38,6 @@ func GetMatchManagerList(page int, count int) ([]map[string]interface{}, int) {
 	// iter := s.DB(GDB).C("matchmanager").Find(bson.M{"state": bson.M{"gte": 0}}).Sort("-shelftime").Skip((page - 1) * count).Limit(count).Iter()
 	err := s.DB(GDB).C("matchmanager").Pipe([]bson.M{
 		{"$match": bson.M{"state": bson.M{"$lt": util.Delete}}},
-		{"$skip": (page - 1) * count},
-		{"$limit": count},
 		{"$project": bson.M{
 			"MatchID":     "$matchid",
 			"MatchName":   "$matchname",
@@ -63,6 +61,8 @@ func GetMatchManagerList(page int, count int) ([]map[string]interface{}, int) {
 			"_id":         0,
 		}},
 		{"$sort": bson.M{"Sort": 1}},
+		{"$skip": (page - 1) * count},
+		{"$limit": count},
 	}).All(&list)
 	// for iter.Next(&one) {
 	// 	// tmp, _ := json.Marshal(one)
