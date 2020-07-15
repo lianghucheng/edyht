@@ -19,6 +19,7 @@ func checkRole(role int, path string) bool {
 // refreshToken 刷新token
 func refreshToken(token string, role int) {
 	db.RedisSetToken(token, role)
+	db.RedisSetTokenUsrn(token, db.RedisGetTokenUsrn(token))
 }
 
 // PassTokenAuth 跳过验证(一些接口不需要验证身份)
@@ -31,11 +32,11 @@ func PassTokenAuth(path string) bool {
 	return false
 }
 
-func ExportFiter(path,token string) bool {
+func ExportFiter(path, token string) bool {
 	defer db.RedisDelTokenExport(token)
 	for _, url := range config.GetConfig().ExportURL {
 		if url == path {
-			if db.RedisGetTokenExport(token){
+			if db.RedisGetTokenExport(token) {
 				return true
 			} else {
 				return false

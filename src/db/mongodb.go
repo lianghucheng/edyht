@@ -215,6 +215,10 @@ func initCollection() {
 	if err != nil {
 		log.Fatal("ensure counter error: %v", err)
 	}
+	err = db.EnsureCounter(DB, "counters", "offlinepayment")
+	if err != nil {
+		log.Fatal("ensure counter error: %v", err)
+	}
 }
 
 // GetDB return init mongodb
@@ -223,5 +227,5 @@ func GetDB() *DialContext {
 }
 
 func MongoDBNextSeq(id string) (int, error) {
-	return mongoDB.NextSeq(GDB, "counters", id)
+	return mongoDB.NextSeq(DB, "counters", id)
 }

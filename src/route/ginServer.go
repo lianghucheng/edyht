@@ -49,6 +49,7 @@ func tokenAuthMiddleWare() gin.HandlerFunc {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "*")
 		token := c.GetHeader("token")
+		log.Debug("【接收到的token】%v", token)
 		path := c.Request.URL.Path
 		if path == "/favicon.ico" {
 			c.Abort()

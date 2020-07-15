@@ -33,6 +33,9 @@ func bind(server *gin.Engine) {
 	server.GET("/download/matchIcon/*action", downloadMatchIcon)
 	server.POST("/upload/matchIcon", uploadMatchIcon)
 	server.GET("/getGameVersion", getGameVersion)
+
+	server.POST("/offlinepayment/list", offlinePaymentList)
+	server.POST("/offlinepayment/add", offlinePaymentAdd)
 }
 
 type loginData struct {

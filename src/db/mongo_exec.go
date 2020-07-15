@@ -2,6 +2,7 @@ package db
 
 import (
 	"bs/param"
+	"bs/param/base"
 	"bs/util"
 	"encoding/json"
 	"fmt"
@@ -333,6 +334,25 @@ func readAllByQuery(rt interface{}, query bson.M, coll string) {
 	}
 }
 
+const (
+	readTypeAll = 1
+	readTypeOne = 2
+)
+
+func readByPipeline(db, coll string, pipeline []bson.M, rt interface{}, readtype int) {
+	se := mongoDB.Ref()
+	defer mongoDB.UnRef(se)
+	var err error
+	if readtype == readTypeAll {
+		err = se.DB(db).C(coll).Pipe(pipeline).All(rt)
+	} else if readtype == readTypeOne {
+		err = se.DB(db).C(coll).Pipe(pipeline).One(rt)
+	}
+	if err != nil {
+		log.Error(err.Error())
+	}
+}
+
 func countByQuery(query bson.M, coll string) int {
 	se := mongoDB.Ref()
 	defer mongoDB.UnRef(se)
@@ -441,8 +461,12 @@ func getQueryByExortReq(r *param.FlowDataExportReq) bson.M {
 				accountid = c
 				query["accountid"] = accountid
 			} else {
+				status = c
 				query["status"] = status
 			}
+		}
+		if status != 0 {
+			query["flowtype"] = 2
 		}
 	}
 	return query
@@ -470,6 +494,12 @@ func AddUserTakenFee(flowData *util.FlowData) {
 func ReadUserDataByUID(id int) *util.UserData {
 	ud := new(util.UserData)
 	readOneByQuery(ud, bson.M{"_id": id}, "users")
+	return ud
+}
+
+func ReadUserDataByAID(aid int) *util.UserData {
+	ud := new(util.UserData)
+	readByPipeline(GDB, "users", []bson.M{{"$match": bson.M{"accountid": aid}}}, ud, readTypeOne)
 	return ud
 }
 
@@ -502,6 +532,7 @@ func GetGameVersion() (version string, url string) {
 	return
 }
 
+<<<<<<< HEAD
 // GetUserList 获取用户列表
 func GetUserList(page, count int) ([]util.UserData, int) {
 	s := mongoDB.Ref()
@@ -680,4 +711,21 @@ func GetUserOptLog(accountID, page, count int, start, end int64) ([]util.ItemLog
 		log.Error("err:%v", err)
 	}
 	return ret, total
+
+func ReadOfflinePaymentList(req *param.OfflinePaymentListReq) *[]util.OfflinePaymentCol {
+	op := new([]util.OfflinePaymentCol)
+	readByPipeline(GDB, "offlinepayment", req.GetDataPipeline(), op, readTypeAll)
+	return op
+}
+
+func ReadOfflinePaymentCount(req *param.OfflinePaymentListReq) int {
+	cnt := new(util.DataCount)
+	readByPipeline(GDB, "offlinepayment", base.GetCountPipeline(req), cnt, readTypeOne)
+	return cnt.Count
+}
+
+func SaveOfflinePayment(data *util.OfflinePaymentCol) {
+	data.ID, _ = MongoDBNextSeq("offlinepayment")
+	data.Createdat = time.Now().Unix()
+	save(data, "offlinepayment", data.ID)
 }
