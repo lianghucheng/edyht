@@ -747,3 +747,233 @@ func getGameVersion(c *gin.Context) {
 	}()
 	version, url = db.GetGameVersion()
 }
+
+func getUserList(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	list := []util.UserData{}
+	total := 0
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code":  code,
+			"desc":  desc,
+			"list":  list,
+			"total": total,
+		})
+	}()
+	data := getUserListReq{}
+	if err := c.ShouldBind(&data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	userList, total := db.GetUserList(data.Page, data.Count)
+	if userList == nil {
+		code = util.Retry
+		desc = "查询出错,请重试!"
+		return
+	}
+	list = userList
+}
+
+func getOneUser(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	user := util.UserData{}
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+			"user": user,
+		})
+	}()
+	data := getOneUserReq{}
+	if err := c.ShouldBind(&data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	one, err := db.GetOneUser(data.AccountID)
+	if err != nil {
+		code = util.Retry
+		desc = "查询出错请重试!"
+		return
+	}
+	user = one
+}
+
+func optUser(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	data := optUserReq{}
+	if err := c.ShouldBind(&data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	err := util.PostToGame(config.GetConfig().GameServer+"/optUser", JSON, data)
+	if err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+}
+
+func getMatchReview(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	matchTypes := []interface{}{}
+	list := []map[string]interface{}{}
+	all := map[string]interface{}{}
+	total := 0
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code":       code,
+			"desc":       desc,
+			"matchTypes": matchTypes,
+			"all":        all,
+			"list":       list,
+			"total":      total,
+		})
+	}()
+	data := getMatchReviewReq{}
+	if err := c.ShouldBind(&data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	log.Debug("get review:%+v", data)
+	if data.Page <= 0 || data.Count <= 0 {
+		log.Error("error page:%v,count:%v", data.Page, data.Count)
+		code = util.Retry
+		desc = "非法请求页码！"
+		return
+	}
+	matchs, ret, all := db.GetMatchReview(data.AccountID)
+	for _, v := range matchs {
+		if v["_id"] == nil {
+			continue
+		}
+		matchTypes = append(matchTypes, v["_id"])
+	}
+	total = len(ret)
+	last := data.Page * data.Count
+	if (data.Page-1)*data.Count >= total && total != 0 {
+		log.Error("error page:%v,count:%v", data.Page, data.Count)
+		code = util.Retry
+		desc = "非法请求页码！"
+		return
+	}
+	if last > total {
+		last = total
+	}
+	list = ret[(data.Page-1)*data.Count : last]
+}
+
+func getMatchReviewByName(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	list := []map[string]interface{}{}
+	all := map[string]interface{}{}
+	total := 0
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code":  code,
+			"desc":  desc,
+			"all":   all,
+			"list":  list,
+			"total": total,
+		})
+	}()
+	data := getMatchReviewByNameReq{}
+	if err := c.ShouldBind(&data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	all, ret := db.GetMatchReviewByName(data.AccountID, data.MatchType)
+	total = len(ret)
+	last := data.Page * data.Count
+	if (data.Page-1)*data.Count >= total {
+		log.Error("error page:%v,count:%v", data.Page, data.Count)
+		code = util.Retry
+		desc = "非法请求页码！"
+		return
+	}
+	if last > total {
+		last = total
+	}
+	list = ret[(data.Page-1)*data.Count : last]
+}
+
+func getUserOptLog(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	list := []util.ItemLog{}
+	total := 0
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code":  code,
+			"desc":  desc,
+			"total": total,
+			"list":  list,
+		})
+	}()
+	data := getUserOptLogReq{}
+	if err := c.ShouldBind(&data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	log.Debug("get log:%+v", data)
+	if data.Page <= 0 || data.Count <= 0 {
+		log.Error("error page:%v,count:%v", data.Page, data.Count)
+		code = util.Retry
+		desc = "非法请求页码！"
+		return
+	}
+	begin, err := time.Parse("2006-01-02", data.Start)
+	over, err := time.Parse("2006-01-02", data.End)
+	if err != nil || begin.After(over) {
+		log.Error("error time:%v,%v", data.Start, data.End)
+		code = util.Retry
+		desc = "非法请求时间！"
+		return
+	}
+	if over.Sub(begin) >= time.Duration(31*24*time.Hour) {
+		code = util.Retry
+		desc = "单次查询时间不能超过一个月！"
+		return
+	}
+	list, total = db.GetUserOptLog(data.AccountID, data.Page, data.Count, begin.Unix(), over.Unix())
+}
+
+func clearRealInfo(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	data := clearInfoReq{}
+	if err := c.ShouldBind(&data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	log.Debug("clear info:%+v", data)
+	err := util.PostToGame(config.GetConfig().GameServer+"/clearRealInfo", JSON, data)
+	if err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+}
