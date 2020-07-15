@@ -120,6 +120,27 @@ func showHall(c *gin.Context) {
 		return
 	}
 }
+func editSort(c *gin.Context) {
+	code := util.OK
+	desc := "修改赛事成功！"
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	data := editSortReq{}
+	if err := c.ShouldBind(&data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	if err := util.PostToGame(config.GetConfig().GameServer+"/editSort", JSON, data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+}
 func editMatch(c *gin.Context) {
 	code := util.OK
 	desc := "修改赛事成功！"

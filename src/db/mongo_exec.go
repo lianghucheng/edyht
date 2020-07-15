@@ -38,8 +38,6 @@ func GetMatchManagerList(page int, count int) ([]map[string]interface{}, int) {
 	// iter := s.DB(GDB).C("matchmanager").Find(bson.M{"state": bson.M{"gte": 0}}).Sort("-shelftime").Skip((page - 1) * count).Limit(count).Iter()
 	err := s.DB(GDB).C("matchmanager").Pipe([]bson.M{
 		{"$match": bson.M{"state": bson.M{"$lt": util.Delete}}},
-		{"$skip": (page - 1) * count},
-		{"$limit": count},
 		{"$project": bson.M{
 			"MatchID":     "$matchid",
 			"MatchName":   "$matchname",
@@ -63,6 +61,8 @@ func GetMatchManagerList(page int, count int) ([]map[string]interface{}, int) {
 			"_id":         0,
 		}},
 		{"$sort": bson.M{"Sort": 1}},
+		{"$skip": (page - 1) * count},
+		{"$limit": count},
 	}).All(&list)
 	// for iter.Next(&one) {
 	// 	// tmp, _ := json.Marshal(one)
@@ -637,7 +637,7 @@ func GetMatchReview(uid int) ([]map[string]interface{}, []map[string]interface{}
 			// "matchtype": bson.M{"$first": "$matchtype"}, "matchid": bson.M{"$first": "$matchid"},
 			"matchtotal": bson.M{"$sum": "$matchtotal"}, "matchwins": bson.M{"$sum": "$matchwins"}, "matchfails": bson.M{"$sum": "$matchfails"},
 			"coupon": bson.M{"$sum": "$coupon"}, "awardmoney": bson.M{"$sum": "$awardmoney"}, "personalprofit": bson.M{"$sum": "$personalprofit"},
-			"winrate": bson.M{"$avg": "$averagebatting"},
+			// "winrate": bson.M{"$avg": []interface{}{bson.M{"$sum": "$matchwins"}, bson.M{"$sum": "$matchtotal"}}},
 		}},
 	}).One(&all); err != nil && err != mgo.ErrNotFound {
 		log.Error("err:%v", err)
@@ -658,7 +658,7 @@ func GetMatchReviewByName(uid int, matchType string) (map[string]interface{}, []
 			// "matchtype": bson.M{"$first": "$matchtype"}, "matchid": bson.M{"$first": "$matchid"},
 			"matchtotal": bson.M{"$sum": "$matchtotal"}, "matchwins": bson.M{"$sum": "$matchwins"}, "matchfails": bson.M{"$sum": "$matchfails"},
 			"coupon": bson.M{"$sum": "$coupon"}, "awardmoney": bson.M{"$sum": "$awardmoney"}, "personalprofit": bson.M{"$sum": "$personalprofit"},
-			"winrate": bson.M{"$avg": "$averagebatting"},
+			// "winrate": bson.M{"$divide": []interface{}{bson.M{"$sum": "$matchwins"}, bson.M{"$sum": "$matchtotal"}}},
 		}},
 	}).One(&all); err != nil && err != mgo.ErrNotFound {
 		log.Error("err:%v", err)
@@ -690,7 +690,7 @@ func GetMatchReviewByName(uid int, matchType string) (map[string]interface{}, []
 					"matchname":  bson.M{"$first": "$matchname"},
 					"matchtotal": bson.M{"$sum": "$matchtotal"}, "matchwins": bson.M{"$sum": "$matchwins"}, "matchfails": bson.M{"$sum": "$matchfails"},
 					"coupon": bson.M{"$sum": "$coupon"}, "awardmoney": bson.M{"$sum": "$awardmoney"}, "personalprofit": bson.M{"$sum": "$personalprofit"},
-					"winrate": bson.M{"$avg": "$averagebatting"},
+					// "winrate": bson.M{"$divide": []interface{}{bson.M{"$sum": "$matchwins"}, bson.M{"$sum": "$matchtotal"}}},
 				}},
 			}).One(&one); err != nil && err != mgo.ErrNotFound {
 				log.Error("err:%v", err)
@@ -711,6 +711,8 @@ func GetUserOptLog(accountID, page, count, optType int, start, end int64) ([]uti
 	ret := []util.ItemLog{}
 	total := 0
 	var err error
+	var oneDay int64 = 24 * 60 * 60
+	end += oneDay
 	if optType > 0 {
 		total, _ = s.DB(GDB).C("itemlog").Find(bson.M{"uid": accountID, "opttype": optType, "createtime": bson.M{"$gt": start, "$lt": end}}).Count()
 		err = s.DB(GDB).C("itemlog").Find(bson.M{"uid": accountID, "opttype": optType, "createtime": bson.M{"$gt": start, "$lt": end}}).
