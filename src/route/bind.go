@@ -22,6 +22,14 @@ func bind(server *gin.Engine) {
 	server.POST("/flowdata/refunds", flowDataRefunds)
 	server.POST("/flowdata/export", flowDataExport)
 
+	server.POST("/getUserList", getUserList)
+	server.POST("/getOneUser", getOneUser)
+	server.POST("/optUser", optUser)
+	server.POST("/getMatchReview", getMatchReview)
+	server.POST("/getMatchReviewByName", getMatchReviewByName)
+	server.POST("/getUserOptLog", getUserOptLog)
+	server.POST("/clearRealInfo", clearRealInfo)
+
 	server.GET("/download/matchIcon/*action", downloadMatchIcon)
 	server.POST("/upload/matchIcon", uploadMatchIcon)
 	server.GET("/getGameVersion", getGameVersion)
@@ -86,8 +94,8 @@ type matchReportReq struct {
 	MatchID string `json:"MatchID" binding:"required"` // 赛事id号
 	Start   string `json:"Start" binding:"required"`   // 查询开始时间,格式"2006-01-02"
 	End     string `json:"End" binding:"required"`     // 查询结束时间
-	Page    int    `json:"Page" binding:"required"`    // 查询开始时间
-	Count   int    `json:"Count" binding:"required"`   // 查询结束时间
+	Page    int    `json:"Page" binding:"required"`
+	Count   int    `json:"Count" binding:"required"`
 }
 
 type matchListReq struct {
@@ -101,4 +109,44 @@ type matchListReq struct {
 
 type matchDetailReq struct {
 	MatchID string `json:"MatchID" binding:"required"` // 赛事id号
+}
+
+type getUserListReq struct {
+	Page  int `json:"Page" binding:"required"`
+	Count int `json:"Count" binding:"required"`
+}
+
+type getOneUserReq struct {
+	AccountID int `json:"AccountID" binding:"required"`
+}
+
+type optUserReq struct {
+	UID int `json:"UID" binding:"required"`
+	Opt int `json:"Opt" binding:"required"`
+}
+
+type getMatchReviewReq struct {
+	AccountID int `json:"AccountID" binding:"required"`
+	Page      int `json:"Page" binding:"required"`
+	Count     int `json:"Count" binding:"required"`
+}
+
+type getMatchReviewByNameReq struct {
+	AccountID int    `json:"AccountID" binding:"required"`
+	MatchType string `json:"MatchType" binding:"required"`
+	Page      int    `json:"Page" binding:"required"`
+	Count     int    `json:"Count" binding:"required"`
+}
+
+type getUserOptLogReq struct {
+	AccountID int    `json:"AccountID" binding:"required"`
+	Start     string `json:"Start"` // 查询开始时间,格式"2006-01-02""
+	End       string `json:"End"`   // 查询结束时间
+	Page      int    `json:"Page" binding:"required"`
+	Count     int    `json:"Count" binding:"required"`
+}
+
+type clearInfoReq struct {
+	UID int `json:"UID" binding:"required"`
+	Opt int `json:"Opt" binding:"required"`
 }

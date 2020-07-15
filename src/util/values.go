@@ -103,6 +103,9 @@ type UserData struct {
 	SetNickNameCount  int
 	TakenFee          float64
 	FirstLogin        bool
+	BankCard          *BankCard
+	ChargeAmount      int64 // 充值金额
+	LoginTime         int64 `bson:"logintime"`
 }
 
 type BankCard struct {
@@ -112,6 +115,35 @@ type BankCard struct {
 	Province    string
 	City        string
 	OpeningBank string
+}
+
+// UserMatchReview 用户后台的赛事列表总览
+type UserMatchReview struct {
+	UID            int
+	AccountID      int
+	MatchID        string
+	MatchType      string
+	MatchName      string
+	MatchTotal     int
+	MatchWins      int
+	MatchFails     int
+	AverageBatting int
+	Coupon         int64
+	AwardMoney     int64
+	PersonalProfit int64
+}
+
+// ItemLog 物品日志
+type ItemLog struct {
+	UID        int    `bson:"uid"`
+	Item       string `bson:"item"`       // 物品名称
+	Amount     int64  `bson:"amount"`     // 物品数量
+	Way        string `bson:"way"`        // 增加物品的方式
+	CreateTime string `bson:"createtime"` // 创建时间
+	Before     int64  `bson:"before"`     // 操作前余额
+	After      int64  `bson:"after"`      // 操作后余额
+	OptType    int    `bson:"opttype"`    // 操作类型
+	MatchID    string `bson:"matchid"`    // 赛事id
 }
 
 type OfflinePayment struct {

@@ -314,7 +314,7 @@ func GetMatchDetail(matchID string) map[string]interface{} {
 func readOneByQuery(rt interface{}, query bson.M, coll string) {
 	se := mongoDB.Ref()
 	defer mongoDB.UnRef(se)
-	if err := se.DB(GDB).C(coll).Find(query).One(rt); err != nil {
+	if err := se.DB(GDB).C(coll).Find(query).One(rt); err != nil && err != mgo.ErrNotFound {
 		log.Error(err.Error())
 	}
 }
@@ -530,6 +530,186 @@ func GetGameVersion() (version string, url string) {
 		return
 	}
 	return
+}
+
+// GetUserList 获取用户列表
+func GetUserList(page, count int) ([]util.UserData, int) {
+	s := mongoDB.Ref()
+	defer mongoDB.UnRef(s)
+	data := []util.UserData{}
+	total, _ := s.DB(GDB).C("users").Find(bson.M{}).Count()
+	iter := s.DB(GDB).C("users").Find(bson.M{}).Sort("-createdat").Skip((page - 1) * count).Limit(count).Iter()
+	// if err != nil && err != mgo.ErrNotFound {
+	// 	log.Error("err:%v", err)
+	// 	return nil, total
+	// }
+	one := util.UserData{}
+	for iter.Next(&one) {
+		bank := ReadBankCardByID(one.UserID)
+		one.BankCard = bank
+		// 查询充值
+		fee := map[string]interface{}{}
+		s.DB("czddz").C("wxpayresult").Pipe([]bson.M{
+			{"$match": bson.M{"success": true, "userid": one.AccountID + 1e8}},
+			{"$project": bson.M{
+				"TotalFee": "$totalfee",
+			}},
+			{"$group": bson.M{
+				"_id": "$userid",
+				"all": bson.M{"$sum": "$TotalFee"},
+			}},
+		}).One(&fee)
+		var chargeAmount int64
+		if feeAdd, ok := fee["all"].(int); ok {
+			chargeAmount = int64(feeAdd)
+		}
+		one.ChargeAmount = chargeAmount
+		data = append(data, one)
+		one = util.UserData{}
+	}
+	return data, total
+}
+
+// GetOneUser 获取单个用户列表
+func GetOneUser(accountID int) (util.UserData, error) {
+	s := mongoDB.Ref()
+	defer mongoDB.UnRef(s)
+	data := util.UserData{}
+	err := s.DB(GDB).C("users").Find(bson.M{"accountid": accountID}).One(&data)
+	if err != nil && err != mgo.ErrNotFound {
+		log.Error("err:%v", err)
+		return data, err
+	}
+	bank := ReadBankCardByID(data.UserID)
+	data.BankCard = bank
+	return data, nil
+}
+
+// GetMatchReview 获取赛事总览
+func GetMatchReview(uid int) ([]map[string]interface{}, []map[string]interface{}, map[string]interface{}) {
+	s := mongoDB.Ref()
+	defer mongoDB.UnRef(s)
+	data := []map[string]interface{}{}
+	matchs := []map[string]interface{}{}
+	ids := []map[string]interface{}{}
+	s.DB(GDB).C("matchreview").Pipe([]bson.M{
+		{"$match": bson.M{"accountid": uid}},
+		{"$group": bson.M{"_id": "$matchtype"}},
+	}).All(&matchs)
+	log.Debug("matchs:%+v", matchs)
+	s.DB(GDB).C("matchreview").Pipe([]bson.M{
+		{"$match": bson.M{"accountid": uid}},
+		{"$group": bson.M{"_id": "$matchid"}},
+	}).All(&ids)
+	log.Debug("ids:%+v", ids)
+	for _, matchType := range matchs {
+		for _, id := range ids {
+			// one := util.UserMatchReview{}
+			one := map[string]interface{}{}
+			// s.DB(GDB).C("matchreview").Find(bson.M{"accountid": uid, "matchtype": matchType["_id"], "matchid": id["_id"]}).One(&one)
+			err := s.DB(GDB).C("matchreview").Pipe([]bson.M{
+				{"$match": bson.M{"accountid": uid, "matchtype": matchType["_id"], "matchid": id["_id"]}},
+				// {"$group": bson.M{"_id": "$matchtype", "matchtype": "$matchtype", "matchid": "$matchid", "matchtotal": "$matchtotal",
+				// 	"matchwins": "$matchwins", "matchfails": "$matchfails", "coupon": "$coupon", "awardmoney": "$awardmoney", "personalprofit": "$personalprofit"}},
+				{"$group": bson.M{"_id": "$matchtype", "matchtype": bson.M{"$first": "$matchtype"}, "matchid": bson.M{"$first": "$matchid"},
+					"matchtotal": bson.M{"$sum": "$matchtotal"}, "matchwins": bson.M{"$sum": "$matchwins"}, "matchfails": bson.M{"$sum": "$matchfails"},
+					"coupon": bson.M{"$sum": "$coupon"}, "awardmoney": bson.M{"$sum": "$awardmoney"}, "personalprofit": bson.M{"$sum": "$personalprofit"}}},
+			}).One(&one)
+			if err != nil && err != mgo.ErrNotFound {
+				log.Error("err:%v", err)
+				continue
+			}
+			if len(one) > 0 {
+				data = append(data, one)
+			}
+		}
+	}
+	all := map[string]interface{}{}
+	if err := s.DB(GDB).C("matchreview").Pipe([]bson.M{
+		{"$match": bson.M{"accountid": uid}},
+		{"$group": bson.M{"_id": "$accountid",
+			// "matchtype": bson.M{"$first": "$matchtype"}, "matchid": bson.M{"$first": "$matchid"},
+			"matchtotal": bson.M{"$sum": "$matchtotal"}, "matchwins": bson.M{"$sum": "$matchwins"}, "matchfails": bson.M{"$sum": "$matchfails"},
+			"coupon": bson.M{"$sum": "$coupon"}, "awardmoney": bson.M{"$sum": "$awardmoney"}, "personalprofit": bson.M{"$sum": "$personalprofit"},
+			"winrate": bson.M{"$avg": "$averagebatting"},
+		}},
+	}).One(&all); err != nil && err != mgo.ErrNotFound {
+		log.Error("err:%v", err)
+	}
+	log.Debug("all:%+v", all)
+
+	return matchs, data, all
+}
+
+// GetMatchReviewByName 根据赛事名称获取赛事总览
+func GetMatchReviewByName(uid int, matchType string) (map[string]interface{}, []map[string]interface{}) {
+	s := mongoDB.Ref()
+	defer mongoDB.UnRef(s)
+	all := map[string]interface{}{}
+	if err := s.DB(GDB).C("matchreview").Pipe([]bson.M{
+		{"$match": bson.M{"accountid": uid, "matchtype": matchType}},
+		{"$group": bson.M{"_id": "$accountid",
+			// "matchtype": bson.M{"$first": "$matchtype"}, "matchid": bson.M{"$first": "$matchid"},
+			"matchtotal": bson.M{"$sum": "$matchtotal"}, "matchwins": bson.M{"$sum": "$matchwins"}, "matchfails": bson.M{"$sum": "$matchfails"},
+			"coupon": bson.M{"$sum": "$coupon"}, "awardmoney": bson.M{"$sum": "$awardmoney"}, "personalprofit": bson.M{"$sum": "$personalprofit"},
+			"winrate": bson.M{"$avg": "$averagebatting"},
+		}},
+	}).One(&all); err != nil && err != mgo.ErrNotFound {
+		log.Error("err:%v", err)
+	}
+	log.Debug("all:%+v", all)
+
+	matchs := []map[string]interface{}{}
+	s.DB(GDB).C("matchreview").Pipe([]bson.M{
+		{"$match": bson.M{"accountid": uid, "matchtype": matchType}},
+		{"$group": bson.M{"_id": "$matchname"}},
+	}).All(&matchs)
+	log.Debug("matchs:%+v", matchs)
+
+	ids := []map[string]interface{}{}
+	s.DB(GDB).C("matchreview").Pipe([]bson.M{
+		{"$match": bson.M{"accountid": uid}},
+		{"$group": bson.M{"_id": "$matchid"}},
+	}).All(&ids)
+	log.Debug("ids:%+v", ids)
+
+	list := []map[string]interface{}{}
+
+	for _, matchName := range matchs {
+		for _, id := range ids {
+			one := map[string]interface{}{}
+			if err := s.DB(GDB).C("matchreview").Pipe([]bson.M{
+				{"$match": bson.M{"accountid": uid, "matchid": id["_id"], "matchtype": matchType, "matchname": matchName["_id"]}},
+				{"$group": bson.M{"_id": "$accountid",
+					"matchname":  bson.M{"$first": "$matchname"},
+					"matchtotal": bson.M{"$sum": "$matchtotal"}, "matchwins": bson.M{"$sum": "$matchwins"}, "matchfails": bson.M{"$sum": "$matchfails"},
+					"coupon": bson.M{"$sum": "$coupon"}, "awardmoney": bson.M{"$sum": "$awardmoney"}, "personalprofit": bson.M{"$sum": "$personalprofit"},
+					"winrate": bson.M{"$avg": "$averagebatting"},
+				}},
+			}).One(&one); err != nil && err != mgo.ErrNotFound {
+				log.Error("err:%v", err)
+			}
+			if len(one) > 0 {
+				list = append(list, one)
+			}
+		}
+	}
+	log.Debug("list:%+v", list)
+	return all, list
+}
+
+// GetUserOptLog 获取玩家操作日志
+func GetUserOptLog(accountID, page, count int, start, end int64) ([]util.ItemLog, int) {
+	s := mongoDB.Ref()
+	defer mongoDB.UnRef(s)
+	ret := []util.ItemLog{}
+	total, _ := s.DB(GDB).C("itemlog").Find(bson.M{"UID": accountID, "createtime": bson.M{"$gt": start, "$lt": end}}).Count()
+	err := s.DB(GDB).C("itemlog").Find(bson.M{"UID": accountID, "createtime": bson.M{"$gt": start, "$lt": end}}).
+		Sort("-createtime").Skip((page - 1) * count).All(&ret)
+	if err != nil && err != mgo.ErrNotFound {
+		log.Error("err:%v", err)
+	}
+	return ret, total
 }
 
 func ReadOfflinePaymentList(req *param.OfflinePaymentListReq) *[]util.OfflinePaymentCol {
