@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/szxby/tools/log"
+	"gopkg.in/mgo.v2"
 
 	"github.com/gin-gonic/gin"
 )
@@ -763,7 +764,7 @@ func getUserList(c *gin.Context) {
 func getOneUser(c *gin.Context) {
 	code := util.OK
 	desc := "OK"
-	user := util.UserData{}
+	user := &util.UserData{}
 	defer func() {
 		c.JSON(http.StatusOK, gin.H{
 			"code": code,
@@ -777,7 +778,15 @@ func getOneUser(c *gin.Context) {
 		desc = err.Error()
 		return
 	}
-	one, err := db.GetOneUser(data.AccountID)
+	if data.AccountID <= 0 && data.Nickname == "" {
+		code = util.Retry
+		desc = "搜索参数不能为空！"
+		return
+	}
+	one, err := db.GetOneUser(data.AccountID, data.Nickname)
+	if err == mgo.ErrNotFound {
+		return
+	}
 	if err != nil {
 		code = util.Retry
 		desc = "查询出错请重试!"
@@ -935,7 +944,7 @@ func getUserOptLog(c *gin.Context) {
 		desc = "单次查询时间不能超过一个月！"
 		return
 	}
-	list, total = db.GetUserOptLog(data.AccountID, data.Page, data.Count, begin.Unix(), over.Unix())
+	list, total = db.GetUserOptLog(data.AccountID, data.Page, data.Count, data.OptType, begin.Unix(), over.Unix())
 }
 
 func clearRealInfo(c *gin.Context) {
