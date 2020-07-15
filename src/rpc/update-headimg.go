@@ -16,11 +16,12 @@ type UpdateHeadImgReq struct {
 }
 
 func RpcUpdateHeadImg(aid int, headimg string) {
-	log.Debug("【rpc更新用户点券】")
+	log.Debug("【rpc更新用户头像】")
 	j := new(UpdateHeadImgReq)
 	j.Secret = secret
 	j.Accountid = aid
 	j.HeadImg = headimg
+	log.Debug("*************%+v", *j)
 	b, err := json.Marshal(j)
 	if err != nil {
 		log.Error(err.Error())

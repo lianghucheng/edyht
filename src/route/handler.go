@@ -1072,8 +1072,9 @@ func uploadPlayerIcon(c *gin.Context) {
 		})
 	}()
 	file, err := c.FormFile("image")
-	accountid := c.Param("accountid")
+	accountid := c.Request.FormValue("accountid")
 	aid, _ := strconv.Atoi(accountid)
+	log.Debug("!!!!!!!!%v", accountid)
 	if err != nil {
 		log.Error("get file fail %v", err)
 		code = util.Retry
