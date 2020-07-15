@@ -13,6 +13,7 @@ const (
 // 文件目录
 const (
 	MatchIconDir = string(os.PathSeparator) + "upload" + string(os.PathSeparator) + "matchIcon" + string(os.PathSeparator)
+	PlayerIconDir = string(os.PathSeparator) + "upload" + string(os.PathSeparator) + "playerIcon" + string(os.PathSeparator)
 )
 
 // 赛事状态
