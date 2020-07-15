@@ -740,7 +740,6 @@ func getGameVersion(c *gin.Context) {
 	version, url = db.GetGameVersion()
 }
 
-<<<<<<< HEAD
 func getUserList(c *gin.Context) {
 	code := util.OK
 	desc := "OK"
@@ -969,7 +968,8 @@ func clearRealInfo(c *gin.Context) {
 		desc = err.Error()
 		return
 	}
-=======
+}
+
 func offlinePaymentList(c *gin.Context) {
 	code := util.Success
 	desc := util.ErrMsg[util.Success]

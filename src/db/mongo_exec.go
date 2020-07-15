@@ -532,7 +532,6 @@ func GetGameVersion() (version string, url string) {
 	return
 }
 
-<<<<<<< HEAD
 // GetUserList 获取用户列表
 func GetUserList(page, count int) ([]util.UserData, int) {
 	s := mongoDB.Ref()
@@ -711,6 +710,7 @@ func GetUserOptLog(accountID, page, count int, start, end int64) ([]util.ItemLog
 		log.Error("err:%v", err)
 	}
 	return ret, total
+}
 
 func ReadOfflinePaymentList(req *param.OfflinePaymentListReq) *[]util.OfflinePaymentCol {
 	op := new([]util.OfflinePaymentCol)
