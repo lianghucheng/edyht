@@ -119,7 +119,8 @@ type getUserListReq struct {
 }
 
 type getOneUserReq struct {
-	AccountID int `json:"AccountID" binding:"required"`
+	AccountID int    `json:"AccountID"`
+	Nickname  string `json:"Nickname"`
 }
 
 type optUserReq struct {
@@ -146,6 +147,7 @@ type getUserOptLogReq struct {
 	End       string `json:"End"`   // 查询结束时间
 	Page      int    `json:"Page" binding:"required"`
 	Count     int    `json:"Count" binding:"required"`
+	OptType   int    `json:"OptType"`
 }
 
 type clearInfoReq struct {

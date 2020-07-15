@@ -571,14 +571,20 @@ func GetUserList(page, count int) ([]util.UserData, int) {
 }
 
 // GetOneUser 获取单个用户列表
-func GetOneUser(accountID int) (util.UserData, error) {
+func GetOneUser(accountID int, nickname string) (*util.UserData, error) {
 	s := mongoDB.Ref()
 	defer mongoDB.UnRef(s)
-	data := util.UserData{}
-	err := s.DB(GDB).C("users").Find(bson.M{"accountid": accountID}).One(&data)
-	if err != nil && err != mgo.ErrNotFound {
+	data := &util.UserData{}
+	var err error
+	if accountID > 0 {
+		err = s.DB(GDB).C("users").Find(bson.M{"accountid": accountID}).One(data)
+	} else if len(nickname) > 0 {
+		err = s.DB(GDB).C("users").Find(bson.M{"nickname": nickname}).One(data)
+	}
+	// err := s.DB(GDB).C("users").Find(bson.M{"$or": []interface{}{bson.M{"accountid": accountID}, bson.M{"nickname": nickname}}}).One(data)
+	if err != nil {
 		log.Error("err:%v", err)
-		return data, err
+		return nil, err
 	}
 	bank := ReadBankCardByID(data.UserID)
 	data.BankCard = bank
@@ -699,13 +705,21 @@ func GetMatchReviewByName(uid int, matchType string) (map[string]interface{}, []
 }
 
 // GetUserOptLog 获取玩家操作日志
-func GetUserOptLog(accountID, page, count int, start, end int64) ([]util.ItemLog, int) {
+func GetUserOptLog(accountID, page, count, optType int, start, end int64) ([]util.ItemLog, int) {
 	s := mongoDB.Ref()
 	defer mongoDB.UnRef(s)
 	ret := []util.ItemLog{}
-	total, _ := s.DB(GDB).C("itemlog").Find(bson.M{"UID": accountID, "createtime": bson.M{"$gt": start, "$lt": end}}).Count()
-	err := s.DB(GDB).C("itemlog").Find(bson.M{"UID": accountID, "createtime": bson.M{"$gt": start, "$lt": end}}).
-		Sort("-createtime").Skip((page - 1) * count).All(&ret)
+	total := 0
+	var err error
+	if optType > 0 {
+		total, _ = s.DB(GDB).C("itemlog").Find(bson.M{"uid": accountID, "opttype": optType, "createtime": bson.M{"$gt": start, "$lt": end}}).Count()
+		err = s.DB(GDB).C("itemlog").Find(bson.M{"uid": accountID, "opttype": optType, "createtime": bson.M{"$gt": start, "$lt": end}}).
+			Sort("-createtime").Skip((page - 1) * count).All(&ret)
+	} else {
+		total, _ = s.DB(GDB).C("itemlog").Find(bson.M{"uid": accountID, "createtime": bson.M{"$gt": start, "$lt": end}}).Count()
+		err = s.DB(GDB).C("itemlog").Find(bson.M{"uid": accountID, "createtime": bson.M{"$gt": start, "$lt": end}}).
+			Sort("-createtime").Skip((page - 1) * count).All(&ret)
+	}
 	if err != nil && err != mgo.ErrNotFound {
 		log.Error("err:%v", err)
 	}
