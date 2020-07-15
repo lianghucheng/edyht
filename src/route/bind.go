@@ -32,6 +32,8 @@ func bind(server *gin.Engine) {
 
 	server.GET("/download/matchIcon/*action", downloadMatchIcon)
 	server.POST("/upload/matchIcon", uploadMatchIcon)
+	server.GET("/download/playerIcon/*action", downloadPlayerIcon)
+	server.POST("/upload/playerIcon", uploadPlayerIcon)
 	server.GET("/getGameVersion", getGameVersion)
 
 	server.POST("/offlinepayment/list", offlinePaymentList)

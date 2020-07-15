@@ -1050,3 +1050,95 @@ func offlinePaymentAdd(c *gin.Context) {
 	}
 	db.SaveOfflinePayment(offlinePaymentCol)
 }
+
+func uploadPlayerIcon(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	var resp string
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+			"url":  resp,
+		})
+	}()
+	file, err := c.FormFile("image")
+	accountid := c.Param("accountid")
+	aid, _ := strconv.Atoi(accountid)
+	if err != nil {
+		log.Error("get file fail %v", err)
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	fileName := util.RandomString(5) + strconv.FormatInt(time.Now().Unix(), 10) + ".png"
+	util.CheckDir(util.PlayerIconDir)
+	local, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Error("get local fail %v", err)
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	if err := c.SaveUploadedFile(file, local+util.PlayerIconDir+fileName); err != nil {
+		log.Error("save file fail %v", err)
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	resp = config.GetConfig().LocalIP + config.GetConfig().Port + "/download/playerIcon/" + fileName
+	rpc.RpcUpdateHeadImg(aid, resp)
+}
+
+func downloadPlayerIcon(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	// var resp string
+	// defer func() {
+	// 	c.JSON(http.StatusOK, gin.H{
+	// 		"code": code,
+	// 		"desc": desc,
+	// 	})
+	// }()
+	path := c.Request.URL.Path
+	// log.Debug("check:%v", path)
+	index := strings.LastIndex(path, "/")
+	if index == -1 || index >= len(path)-1 {
+		code = util.Retry
+		desc = "请求url错误！"
+
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+		return
+	}
+	reqImage := path[index+1:]
+	local, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Error("get local fail %v", err)
+		code = util.Retry
+		desc = err.Error()
+
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+		return
+	}
+	filePath := local + util.PlayerIconDir + reqImage
+	_, err = os.Stat(filePath)
+	if err != nil {
+		log.Error("image file err:%v", err)
+		code = util.Retry
+		desc = "请求url错误！"
+
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+		return
+	}
+	// ok
+	http.ServeFile(c.Writer, c.Request, filePath)
+}

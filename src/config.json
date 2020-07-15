@@ -10,7 +10,7 @@
         "GameMongo":"mongodb://127.0.0.1:27017",
         "GameServer":"http://127.0.0.1:9084",
         "LocalIP":"http://192.168.1.172",
-        "PassURL":["/getGameVersion","/download/matchIcon"],
+        "PassURL":["/getGameVersion","/download/matchIcon", "/download/playerIcon", "/upload/playerIcon"],
         "ExportURL": ["/flowdata/refunds", "/flowdata/payments"],
         "BackDB":"backstage",
         "GameDB":"ddz-match"
@@ -25,7 +25,7 @@
         "GameMongo":"mongodb://mongouser:eiTV^45i@10.66.129.0:27017",
         "GameServer":"http://123.207.12.67:9084",
         "LocalIP":"http://123.207.12.67",
-        "PassURL":["/getGameVersion","/download/matchIcon"],
+        "PassURL":["/getGameVersion","/download/matchIcon", "/download/playerIcon", "/upload/playerIcon"],
         "ExportURL": ["/flowdata/refunds", "/flowdata/payments"],
         "BackDB":"backstage",
         "GameDB":"edy"
