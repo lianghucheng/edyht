@@ -12,7 +12,7 @@ const (
 
 // 文件目录
 const (
-	MatchIconDir = string(os.PathSeparator) + "upload" + string(os.PathSeparator) + "matchIcon" + string(os.PathSeparator)
+	MatchIconDir  = string(os.PathSeparator) + "upload" + string(os.PathSeparator) + "matchIcon" + string(os.PathSeparator)
 	PlayerIconDir = string(os.PathSeparator) + "upload" + string(os.PathSeparator) + "playerIcon" + string(os.PathSeparator)
 )
 
@@ -140,7 +140,7 @@ type ItemLog struct {
 	Item       string `bson:"item"`       // 物品名称
 	Amount     int64  `bson:"amount"`     // 物品数量
 	Way        string `bson:"way"`        // 增加物品的方式
-	CreateTime string `bson:"createtime"` // 创建时间
+	CreateTime int64  `bson:"createtime"` // 创建时间
 	Before     int64  `bson:"before"`     // 操作前余额
 	After      int64  `bson:"after"`      // 操作后余额
 	OptType    int    `bson:"opttype"`    // 操作类型
