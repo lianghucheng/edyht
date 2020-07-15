@@ -405,14 +405,9 @@ func flowDataHistory(c *gin.Context) {
 			"resp": resp,
 		})
 	}()
-	data := c.Request.FormValue("data")
-	log.Debug("【流水数据查询】%v", data)
 	flowDataReq := new(param.FlowDataHistoryReq)
-	if err := json.Unmarshal([]byte(data), flowDataReq); err != nil {
-		log.Error(err.Error())
-		code = util.FormatFail
-		desc = util.ErrMsg[util.FormatFail]
-		resp = nil
+	code, desc = parseJsonParam(c.Request, flowDataReq)
+	if code != util.Success {
 		return
 	}
 
@@ -602,12 +597,9 @@ func flowDataExport(c *gin.Context) {
 			"resp": resp,
 		})
 	}()
-	data := c.Request.FormValue("data")
 	feReq := new(param.FlowDataExportReq)
-	if err := json.Unmarshal([]byte(data), feReq); err != nil {
-		log.Error(err.Error())
-		code = util.FormatFail
-		desc = util.ErrMsg[code]
+	code, desc = parseJsonParam(c.Request, feReq)
+	if code != util.Success {
 		return
 	}
 	fds := db.ReadExports(feReq)
