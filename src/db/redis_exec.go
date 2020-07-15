@@ -131,5 +131,11 @@ func RedisGetTokenUsrn(token string) string {
 		return ""
 	}
 
-	return string(data.([]uint8))
+	res, ok := data.([]uint8)
+	if !ok {
+		log.Error("data not []uint8")
+		return ""
+	}
+
+	return string(res)
 }
