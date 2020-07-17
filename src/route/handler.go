@@ -638,6 +638,7 @@ func flowDataExport(c *gin.Context) {
 				PhoneNum:     ud.Username,
 				Realname:     ud.RealName,
 				BankCardNo:   ud.BankCardNo,
+				BankName: 	  bc.BankName,
 				OpenBankName: bc.OpeningBank,
 				ChangeAmount: v.ChangeAmount,
 			}
