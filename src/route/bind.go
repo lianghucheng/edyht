@@ -65,7 +65,7 @@ type addManagerReq struct {
 	Recommend     string   `json:"Recommend" binding:"required"`   // 赛事推荐介绍(在赛事列表界面倒计时左侧的文字信息)
 	TotalMatch    int      `json:"TotalMatch" binding:"required"`  // 后台配置的该种比赛可创建的比赛次数
 	Eliminate     []int    `json:"Eliminate"`                      // 每轮淘汰人数
-	EnterFee      int64    `json:"EnterFee" binding:"required"`    // 报名费
+	EnterFee      *int64   `json:"EnterFee" binding:"required"`    // 报名费
 	ShelfTime     int64    `json:"ShelfTime" binding:"required"`   // 上架时间
 	Sort          int      `json:"Sort" binding:"required"`        // 赛事排序
 	AwardDesc     string   `json:"AwardDesc"`                      // 奖励描述
