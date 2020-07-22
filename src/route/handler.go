@@ -1071,15 +1071,18 @@ func offlinePaymentAdd(c *gin.Context) {
 	offlinePaymentCol.Nickname = ud.Nickname
 	offlinePaymentCol.Operator = admin
 	if opar.ActionType == 0 {
-		rpc.RpcUpdateCoupon(opar.Accountid, int(opar.ChangeFee))
 		offlinePaymentCol.BeforFee = float64(ud.Coupon)
 		offlinePaymentCol.AfterFee = float64(ud.Coupon) + opar.ChangeFee
 	} else if opar.ActionType == 1 {
-		rpc.AddAward(opar.Accountid, opar.ChangeFee)
 		offlinePaymentCol.BeforFee = ud.Fee
 		offlinePaymentCol.AfterFee = ud.Fee + opar.ChangeFee
 	}
 	db.SaveOfflinePayment(offlinePaymentCol)
+	if opar.ActionType == 0 {
+		rpc.RpcUpdateCoupon(opar.Accountid, int(opar.ChangeFee))
+	} else if opar.ActionType == 1 {
+		rpc.AddAward(opar.Accountid, opar.ChangeFee)
+	}
 }
 
 func uploadPlayerIcon(c *gin.Context) {
