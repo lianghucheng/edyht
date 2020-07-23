@@ -288,7 +288,7 @@ func matchList(c *gin.Context) {
 	code := util.OK
 	desc := "OK"
 	total := 0
-	var resp interface{}
+	resp := []map[string]interface{}{}
 	defer func() {
 		c.JSON(http.StatusOK, gin.H{
 			"code":  code,
@@ -305,7 +305,11 @@ func matchList(c *gin.Context) {
 	}
 	// 按照赛事id精准查询
 	if len(data.MatchID) > 0 {
-		resp = db.GetMatch(data.MatchID)
+		tmp := db.GetMatch(data.MatchID)
+		if tmp != nil {
+			resp = append(resp, tmp)
+			total = 1
+		}
 		return
 	}
 	// 按照matchtype和时间查询
@@ -638,7 +642,7 @@ func flowDataExport(c *gin.Context) {
 				PhoneNum:     ud.Username,
 				Realname:     ud.RealName,
 				BankCardNo:   ud.BankCardNo,
-				BankName: 	  bc.BankName,
+				BankName:     bc.BankName,
 				OpenBankName: bc.OpeningBank,
 				ChangeAmount: v.ChangeAmount,
 			}
@@ -786,7 +790,7 @@ func getUserList(c *gin.Context) {
 func getOneUser(c *gin.Context) {
 	code := util.OK
 	desc := "OK"
-	user := &util.UserData{}
+	user := []*util.UserData{}
 	defer func() {
 		c.JSON(http.StatusOK, gin.H{
 			"code": code,
@@ -814,7 +818,7 @@ func getOneUser(c *gin.Context) {
 		desc = "查询出错请重试!"
 		return
 	}
-	user = one
+	user = append(user, one)
 }
 
 func optUser(c *gin.Context) {

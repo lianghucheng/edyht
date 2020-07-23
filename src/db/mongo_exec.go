@@ -4,7 +4,6 @@ import (
 	"bs/param"
 	"bs/param/base"
 	"bs/util"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -165,7 +164,7 @@ func GetMatchReport(matchID string, start, end int64) []map[string]interface{} {
 }
 
 // GetMatch 获取单场赛事
-func GetMatch(matchID string) []byte {
+func GetMatch(matchID string) map[string]interface{} {
 	s := gameDB.Ref()
 	defer gameDB.UnRef(s)
 
@@ -195,12 +194,7 @@ func GetMatch(matchID string) []byte {
 		log.Error("get match fail %v", err)
 		return nil
 	}
-	ret, err := json.Marshal(one)
-	if err != nil {
-		log.Error("get match fail %v", err)
-		return nil
-	}
-	return ret
+	return one
 }
 
 // GetMatchList 获取某个时间段的赛事
@@ -650,8 +644,16 @@ func GetMatchReview(uid int) ([]map[string]interface{}, []map[string]interface{}
 				log.Error("err:%v", err)
 				continue
 			}
-			if len(one) > 0 {
-				data = append(data, one)
+			// 由于游戏服采集算法有误,修改读取方式
+			award, ok := one["awardmoney"].(int64)
+			if ok {
+				one["awardmoney"] = util.FormatFloat(float64(award)/100, 2)
+				if len(one) > 0 {
+					data = append(data, one)
+				}
+				if coupon, ok := one["coupon"].(int64); ok {
+					one["personalprofit"] = util.FormatFloat(float64(award-coupon*100)/100, 2)
+				}
 			}
 		}
 	}
@@ -668,6 +670,15 @@ func GetMatchReview(uid int) ([]map[string]interface{}, []map[string]interface{}
 		log.Error("err:%v", err)
 	}
 	log.Debug("all:%+v", all)
+
+	// 由于游戏服采集算法有误,修改读取方式
+	award, ok := all["awardmoney"].(int64)
+	if ok {
+		all["awardmoney"] = util.FormatFloat(float64(award)/100, 2)
+		if coupon, ok := all["coupon"].(int64); ok {
+			all["personalprofit"] = util.FormatFloat(float64(award-coupon*100)/100, 2)
+		}
+	}
 
 	return matchs, data, all
 }
@@ -687,6 +698,14 @@ func GetMatchReviewByName(uid int, matchType string) (map[string]interface{}, []
 		}},
 	}).One(&all); err != nil && err != mgo.ErrNotFound {
 		log.Error("err:%v", err)
+	}
+	// 由于游戏服采集算法有误,修改读取方式
+	award, ok := all["awardmoney"].(int64)
+	if ok {
+		all["awardmoney"] = util.FormatFloat(float64(award)/100, 2)
+		if coupon, ok := all["coupon"].(int64); ok {
+			all["personalprofit"] = util.FormatFloat(float64(award-coupon*100)/100, 2)
+		}
 	}
 	log.Debug("all:%+v", all)
 
@@ -719,6 +738,14 @@ func GetMatchReviewByName(uid int, matchType string) (map[string]interface{}, []
 				}},
 			}).One(&one); err != nil && err != mgo.ErrNotFound {
 				log.Error("err:%v", err)
+			}
+			// 由于游戏服采集算法有误,修改读取方式
+			award, ok := one["awardmoney"].(int64)
+			if ok {
+				one["awardmoney"] = util.FormatFloat(float64(award)/100, 2)
+				if coupon, ok := one["coupon"].(int64); ok {
+					one["personalprofit"] = util.FormatFloat(float64(award-coupon*100)/100, 2)
+				}
 			}
 			if len(one) > 0 {
 				list = append(list, one)
