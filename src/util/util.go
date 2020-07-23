@@ -3,6 +3,7 @@ package util
 import (
 	"crypto/sha256"
 	"fmt"
+	"math"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -40,9 +41,9 @@ func CheckDir(dir string) {
 		log.Error("get local fail %v", err)
 		return
 	}
-	_, err = os.Stat(local + MatchIconDir)
+	_, err = os.Stat(local + dir)
 	if os.IsNotExist(err) {
-		if err := os.MkdirAll(local+MatchIconDir, os.ModePerm); err != nil {
+		if err := os.MkdirAll(local+dir, os.ModePerm); err != nil {
 			log.Error("make dir fail %v", err)
 		}
 	}
@@ -62,4 +63,17 @@ func MergeMaps(maps ...map[string]interface{}) map[string]interface{} {
 		}
 	}
 	return ret
+}
+
+// FormatFloat 取小数点后n位非零小数
+func FormatFloat(num float64, decimal int) string {
+	// 默认乘1
+	d := float64(1)
+	if decimal > 0 {
+		// 10的N次方
+		d = math.Pow10(decimal)
+	}
+	// math.trunc作用就是返回浮点数的整数部分
+	// 再除回去，小数点后无效的0也就不存在了
+	return strconv.FormatFloat(math.Trunc(num*d)/d, 'f', -1, 64)
 }

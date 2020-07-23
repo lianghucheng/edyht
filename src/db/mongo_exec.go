@@ -536,6 +536,8 @@ func GetGameVersion() (version string, url string) {
 func GetUserList(page, count int) ([]util.UserData, int) {
 	s := mongoDB.Ref()
 	defer mongoDB.UnRef(s)
+	gs := gameDB.Ref()
+	defer gameDB.UnRef(gs)
 	data := []util.UserData{}
 	total, _ := s.DB(GDB).C("users").Find(bson.M{}).Count()
 	iter := s.DB(GDB).C("users").Find(bson.M{}).Sort("-createdat").Skip((page - 1) * count).Limit(count).Iter()
@@ -549,21 +551,22 @@ func GetUserList(page, count int) ([]util.UserData, int) {
 		one.BankCard = bank
 		// 查询充值
 		fee := map[string]interface{}{}
-		s.DB("czddz").C("wxpayresult").Pipe([]bson.M{
-			{"$match": bson.M{"success": true, "userid": one.AccountID + 1e8}},
+		gs.DB(GDB).C("edyorder").Pipe([]bson.M{
+			{"$match": bson.M{"status": true, "accountid": one.AccountID}},
 			{"$project": bson.M{
-				"TotalFee": "$totalfee",
+				"TotalFee": "$fee",
 			}},
 			{"$group": bson.M{
-				"_id": "$userid",
+				"_id": "$accountid",
 				"all": bson.M{"$sum": "$TotalFee"},
 			}},
 		}).One(&fee)
 		var chargeAmount int64
-		if feeAdd, ok := fee["all"].(int); ok {
+		// log.Debug("fee:%v", reflect.TypeOf(fee["all"]))
+		if feeAdd, ok := fee["all"].(int64); ok {
 			chargeAmount = int64(feeAdd)
 		}
-		one.ChargeAmount = chargeAmount
+		one.ChargeAmount = util.FormatFloat(float64(chargeAmount/100), 2)
 		data = append(data, one)
 		one = util.UserData{}
 	}
@@ -588,6 +591,28 @@ func GetOneUser(accountID int, nickname string) (*util.UserData, error) {
 	}
 	bank := ReadBankCardByID(data.UserID)
 	data.BankCard = bank
+
+	gs := gameDB.Ref()
+	defer gameDB.UnRef(gs)
+	// 查询充值
+	fee := map[string]interface{}{}
+	gs.DB(GDB).C("edyorder").Pipe([]bson.M{
+		{"$match": bson.M{"status": true, "accountid": data.AccountID}},
+		{"$project": bson.M{
+			"TotalFee": "$fee",
+		}},
+		{"$group": bson.M{
+			"_id": "$accountid",
+			"all": bson.M{"$sum": "$TotalFee"},
+		}},
+	}).One(&fee)
+	var chargeAmount int64
+	// log.Debug("fee:%v", reflect.TypeOf(fee["all"]))
+	if feeAdd, ok := fee["all"].(int64); ok {
+		chargeAmount = int64(feeAdd)
+	}
+	data.ChargeAmount = util.FormatFloat(float64(chargeAmount/100), 2)
+
 	return data, nil
 }
 
