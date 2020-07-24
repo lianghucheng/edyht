@@ -115,14 +115,15 @@ func GetMatchReport(matchID string, start, end int64) []map[string]interface{} {
 				// "RecordTime":  fmt.Sprintf("$%v", time.Unix(i, 0).Format("2006-01-02")),
 				"RecordTime":  "$createtime",
 				"SignInCount": bson.M{"$size": "$signinplayers"}, "_id": 0, "matchid": fmt.Sprintf("$%v", matchID),
-				"SignFee":  bson.M{"$multiply": []interface{}{bson.M{"$size": "$signinplayers"}, bson.M{"$divide": []interface{}{"$enterfee", 10}}}},
+				"SignFee":  bson.M{"$multiply": []interface{}{bson.M{"$size": "$signinplayers"}, bson.M{"$divide": []interface{}{"$enterfee", util.CouponRate}}}},
 				"AwardNum": bson.M{"$size": "$award"},
 				"Money":    "$moneyaward",
 				"Coupon":   "$couponaward",
 				"LastMoney": bson.M{"$subtract": []interface{}{bson.M{
 					"$multiply": []interface{}{
-						bson.M{"$size": "$signinplayers"}, bson.M{"$divide": []interface{}{"$enterfee", 10}}}},
-					bson.M{"$add": []interface{}{"$moneyaward", bson.M{"$multiply": []interface{}{"$couponaward", 10}}}}}}}},
+						bson.M{"$size": "$signinplayers"}, bson.M{"$divide": []interface{}{"$enterfee", util.CouponRate}}}},
+					// bson.M{"$add": []interface{}{"$moneyaward", bson.M{"$multiply": []interface{}{"$couponaward", util.CouponRate}}}}}}}},
+					"$moneyaward"}}}},
 			{"$group": bson.M{
 				"_id": "$matchid", "RecordTime": bson.M{"$first": "$RecordTime"}, "allMoney": bson.M{"$sum": "$Money"},
 				"allCoupon": bson.M{"$sum": "$Coupon"}, "allSign": bson.M{"$sum": "$SignInCount"},
@@ -568,16 +569,22 @@ func GetUserList(page, count int) ([]util.UserData, int) {
 }
 
 // GetOneUser 获取单个用户列表
-func GetOneUser(accountID int, nickname string) (*util.UserData, error) {
-	s := mongoDB.Ref()
-	defer mongoDB.UnRef(s)
+func GetOneUser(accountID int, nickname, phone string) (*util.UserData, error) {
+	gs := gameDB.Ref()
+	defer gameDB.UnRef(gs)
 	data := &util.UserData{}
 	var err error
+	selector := bson.M{}
 	if accountID > 0 {
-		err = s.DB(GDB).C("users").Find(bson.M{"accountid": accountID}).One(data)
+		// err = gs.DB(GDB).C("users").Find(bson.M{"accountid": accountID}).One(data)
+		selector["accountid"] = accountID
 	} else if len(nickname) > 0 {
-		err = s.DB(GDB).C("users").Find(bson.M{"nickname": nickname}).One(data)
+		// err = gs.DB(GDB).C("users").Find(bson.M{"nickname": nickname}).One(data)
+		selector["nickname"] = nickname
+	} else if len(phone) > 0 {
+		selector["username"] = phone
 	}
+	err = gs.DB(GDB).C("users").Find(selector).One(data)
 	// err := s.DB(GDB).C("users").Find(bson.M{"$or": []interface{}{bson.M{"accountid": accountID}, bson.M{"nickname": nickname}}}).One(data)
 	if err != nil {
 		log.Error("err:%v", err)
@@ -586,8 +593,6 @@ func GetOneUser(accountID int, nickname string) (*util.UserData, error) {
 	bank := ReadBankCardByID(data.UserID)
 	data.BankCard = bank
 
-	gs := gameDB.Ref()
-	defer gameDB.UnRef(gs)
 	// 查询充值
 	fee := map[string]interface{}{}
 	gs.DB(GDB).C("edyorder").Pipe([]bson.M{

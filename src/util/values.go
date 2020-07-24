@@ -16,6 +16,9 @@ const (
 	PlayerIconDir = string(os.PathSeparator) + "upload" + string(os.PathSeparator) + "playerIcon" + string(os.PathSeparator)
 )
 
+// CouponRate 点券与rmb比例
+const CouponRate = 1
+
 // 赛事状态
 const (
 	Signing = iota // 报名中

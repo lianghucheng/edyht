@@ -804,12 +804,12 @@ func getOneUser(c *gin.Context) {
 		desc = err.Error()
 		return
 	}
-	if data.AccountID <= 0 && data.Nickname == "" {
+	if data.AccountID <= 0 && data.Nickname == "" && data.Phone == "" {
 		code = util.Retry
 		desc = "搜索参数不能为空！"
 		return
 	}
-	one, err := db.GetOneUser(data.AccountID, data.Nickname)
+	one, err := db.GetOneUser(data.AccountID, data.Nickname, data.Phone)
 	if err == mgo.ErrNotFound {
 		return
 	}
