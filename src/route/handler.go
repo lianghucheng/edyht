@@ -288,7 +288,7 @@ func matchList(c *gin.Context) {
 	code := util.OK
 	desc := "OK"
 	total := 0
-	var resp interface{}
+	resp := []map[string]interface{}{}
 	defer func() {
 		c.JSON(http.StatusOK, gin.H{
 			"code":  code,
@@ -305,7 +305,11 @@ func matchList(c *gin.Context) {
 	}
 	// 按照赛事id精准查询
 	if len(data.MatchID) > 0 {
-		resp = db.GetMatch(data.MatchID)
+		tmp := db.GetMatch(data.MatchID)
+		if tmp != nil {
+			resp = append(resp, tmp)
+			total = 1
+		}
 		return
 	}
 	// 按照matchtype和时间查询
@@ -786,7 +790,7 @@ func getUserList(c *gin.Context) {
 func getOneUser(c *gin.Context) {
 	code := util.OK
 	desc := "OK"
-	user := &util.UserData{}
+	user := []*util.UserData{}
 	defer func() {
 		c.JSON(http.StatusOK, gin.H{
 			"code": code,
@@ -800,12 +804,12 @@ func getOneUser(c *gin.Context) {
 		desc = err.Error()
 		return
 	}
-	if data.AccountID <= 0 && data.Nickname == "" {
+	if data.AccountID <= 0 && data.Nickname == "" && data.Phone == "" {
 		code = util.Retry
 		desc = "搜索参数不能为空！"
 		return
 	}
-	one, err := db.GetOneUser(data.AccountID, data.Nickname)
+	one, err := db.GetOneUser(data.AccountID, data.Nickname, data.Phone)
 	if err == mgo.ErrNotFound {
 		return
 	}
@@ -814,7 +818,7 @@ func getOneUser(c *gin.Context) {
 		desc = "查询出错请重试!"
 		return
 	}
-	user = one
+	user = append(user, one)
 }
 
 func optUser(c *gin.Context) {
@@ -1613,10 +1617,11 @@ func robotStartAll(c *gin.Context) {
 	rmnr.Per = total
 	rmnr.Page = 1
 	ret := db.ReadRobotMatchNumList(rmnr)
-	for _, v := range *ret {
-		if _, ok := matchTypeMap[v.MatchType]; ok {
-			changeRobotStatus(v.MatchID, 0)
-		}
-	}
-	return
+for _, v := range *ret {
+if _, ok := matchTypeMap[v.MatchType]; ok {
+changeRobotStatus(v.MatchID, 0)
 }
+}
+return
+}
+

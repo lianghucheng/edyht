@@ -3,6 +3,7 @@ package util
 import (
 	"crypto/sha256"
 	"fmt"
+	"math"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -40,9 +41,9 @@ func CheckDir(dir string) {
 		log.Error("get local fail %v", err)
 		return
 	}
-	_, err = os.Stat(local + MatchIconDir)
+	_, err = os.Stat(local + dir)
 	if os.IsNotExist(err) {
-		if err := os.MkdirAll(local+MatchIconDir, os.ModePerm); err != nil {
+		if err := os.MkdirAll(local+dir, os.ModePerm); err != nil {
 			log.Error("make dir fail %v", err)
 		}
 	}
@@ -62,4 +63,13 @@ func MergeMaps(maps ...map[string]interface{}) map[string]interface{} {
 		}
 	}
 	return ret
+}
+
+// FormatFloat 取小数点后n位非零小数
+func FormatFloat(num float64, decimal int) string {
+	if math.Trunc(num) == num || decimal == 0 {
+		return fmt.Sprintf("%.f", math.Trunc(num))
+	}
+	format := "%." + strconv.Itoa(decimal) + "f"
+	return fmt.Sprintf(format, num)
 }

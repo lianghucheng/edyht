@@ -4,7 +4,6 @@ import (
 	"bs/param"
 	"bs/param/base"
 	"bs/util"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -116,14 +115,15 @@ func GetMatchReport(matchID string, start, end int64) []map[string]interface{} {
 				// "RecordTime":  fmt.Sprintf("$%v", time.Unix(i, 0).Format("2006-01-02")),
 				"RecordTime":  "$createtime",
 				"SignInCount": bson.M{"$size": "$signinplayers"}, "_id": 0, "matchid": fmt.Sprintf("$%v", matchID),
-				"SignFee":  bson.M{"$multiply": []interface{}{bson.M{"$size": "$signinplayers"}, bson.M{"$divide": []interface{}{"$enterfee", 10}}}},
+				"SignFee":  bson.M{"$multiply": []interface{}{bson.M{"$size": "$signinplayers"}, bson.M{"$divide": []interface{}{"$enterfee", util.CouponRate}}}},
 				"AwardNum": bson.M{"$size": "$award"},
 				"Money":    "$moneyaward",
 				"Coupon":   "$couponaward",
 				"LastMoney": bson.M{"$subtract": []interface{}{bson.M{
 					"$multiply": []interface{}{
-						bson.M{"$size": "$signinplayers"}, bson.M{"$divide": []interface{}{"$enterfee", 10}}}},
-					bson.M{"$add": []interface{}{"$moneyaward", bson.M{"$multiply": []interface{}{"$couponaward", 10}}}}}}}},
+						bson.M{"$size": "$signinplayers"}, bson.M{"$divide": []interface{}{"$enterfee", util.CouponRate}}}},
+					// bson.M{"$add": []interface{}{"$moneyaward", bson.M{"$multiply": []interface{}{"$couponaward", util.CouponRate}}}}}}}},
+					"$moneyaward"}}}},
 			{"$group": bson.M{
 				"_id": "$matchid", "RecordTime": bson.M{"$first": "$RecordTime"}, "allMoney": bson.M{"$sum": "$Money"},
 				"allCoupon": bson.M{"$sum": "$Coupon"}, "allSign": bson.M{"$sum": "$SignInCount"},
@@ -165,7 +165,7 @@ func GetMatchReport(matchID string, start, end int64) []map[string]interface{} {
 }
 
 // GetMatch 获取单场赛事
-func GetMatch(matchID string) []byte {
+func GetMatch(matchID string) map[string]interface{} {
 	s := gameDB.Ref()
 	defer gameDB.UnRef(s)
 
@@ -195,12 +195,7 @@ func GetMatch(matchID string) []byte {
 		log.Error("get match fail %v", err)
 		return nil
 	}
-	ret, err := json.Marshal(one)
-	if err != nil {
-		log.Error("get match fail %v", err)
-		return nil
-	}
-	return ret
+	return one
 }
 
 // GetMatchList 获取某个时间段的赛事
@@ -534,6 +529,8 @@ func GetGameVersion() (version string, url string) {
 func GetUserList(page, count int) ([]util.UserData, int) {
 	s := mongoDB.Ref()
 	defer mongoDB.UnRef(s)
+	gs := gameDB.Ref()
+	defer gameDB.UnRef(gs)
 	data := []util.UserData{}
 	total, _ := s.DB(GDB).C("users").Find(bson.M{}).Count()
 	iter := s.DB(GDB).C("users").Find(bson.M{}).Sort("-createdat").Skip((page - 1) * count).Limit(count).Iter()
@@ -547,21 +544,22 @@ func GetUserList(page, count int) ([]util.UserData, int) {
 		one.BankCard = bank
 		// 查询充值
 		fee := map[string]interface{}{}
-		s.DB("czddz").C("wxpayresult").Pipe([]bson.M{
-			{"$match": bson.M{"success": true, "userid": one.AccountID + 1e8}},
+		gs.DB(GDB).C("edyorder").Pipe([]bson.M{
+			{"$match": bson.M{"status": true, "accountid": one.AccountID}},
 			{"$project": bson.M{
-				"TotalFee": "$totalfee",
+				"TotalFee": "$fee",
 			}},
 			{"$group": bson.M{
-				"_id": "$userid",
+				"_id": "$accountid",
 				"all": bson.M{"$sum": "$TotalFee"},
 			}},
 		}).One(&fee)
 		var chargeAmount int64
-		if feeAdd, ok := fee["all"].(int); ok {
+		// log.Debug("fee:%v", reflect.TypeOf(fee["all"]))
+		if feeAdd, ok := fee["all"].(int64); ok {
 			chargeAmount = int64(feeAdd)
 		}
-		one.ChargeAmount = chargeAmount
+		one.ChargeAmount = util.FormatFloat(float64(chargeAmount/100), 2)
 		data = append(data, one)
 		one = util.UserData{}
 	}
@@ -569,16 +567,22 @@ func GetUserList(page, count int) ([]util.UserData, int) {
 }
 
 // GetOneUser 获取单个用户列表
-func GetOneUser(accountID int, nickname string) (*util.UserData, error) {
-	s := mongoDB.Ref()
-	defer mongoDB.UnRef(s)
+func GetOneUser(accountID int, nickname, phone string) (*util.UserData, error) {
+	gs := gameDB.Ref()
+	defer gameDB.UnRef(gs)
 	data := &util.UserData{}
 	var err error
+	selector := bson.M{}
 	if accountID > 0 {
-		err = s.DB(GDB).C("users").Find(bson.M{"accountid": accountID}).One(data)
+		// err = gs.DB(GDB).C("users").Find(bson.M{"accountid": accountID}).One(data)
+		selector["accountid"] = accountID
 	} else if len(nickname) > 0 {
-		err = s.DB(GDB).C("users").Find(bson.M{"nickname": nickname}).One(data)
+		// err = gs.DB(GDB).C("users").Find(bson.M{"nickname": nickname}).One(data)
+		selector["nickname"] = nickname
+	} else if len(phone) > 0 {
+		selector["username"] = phone
 	}
+	err = gs.DB(GDB).C("users").Find(selector).One(data)
 	// err := s.DB(GDB).C("users").Find(bson.M{"$or": []interface{}{bson.M{"accountid": accountID}, bson.M{"nickname": nickname}}}).One(data)
 	if err != nil {
 		log.Error("err:%v", err)
@@ -586,6 +590,26 @@ func GetOneUser(accountID int, nickname string) (*util.UserData, error) {
 	}
 	bank := ReadBankCardByID(data.UserID)
 	data.BankCard = bank
+
+	// 查询充值
+	fee := map[string]interface{}{}
+	gs.DB(GDB).C("edyorder").Pipe([]bson.M{
+		{"$match": bson.M{"status": true, "accountid": data.AccountID}},
+		{"$project": bson.M{
+			"TotalFee": "$fee",
+		}},
+		{"$group": bson.M{
+			"_id": "$accountid",
+			"all": bson.M{"$sum": "$TotalFee"},
+		}},
+	}).One(&fee)
+	var chargeAmount int64
+	// log.Debug("fee:%v", reflect.TypeOf(fee["all"]))
+	if feeAdd, ok := fee["all"].(int64); ok {
+		chargeAmount = int64(feeAdd)
+	}
+	data.ChargeAmount = util.FormatFloat(float64(chargeAmount/100), 2)
+
 	return data, nil
 }
 
@@ -623,8 +647,16 @@ func GetMatchReview(uid int) ([]map[string]interface{}, []map[string]interface{}
 				log.Error("err:%v", err)
 				continue
 			}
-			if len(one) > 0 {
-				data = append(data, one)
+			// 由于游戏服采集算法有误,修改读取方式
+			award, ok := one["awardmoney"].(int64)
+			if ok {
+				one["awardmoney"] = util.FormatFloat(float64(award)/100, 2)
+				if len(one) > 0 {
+					data = append(data, one)
+				}
+				if coupon, ok := one["coupon"].(int64); ok {
+					one["personalprofit"] = util.FormatFloat(float64(award-coupon*100)/100, 2)
+				}
 			}
 		}
 	}
@@ -641,6 +673,15 @@ func GetMatchReview(uid int) ([]map[string]interface{}, []map[string]interface{}
 		log.Error("err:%v", err)
 	}
 	log.Debug("all:%+v", all)
+
+	// 由于游戏服采集算法有误,修改读取方式
+	award, ok := all["awardmoney"].(int64)
+	if ok {
+		all["awardmoney"] = util.FormatFloat(float64(award)/100, 2)
+		if coupon, ok := all["coupon"].(int64); ok {
+			all["personalprofit"] = util.FormatFloat(float64(award-coupon*100)/100, 2)
+		}
+	}
 
 	return matchs, data, all
 }
@@ -660,6 +701,14 @@ func GetMatchReviewByName(uid int, matchType string) (map[string]interface{}, []
 		}},
 	}).One(&all); err != nil && err != mgo.ErrNotFound {
 		log.Error("err:%v", err)
+	}
+	// 由于游戏服采集算法有误,修改读取方式
+	award, ok := all["awardmoney"].(int64)
+	if ok {
+		all["awardmoney"] = util.FormatFloat(float64(award)/100, 2)
+		if coupon, ok := all["coupon"].(int64); ok {
+			all["personalprofit"] = util.FormatFloat(float64(award-coupon*100)/100, 2)
+		}
 	}
 	log.Debug("all:%+v", all)
 
@@ -692,6 +741,14 @@ func GetMatchReviewByName(uid int, matchType string) (map[string]interface{}, []
 				}},
 			}).One(&one); err != nil && err != mgo.ErrNotFound {
 				log.Error("err:%v", err)
+			}
+			// 由于游戏服采集算法有误,修改读取方式
+			award, ok := one["awardmoney"].(int64)
+			if ok {
+				one["awardmoney"] = util.FormatFloat(float64(award)/100, 2)
+				if coupon, ok := one["coupon"].(int64); ok {
+					one["personalprofit"] = util.FormatFloat(float64(award-coupon*100)/100, 2)
+				}
 			}
 			if len(one) > 0 {
 				list = append(list, one)

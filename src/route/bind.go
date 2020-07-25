@@ -137,6 +137,7 @@ type getUserListReq struct {
 type getOneUserReq struct {
 	AccountID int    `json:"AccountID"`
 	Nickname  string `json:"Nickname"`
+	Phone     string `json:"Phone"`
 }
 
 type optUserReq struct {

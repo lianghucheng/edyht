@@ -16,6 +16,9 @@ const (
 	PlayerIconDir = string(os.PathSeparator) + "upload" + string(os.PathSeparator) + "playerIcon" + string(os.PathSeparator)
 )
 
+// CouponRate 点券与rmb比例
+const CouponRate = 1
+
 // 赛事状态
 const (
 	Signing = iota // 报名中
@@ -105,8 +108,8 @@ type UserData struct {
 	TakenFee          float64
 	FirstLogin        bool
 	BankCard          *BankCard
-	ChargeAmount      int64 // 充值金额
-	LoginTime         int64 `bson:"logintime"`
+	ChargeAmount      string // 充值金额
+	LoginTime         int64  `bson:"logintime"`
 }
 
 type BankCard struct {
