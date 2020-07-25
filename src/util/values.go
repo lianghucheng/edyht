@@ -175,3 +175,36 @@ type OfflinePaymentCol struct {
 type DataCount struct {
 	Count int
 }
+
+const (
+	PayStatusAction = iota
+	PayStatusSuccess
+	PayStatusFail
+)
+
+type EdyOrder struct {
+	ID             int `bson:"_id",json:"-"`
+	Accountid      int
+	TradeNo        string
+	TradeNoReceive string
+	Merchant       int //商户
+	Status         bool
+	Fee            int64
+	Createdat      int64
+	PayStatus      int //0表示支付中， 1表示支付成功， 2表示支付失败
+	GoodsType      int //商品类型。1表示点券，2表示碎片
+	Amount         int //商品数量
+}
+
+type RobotMatchNum struct {
+	ID          int `bson:"_id"`
+	MatchID     string
+	MatchType   string
+	MatchName   string
+	PerMaxNum   int
+	Total       int
+	JoinNum     int
+	Desc        string
+	Status      int
+	RobotStatus int
+}

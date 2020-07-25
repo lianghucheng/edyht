@@ -12,7 +12,7 @@ const updateHeadImgUri = "/update-headimg"
 type UpdateHeadImgReq struct {
 	Secret    string `json:"secret"`
 	Accountid int    `json:"accountid"`
-	HeadImg    string `json:"headImg"`
+	HeadImg   string `json:"headImg"`
 }
 
 func RpcUpdateHeadImg(aid int, headimg string) {

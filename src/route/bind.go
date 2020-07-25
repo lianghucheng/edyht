@@ -39,6 +39,16 @@ func bind(server *gin.Engine) {
 
 	server.POST("/offlinepayment/list", offlinePaymentList)
 	server.POST("/offlinepayment/add", offlinePaymentAdd)
+
+	server.POST("/order/history", OrderHistory)
+	server.POST("/robot/match-detail", robotMatchDetail)
+	server.POST("/robot/match", robotMatch)
+	server.POST("/robot/save", robotSave)
+	server.POST("/robot/delete", robotDelete)
+	server.POST("/robot/stop", robotStop)
+	server.POST("/robot/stop-all", robotStopAll)
+	server.POST("/robot/start", robotStart)
+	server.POST("/robot/start-all", robotStartAll)
 }
 
 type loginData struct {

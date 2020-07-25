@@ -638,7 +638,7 @@ func flowDataExport(c *gin.Context) {
 				PhoneNum:     ud.Username,
 				Realname:     ud.RealName,
 				BankCardNo:   ud.BankCardNo,
-				BankName: 	  bc.BankName,
+				BankName:     bc.BankName,
 				OpenBankName: bc.OpeningBank,
 				ChangeAmount: v.ChangeAmount,
 			}
@@ -1176,4 +1176,447 @@ func downloadPlayerIcon(c *gin.Context) {
 	}
 	// ok
 	http.ServeFile(c.Writer, c.Request, filePath)
+}
+
+// POST /order/history 查询订单历史记录
+func OrderHistory(c *gin.Context) {
+	code := util.Success
+	desc := util.ErrMsg[util.Success]
+	var resp interface{}
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+			"resp": resp,
+		})
+	}()
+	eolr := new(param.OrderHistoryListReq)
+	code, desc = parseJsonParam(c.Request, eolr)
+	if code != util.Success {
+		return
+	}
+	ret := db.ReadOrderHistoryList(eolr)
+	total := db.ReadOrderHistoryCount(eolr)
+
+	rt := new([]param.OrderHistory)
+	for _, v := range *ret {
+		goodsType := ""
+		switch v.GoodsType {
+		case 1:
+			goodsType = "点券"
+		case 2:
+			goodsType = "碎片"
+		default:
+			goodsType = "异常"
+		}
+		payStatus := ""
+		switch v.PayStatus {
+		case 0:
+			payStatus = "支付中"
+		case 1:
+			payStatus = "支付成功"
+		case 2:
+			payStatus = "支付失败"
+		default:
+			payStatus = "异常"
+		}
+		merchant := ""
+		switch v.Merchant {
+		case 1:
+			merchant = "体总"
+		default:
+			merchant = "异常"
+		}
+		temp := param.OrderHistory{
+			Accountid:      v.Accountid,
+			TradeNo:        v.TradeNo,
+			TradeNoReceive: v.TradeNoReceive,
+			GoodsType:      goodsType,
+			Amount:         v.Amount,
+			Fee:            v.Fee,
+			Createdat:      v.Createdat,
+			PayStatus:      payStatus,
+			Merchant:       merchant,
+		}
+		*rt = append(*rt, temp)
+	}
+
+	resp = &param.OrderHistoryListResp{
+		OrderHistorys: rt,
+		Page:          eolr.Page,
+		Per:           eolr.Per,
+		Total:         total,
+	}
+}
+
+func robotMatchDetail(c *gin.Context) {
+	code := util.Success
+	desc := util.ErrMsg[util.Success]
+	var resp interface{}
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+			"resp": resp,
+		})
+	}()
+	rmnr := new(param.RobotMatchNumReq)
+	code, desc = parseJsonParam(c.Request, rmnr)
+	if code != util.Success {
+		code = util.FormatFail
+		desc = util.ErrMsg[code]
+		return
+	}
+	temp, ok := rmnr.Condition.(map[string]interface{})
+	if ok {
+		temp["status"] = 0
+		rmnr.Condition = temp
+	}
+	ret := db.ReadRobotMatchNumList(rmnr)
+	total := db.ReadRobotMatchNumCount(rmnr)
+
+	rt := new([]param.MatchRobotNum)
+	if err := transfer(ret, rt); err != nil {
+		code = util.FormatFail
+		desc = util.ErrMsg[code]
+		return
+	}
+	resp = &param.RobotMatchNumResp{
+		Page:           rmnr.Page,
+		Per:            rmnr.Per,
+		Total:          total,
+		MatchRobotNums: rt,
+	}
+}
+
+func transfer(src interface{}, dir interface{}) error {
+	b, err := json.Marshal(src)
+	if err != nil {
+		log.Error(err.Error())
+		return err
+	}
+	if err := json.Unmarshal(b, dir); err != nil {
+		log.Error(err.Error())
+		return err
+	}
+	return nil
+}
+
+func robotMatch(c *gin.Context) {
+	code := util.Success
+	desc := util.ErrMsg[util.Success]
+	var resp interface{}
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+			"resp": resp,
+		})
+	}()
+	rmr := new(param.RobotMatchReq)
+	code, desc = parseJsonParam(c.Request, rmr)
+	if code != util.Success {
+		code = util.FormatFail
+		desc = util.ErrMsg[code]
+		return
+	}
+
+	rmnr := new(param.RobotMatchNumReq)
+	rmnr.Condition = rmr.Condition
+	log.Debug("****%v", rmr.Condition)
+	rt := new([]param.RobotMatch)
+	temp2, ok := rmnr.Condition.(map[string]interface{})
+	if ok {
+		temp2["status"] = 0
+		rmnr.Condition = temp2
+	}
+	total := db.ReadRobotMatchNumCount(rmnr)
+	rmnr.Per = total
+	rmnr.Page = 1
+	ret := db.ReadRobotMatchNumList(rmnr)
+	temp := make(map[string]*param.RobotMatch)
+	total = 0
+	for _, v := range *ret {
+		total++
+		if rm, ok := temp[v.MatchType]; ok {
+			rm.MatchNum++
+			rm.RobotTotal += v.Total
+			rm.RobotJoinNum += v.JoinNum
+		} else {
+			temp[v.MatchType] = &param.RobotMatch{
+				MatchType: v.MatchType,
+			}
+
+			temp[v.MatchType].MatchNum++
+			temp[v.MatchType].RobotTotal += v.Total
+			temp[v.MatchType].RobotJoinNum += v.JoinNum
+		}
+	}
+
+	for _, v := range temp {
+		*rt = append(*rt, *v)
+	}
+	matchTypes := []string{}
+
+	filter := make(map[string]bool)
+	for _, v := range *db.ReadAllMatchConfig(nil) {
+		if _, ok := filter[v.MatchType]; ok {
+			continue
+		}
+		matchTypes = append(matchTypes, v.MatchType)
+		filter[v.MatchType] = true
+	}
+	if len(*rt) == 0 {
+		for _, v := range matchTypes {
+			*rt = append(*rt, param.RobotMatch{
+				MatchType   :v,
+				MatchNum     :0,
+				RobotTotal  :0,
+				RobotJoinNum :0,
+			})
+		}
+	}
+	resp = &param.RobotMatchResp{
+		Page:        1,
+		Per:         total,
+		Total:       total,
+		RobotMatchs: rt,
+		MatchTypes:  matchTypes,
+	}
+}
+
+func robotSave(c *gin.Context) {
+	code := util.Success
+	desc := util.ErrMsg[util.Success]
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	rsr := new(param.RobotSaveReq)
+	code, desc = parseJsonParam(c.Request, rsr)
+	if code != util.Success {
+		code = util.FormatFail
+		desc = util.ErrMsg[code]
+		return
+	}
+	condition := make(map[string]interface{})
+	condition["matchid"] = rsr.MatchID
+	cond2 := make(map[string]interface{})
+	cond2["matchid"] = rsr.MatchID
+
+	condMatchcfg := make(map[string]interface{})
+	condMatchcfg["matchid"] = rsr.MatchID
+	matchConfig := db.ReadMatchConfig(condMatchcfg)
+	if matchConfig.MatchID == "" {
+		code = util.MatchNotExist
+		desc = util.ErrMsg[code]
+		return
+	}
+	var rmn *util.RobotMatchNum
+	if rmn = db.ReadRobotMatchNum(condition); rmn.MatchID == "" {
+		matchConfig := db.ReadMatchConfig(cond2)
+		rmn.ID, _ = db.MongoDBNextSeq("robotmatchnum")
+		rmn.MatchID = rsr.MatchID
+		rmn.MatchType = matchConfig.MatchType
+		rmn.MatchName = matchConfig.MatchName
+		rmn.PerMaxNum = rsr.PerMatchNum
+		rmn.Total = rsr.RobotNum
+		rmn.Desc = rsr.Desc
+	} else {
+		if rmn.Status == 1 {
+			rmn.PerMaxNum = rsr.PerMatchNum
+			rmn.Total = rsr.RobotNum
+			rmn.Desc = rsr.Desc
+			rmn.Status = 0
+		} else if rmn.Status == 0 {
+			if rsr.Type == 1 {
+				code = util.MatchRobotConfExist
+				desc = util.ErrMsg[code]
+				return
+			} else if rsr.Type == 2 {
+				rmn.PerMaxNum = rsr.PerMatchNum
+				rmn.Total = rsr.RobotNum
+				rmn.Desc = rsr.Desc
+			}
+		}
+
+	}
+
+	db.SaveRobotMatchNum(rmn)
+	rpc.MatchMaxRobotNumConf(rmn.PerMaxNum, rmn.MatchID)
+	rpc.RobotTotalConf(rmn.Total, rmn.MatchID)
+	return
+}
+
+func robotDelete(c *gin.Context) {
+	code := util.Success
+	desc := util.ErrMsg[util.Success]
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	rdr := new(param.RobotDelReq)
+	code, desc = parseJsonParam(c.Request, rdr)
+	if code != util.Success {
+		code = util.FormatFail
+		desc = util.ErrMsg[code]
+		return
+	}
+	condition := make(map[string]interface{})
+	condition["matchid"] = rdr.MatchID
+	condition["status"] = 0
+	var rmn *util.RobotMatchNum
+	if rmn = db.ReadRobotMatchNum(condition); rmn.MatchID == "" {
+		return
+	} else if rmn.RobotStatus == 0 {
+		code = util.RobotNotBan
+		desc = util.ErrMsg[code]
+		return
+	} else {
+		rmn.Status = 1
+	}
+
+	db.SaveRobotMatchNum(rmn)
+	rpc.MatchMaxRobotNumConf(0, rmn.MatchID)
+	rpc.RobotTotalConf(0, rmn.MatchID)
+	return
+}
+
+func changeRobotStatus(matchid string, status int) {
+	condition := make(map[string]interface{})
+	condition["matchid"] = matchid
+	condition["status"] = 0
+	var rmn *util.RobotMatchNum
+	if rmn = db.ReadRobotMatchNum(condition); rmn.MatchID == "" {
+		return
+	} else {
+		rmn.RobotStatus = status
+	}
+
+	db.SaveRobotMatchNum(rmn)
+	rpc.RobotTotalConf(rmn.Total, rmn.MatchID)
+	rpc.RobotStatusConf(status, rmn.MatchID)
+}
+func robotStop(c *gin.Context) {
+	code := util.Success
+	desc := util.ErrMsg[util.Success]
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	rsr := new(param.RobotStopReq)
+	code, desc = parseJsonParam(c.Request, rsr)
+	if code != util.Success {
+		code = util.FormatFail
+		desc = util.ErrMsg[code]
+		return
+	}
+	changeRobotStatus(rsr.MatchID, 1)
+	return
+}
+
+func robotStopAll(c *gin.Context) {
+	code := util.Success
+	desc := util.ErrMsg[util.Success]
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	rdr := new(param.RobotStopAllReq)
+	code, desc = parseJsonParam(c.Request, rdr)
+	if code != util.Success {
+		code = util.FormatFail
+		desc = util.ErrMsg[code]
+		return
+	}
+
+	matchTypeMap := make(map[string]bool)
+	for _, v := range rdr.MatchTypes {
+		matchTypeMap[v] = true
+	}
+
+	rmnr := new(param.RobotMatchNumReq)
+	temp2, ok := rmnr.Condition.(map[string]interface{})
+	if ok {
+		temp2["status"] = 0
+		rmnr.Condition = temp2
+	}
+	total := db.ReadRobotMatchNumCount(rmnr)
+	rmnr.Per = total
+	rmnr.Page = 1
+	ret := db.ReadRobotMatchNumList(rmnr)
+	for _, v := range *ret {
+		if _, ok := matchTypeMap[v.MatchType]; ok {
+			changeRobotStatus(v.MatchID, 1)
+		}
+	}
+	return
+}
+
+func robotStart(c *gin.Context) {
+	code := util.Success
+	desc := util.ErrMsg[util.Success]
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	rsr := new(param.RobotStartReq)
+	code, desc = parseJsonParam(c.Request, rsr)
+	if code != util.Success {
+		code = util.FormatFail
+		desc = util.ErrMsg[code]
+		return
+	}
+	changeRobotStatus(rsr.MatchID, 0)
+	return
+}
+
+func robotStartAll(c *gin.Context) {
+	code := util.Success
+	desc := util.ErrMsg[util.Success]
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	rdr := new(param.RobotStartAllReq)
+	code, desc = parseJsonParam(c.Request, rdr)
+	if code != util.Success {
+		code = util.FormatFail
+		desc = util.ErrMsg[code]
+		return
+	}
+
+	matchTypeMap := make(map[string]bool)
+	for _, v := range rdr.MatchTypes {
+		matchTypeMap[v] = true
+	}
+
+	rmnr := new(param.RobotMatchNumReq)
+	temp2, ok := rmnr.Condition.(map[string]interface{})
+	if ok {
+		temp2["status"] = 0
+		rmnr.Condition = temp2
+	}
+	total := db.ReadRobotMatchNumCount(rmnr)
+	rmnr.Per = total
+	rmnr.Page = 1
+	ret := db.ReadRobotMatchNumList(rmnr)
+	for _, v := range *ret {
+		if _, ok := matchTypeMap[v.MatchType]; ok {
+			changeRobotStatus(v.MatchID, 0)
+		}
+	}
+	return
 }

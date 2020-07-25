@@ -11,7 +11,7 @@ type FlowExports struct {
 	PhoneNum     string  `json:"phone_num"`      //电话号码
 	Realname     string  `json:"realname"`       //真实名字
 	BankCardNo   string  `json:"bank_card_no"`   //银行卡号
-	BankName 	 string  `json:"bank_name"`	 	 //银行名称
+	BankName     string  `json:"bank_name"`      //银行名称
 	OpenBankName string  `json:"open_bank_name"` //开户行名称
 	ChangeAmount float64 `json:"change_amount"`  //变动金额
 }

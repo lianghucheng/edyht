@@ -353,6 +353,20 @@ func readByPipeline(db, coll string, pipeline []bson.M, rt interface{}, readtype
 	}
 }
 
+func readGameByPipeline(db, coll string, pipeline []bson.M, rt interface{}, readtype int) {
+	se := gameDB.Ref()
+	defer gameDB.UnRef(se)
+	var err error
+	if readtype == readTypeAll {
+		err = se.DB(db).C(coll).Pipe(pipeline).All(rt)
+	} else if readtype == readTypeOne {
+		err = se.DB(db).C(coll).Pipe(pipeline).One(rt)
+	}
+	if err != nil {
+		log.Error(err.Error())
+	}
+}
+
 func countByQuery(query bson.M, coll string) int {
 	se := mongoDB.Ref()
 	defer mongoDB.UnRef(se)
@@ -363,18 +377,10 @@ func countByQuery(query bson.M, coll string) int {
 	return count
 }
 
-func save(data interface{}, coll string, id int) {
+func save(db string, data interface{}, coll string, id int) {
 	se := mongoDB.Ref()
 	defer mongoDB.UnRef(se)
-	if _, err := se.DB(GDB).C(coll).Upsert(bson.M{"_id": id}, data); err != nil {
-		log.Error(err.Error())
-	}
-}
-
-func update(selector, update bson.M, coll string) {
-	se := mongoDB.Ref()
-	defer mongoDB.UnRef(se)
-	if _, err := se.DB(GDB).C(coll).Upsert(selector, update); err != nil {
+	if _, err := se.DB(db).C(coll).Upsert(bson.M{"_id": id}, data); err != nil {
 		log.Error(err.Error())
 	}
 }
@@ -480,15 +486,7 @@ func ReadFlowDataByID(id int) *util.FlowData {
 }
 
 func SaveFlowData(data *util.FlowData) {
-	save(data, "flowdata", data.ID)
-}
-
-func AddUserFee(flowData *util.FlowData) {
-	update(bson.M{"_id": flowData.Userid}, bson.M{"$inc": bson.M{"fee": flowData.ChangeAmount}}, "users")
-}
-
-func AddUserTakenFee(flowData *util.FlowData) {
-	update(bson.M{"_id": flowData.Userid}, bson.M{"$inc": bson.M{"takenfee": flowData.ChangeAmount}}, "users")
+	save(GDB, data, "flowdata", data.ID)
 }
 
 func ReadUserDataByUID(id int) *util.UserData {
@@ -743,5 +741,62 @@ func ReadOfflinePaymentCount(req *param.OfflinePaymentListReq) int {
 func SaveOfflinePayment(data *util.OfflinePaymentCol) {
 	data.ID, _ = MongoDBNextSeq("offlinepayment")
 	data.Createdat = time.Now().Unix()
-	save(data, "offlinepayment", data.ID)
+	save(GDB, data, "offlinepayment", data.ID)
+}
+
+func ReadOrderHistoryList(req *param.OrderHistoryListReq) *[]util.EdyOrder {
+	eo := new([]util.EdyOrder)
+	readByPipeline(GDB, "edyorder", req.GetDataPipeline(), eo, readTypeAll)
+	return eo
+}
+
+func ReadOrderHistoryCount(req *param.OrderHistoryListReq) int {
+	cnt := new(util.DataCount)
+	readByPipeline(GDB, "edyorder", base.GetCountPipeline(req), cnt, readTypeOne)
+	return cnt.Count
+}
+
+func saveBC(data interface{}, coll string, id int) {
+	se := mongoDB.Ref()
+	defer mongoDB.UnRef(se)
+	if _, err := se.DB(DB).C(coll).Upsert(bson.M{"_id": id}, data); err != nil {
+		log.Error(err.Error())
+	}
+}
+
+func ReadRobotMatchNumList(req *param.RobotMatchNumReq) *[]util.RobotMatchNum {
+	rt := new([]util.RobotMatchNum)
+	readByPipeline(DB, "robotmatchnum", req.GetDataPipeline(), rt, readTypeAll)
+	log.Debug("pipeline：%+v   Data：%v", req.GetDataPipeline(), *rt)
+	return rt
+}
+
+func ReadRobotMatchNumCount(req *param.RobotMatchNumReq) int {
+	cnt := new(util.DataCount)
+	readByPipeline(DB, "robotmatchnum", base.GetCountPipeline(req), cnt, readTypeOne)
+	return cnt.Count
+}
+
+func ReadRobotMatchNum(condition base.Condition) *util.RobotMatchNum {
+	rt := new(util.RobotMatchNum)
+	readByPipeline(DB, "robotmatchnum", base.GetPipeline(condition), rt, readTypeOne)
+	return rt
+}
+
+func SaveRobotMatchNum(data *util.RobotMatchNum) {
+	save(DB, data, "robotmatchnum", data.ID)
+}
+
+func ReadMatchConfig(condition base.Condition) *util.MatchManager {
+	rt := new(util.MatchManager)
+	log.Debug("%v", base.GetPipeline(condition))
+	readGameByPipeline(GDB, "matchmanager", base.GetPipeline(condition), rt, readTypeOne)
+	return rt
+}
+
+func ReadAllMatchConfig(condition base.Condition) *[]util.MatchManager {
+	rt := new([]util.MatchManager)
+	log.Debug("%v", base.GetPipeline(condition))
+	readGameByPipeline(GDB, "matchmanager", base.GetPipeline(condition), rt, readTypeAll)
+	return rt
 }
