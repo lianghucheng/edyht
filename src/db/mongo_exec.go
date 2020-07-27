@@ -4,6 +4,7 @@ import (
 	"bs/param"
 	"bs/param/base"
 	"bs/util"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -285,24 +286,53 @@ func GetMatchDetail(matchID string) map[string]interface{} {
 		{"$project": bson.M{
 			"Rank":        "$rank",
 			"MatchRecord": "$matchrecord",
+			"CreateTime":  "$createtime",
 			"_id":         0,
 		}},
-		// {"$group": bson.M{
-		// 	"_id": "$matchid", "RecordTime": bson.M{"$first": "$RecordTime"}, "allMoney": bson.M{"$sum": "$Money"},
-		// 	"allCoupon": bson.M{"$sum": "$Coupon"}, "allSign": bson.M{"$sum": "$SignInCount"},
-		// 	"allSignFee": bson.M{"$sum": "$SignFee"}, "awardNum": bson.M{"$sum": "$AwardNum"},
-		// "lastMoney": bson.M{"$sum": "$LastMoney"}}},
-		// {"$sort": bson.M{"CreateTime": -1}},
 	}).One(&one)
 	if err != nil {
 		log.Error("get detail fail %v", err)
 		return nil
 	}
-	// data, err := json.Marshal(one)
-	// if err != nil {
-	// 	log.Error("get detail fail %v", err)
-	// 	return nil
-	// }
+
+	// 转化一下uid为accountid
+	nowYear, ok := one["CreateTime"].(int64)
+	if ok {
+		thisYear := time.Unix(nowYear, 0)
+		record := one["MatchRecord"]
+		records := [][]util.MatchRecord{}
+		if slice, ok := record.([]interface{}); ok {
+			for _, v := range slice {
+				tmp, err := json.Marshal(v)
+				if err != nil {
+					log.Error("err:%v", err)
+				} else {
+					oneRecords := []util.MatchRecord{}
+					if err := json.Unmarshal(tmp, &oneRecords); err == nil {
+						for i := range oneRecords {
+							oneRecords[i].UID += thisYear.Year() * 100
+						}
+						records = append(records, oneRecords)
+					}
+				}
+			}
+		}
+		// tmp, err := json.Marshal(record)
+		// if err != nil {
+		// 	log.Error("err:%v", err)
+		// } else {
+		// 	fmt.Println(string(tmp))
+		// 	if err := json.Unmarshal(tmp, &records); err == nil {
+		// 		for i, v := range records {
+		// 			for j := range v {
+		// 				records[i][j].UID += thisYear.Year() * 100
+		// 			}
+		// 		}
+		// 	}
+		// }
+		one["MatchRecord"] = records
+		delete(one, "CreateTime")
+	}
 	return one
 }
 
@@ -771,11 +801,11 @@ func GetUserOptLog(accountID, page, count, optType int, start, end int64) ([]uti
 	if optType > 0 {
 		total, _ = s.DB(GDB).C("itemlog").Find(bson.M{"uid": accountID, "opttype": optType, "createtime": bson.M{"$gt": start, "$lt": end}}).Count()
 		err = s.DB(GDB).C("itemlog").Find(bson.M{"uid": accountID, "opttype": optType, "createtime": bson.M{"$gt": start, "$lt": end}}).
-			Sort("-createtime").Skip((page - 1) * count).All(&ret)
+			Sort("-createtime").Skip((page - 1) * count).Limit(count).All(&ret)
 	} else {
 		total, _ = s.DB(GDB).C("itemlog").Find(bson.M{"uid": accountID, "createtime": bson.M{"$gt": start, "$lt": end}}).Count()
 		err = s.DB(GDB).C("itemlog").Find(bson.M{"uid": accountID, "createtime": bson.M{"$gt": start, "$lt": end}}).
-			Sort("-createtime").Skip((page - 1) * count).All(&ret)
+			Sort("-createtime").Skip((page - 1) * count).Limit(count).All(&ret)
 	}
 	if err != nil && err != mgo.ErrNotFound {
 		log.Error("err:%v", err)

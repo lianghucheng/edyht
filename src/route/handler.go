@@ -398,6 +398,7 @@ func matchDetail(c *gin.Context) {
 		return
 	}
 	resp = db.GetMatchDetail(data.MatchID)
+	log.Debug("detail:%+v", resp)
 }
 
 func parseJsonParam(req *http.Request, rt interface{}) (code int, desc string) {
@@ -1373,10 +1374,10 @@ func robotMatch(c *gin.Context) {
 	if len(*rt) == 0 {
 		for _, v := range matchTypes {
 			*rt = append(*rt, param.RobotMatch{
-				MatchType   :v,
-				MatchNum     :0,
-				RobotTotal  :0,
-				RobotJoinNum :0,
+				MatchType:    v,
+				MatchNum:     0,
+				RobotTotal:   0,
+				RobotJoinNum: 0,
 			})
 		}
 	}
@@ -1617,11 +1618,10 @@ func robotStartAll(c *gin.Context) {
 	rmnr.Per = total
 	rmnr.Page = 1
 	ret := db.ReadRobotMatchNumList(rmnr)
-for _, v := range *ret {
-if _, ok := matchTypeMap[v.MatchType]; ok {
-changeRobotStatus(v.MatchID, 0)
+	for _, v := range *ret {
+		if _, ok := matchTypeMap[v.MatchType]; ok {
+			changeRobotStatus(v.MatchID, 0)
+		}
+	}
+	return
 }
-}
-return
-}
-
