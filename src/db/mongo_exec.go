@@ -857,3 +857,9 @@ func ReadAllMatchConfig(condition base.Condition) *[]util.MatchManager {
 	readGameByPipeline(GDB, "matchmanager", base.GetPipeline(condition), rt, readTypeAll)
 	return rt
 }
+
+func ReadKnapsackPropByAidPid(aid, pid int) *util.KnapsackProp {
+	rt := new(util.KnapsackProp)
+	readGameByPipeline(GDB, "knapsack", []bson.M{{"$match": bson.M{"accountid": aid, "propid": pid}}}, rt, readTypeOne)
+	return rt
+}

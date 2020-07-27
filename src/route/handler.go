@@ -1080,12 +1080,18 @@ func offlinePaymentAdd(c *gin.Context) {
 	} else if opar.ActionType == 1 {
 		offlinePaymentCol.BeforFee = ud.Fee
 		offlinePaymentCol.AfterFee = ud.Fee + opar.ChangeFee
+	} else if opar.ActionType == 2 {
+		data := db.ReadKnapsackPropByAidPid(ud.AccountID, 10003)
+		offlinePaymentCol.BeforFee = float64(data.Num)
+		offlinePaymentCol.AfterFee = float64(data.Num) + opar.ChangeFee
 	}
 	db.SaveOfflinePayment(offlinePaymentCol)
 	if opar.ActionType == 0 {
 		rpc.RpcUpdateCoupon(opar.Accountid, int(opar.ChangeFee))
 	} else if opar.ActionType == 1 {
 		rpc.AddAward(opar.Accountid, opar.ChangeFee)
+	} else if opar.ActionType == 2 {
+		rpc.RpcAddCouponFrag(opar.Accountid, int(opar.ChangeFee))
 	}
 }
 
@@ -1206,9 +1212,9 @@ func OrderHistory(c *gin.Context) {
 	for _, v := range *ret {
 		goodsType := ""
 		switch v.GoodsType {
-		case 1:
+		case 0:
 			goodsType = "点券"
-		case 2:
+		case 1:
 			goodsType = "碎片"
 		default:
 			goodsType = "异常"
@@ -1228,6 +1234,8 @@ func OrderHistory(c *gin.Context) {
 		switch v.Merchant {
 		case 1:
 			merchant = "体总"
+		case 0://之前没有写入过的数据
+			merchant = "体总"
 		default:
 			merchant = "异常"
 		}
@@ -1236,7 +1244,7 @@ func OrderHistory(c *gin.Context) {
 			TradeNo:        v.TradeNo,
 			TradeNoReceive: v.TradeNoReceive,
 			GoodsType:      goodsType,
-			Amount:         v.Amount,
+			Amount:         int(v.Fee) / 100,
 			Fee:            v.Fee,
 			Createdat:      v.Createdat,
 			PayStatus:      payStatus,
@@ -1370,14 +1378,40 @@ func robotMatch(c *gin.Context) {
 		matchTypes = append(matchTypes, v.MatchType)
 		filter[v.MatchType] = true
 	}
-	if len(*rt) == 0 {
-		for _, v := range matchTypes {
-			*rt = append(*rt, param.RobotMatch{
-				MatchType   :v,
-				MatchNum     :0,
-				RobotTotal  :0,
-				RobotJoinNum :0,
-			})
+
+	cond := rmr.Condition.(map[string]interface{})
+	if len(cond) <= 1 {
+		if len(*rt) < len(matchTypes) {
+			for _, v := range matchTypes {
+				flag := 0
+				for _, v2 := range *rt {
+					if v2.MatchType == v {
+						flag = 1
+						break
+					}
+				}
+				if flag != 0 {
+					continue
+				}
+				*rt = append(*rt, param.RobotMatch{
+					MatchType   :v,
+					MatchNum     :0,
+					RobotTotal  :0,
+					RobotJoinNum :0,
+				})
+			}
+		}
+	} else if len(cond) > 1 {
+		if len(*rt) == 0 {
+			mt, ok := cond["matchtype"]
+			if ok {
+				*rt = append(*rt, param.RobotMatch{
+					MatchType   :mt.(string),
+					MatchNum     :0,
+					RobotTotal  :0,
+					RobotJoinNum :0,
+				})
+			}
 		}
 	}
 	resp = &param.RobotMatchResp{

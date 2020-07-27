@@ -211,3 +211,16 @@ type RobotMatchNum struct {
 	Status      int
 	RobotStatus int
 }
+
+type KnapsackProp struct {
+	ID        int `bson:"_id"`
+	Accountid int
+	PropID    int
+	Name      string
+	Num       int
+	IsAdd     bool
+	IsUse     bool
+	Expiredat int64
+	Desc      string
+	Createdat int64
+}
