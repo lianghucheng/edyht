@@ -252,7 +252,7 @@ func matchReport(c *gin.Context) {
 		return
 	}
 
-	result := db.GetMatchReport(data.MatchID, begin.Unix(), over.Unix())
+	result := db.GetMatchReport(data.MatchID, util.GetZeroTime(begin).Unix(), util.GetZeroTime(over).Unix())
 	if result == nil {
 		code = util.Retry
 		desc = "查询出错请重试！"
@@ -352,7 +352,7 @@ func matchList(c *gin.Context) {
 		return
 	}
 
-	result := db.GetMatchList(data.MatchType, begin.Unix(), over.Unix())
+	result := db.GetMatchList(data.MatchType, util.GetZeroTime(begin).Unix(), util.GetZeroTime(over).Unix())
 	// if result == nil {
 	// 	code = util.Retry
 	// 	desc = "查询出错请重试！"
@@ -398,6 +398,7 @@ func matchDetail(c *gin.Context) {
 		return
 	}
 	resp = db.GetMatchDetail(data.MatchID)
+	log.Debug("detail:%+v", resp)
 }
 
 func parseJsonParam(req *http.Request, rt interface{}) (code int, desc string) {
@@ -970,7 +971,7 @@ func getUserOptLog(c *gin.Context) {
 		desc = "单次查询时间不能超过一个月！"
 		return
 	}
-	list, total = db.GetUserOptLog(data.AccountID, data.Page, data.Count, data.OptType, begin.Unix(), over.Unix())
+	list, total = db.GetUserOptLog(data.AccountID, data.Page, data.Count, data.OptType, util.GetZeroTime(begin).Unix(), util.GetZeroTime(over).Unix())
 }
 
 func clearRealInfo(c *gin.Context) {
@@ -1378,7 +1379,6 @@ func robotMatch(c *gin.Context) {
 		matchTypes = append(matchTypes, v.MatchType)
 		filter[v.MatchType] = true
 	}
-
 	cond := rmr.Condition.(map[string]interface{})
 	if len(cond) <= 1 {
 		if len(*rt) < len(matchTypes) {
@@ -1651,11 +1651,10 @@ func robotStartAll(c *gin.Context) {
 	rmnr.Per = total
 	rmnr.Page = 1
 	ret := db.ReadRobotMatchNumList(rmnr)
-for _, v := range *ret {
-if _, ok := matchTypeMap[v.MatchType]; ok {
-changeRobotStatus(v.MatchID, 0)
+	for _, v := range *ret {
+		if _, ok := matchTypeMap[v.MatchType]; ok {
+			changeRobotStatus(v.MatchID, 0)
+		}
+	}
+	return
 }
-}
-return
-}
-

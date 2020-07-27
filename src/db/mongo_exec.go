@@ -4,6 +4,7 @@ import (
 	"bs/param"
 	"bs/param/base"
 	"bs/util"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -103,7 +104,7 @@ func GetMatchReport(matchID string, start, end int64) []map[string]interface{} {
 
 	// log.Debug("check,%v,%v", start, end)
 	result := make([]map[string]interface{}, 0)
-	for i := start; i <= end; i = i + oneDay {
+	for i := end; i >= start; i = i - oneDay {
 		one := map[string]interface{}{}
 		// rt := time.Unix(i, 0).Format("2006-01-02")
 		// log.Debug("check,%v,%v", i, i+oneDay)
@@ -230,7 +231,7 @@ func GetMatchList(matchType string, start, end int64) []map[string]interface{} {
 				"EnterFee":    "$enterfee",
 				"_id":         0,
 			}},
-			{"$sort": bson.M{"CreateTime": 1}},
+			{"$sort": bson.M{"CreateTime": -1}},
 		}).Iter()
 	} else {
 		iter = s.DB(GDB).C("match").Pipe([]bson.M{
@@ -250,7 +251,7 @@ func GetMatchList(matchType string, start, end int64) []map[string]interface{} {
 				"EnterFee":    "$enterfee",
 				"_id":         0,
 			}},
-			{"$sort": bson.M{"CreateTime": 1}},
+			{"$sort": bson.M{"CreateTime": -1}},
 		}).Iter()
 	}
 	for iter.Next(&one) {
@@ -285,24 +286,53 @@ func GetMatchDetail(matchID string) map[string]interface{} {
 		{"$project": bson.M{
 			"Rank":        "$rank",
 			"MatchRecord": "$matchrecord",
+			"CreateTime":  "$createtime",
 			"_id":         0,
 		}},
-		// {"$group": bson.M{
-		// 	"_id": "$matchid", "RecordTime": bson.M{"$first": "$RecordTime"}, "allMoney": bson.M{"$sum": "$Money"},
-		// 	"allCoupon": bson.M{"$sum": "$Coupon"}, "allSign": bson.M{"$sum": "$SignInCount"},
-		// 	"allSignFee": bson.M{"$sum": "$SignFee"}, "awardNum": bson.M{"$sum": "$AwardNum"},
-		// "lastMoney": bson.M{"$sum": "$LastMoney"}}},
-		// {"$sort": bson.M{"CreateTime": -1}},
 	}).One(&one)
 	if err != nil {
 		log.Error("get detail fail %v", err)
 		return nil
 	}
-	// data, err := json.Marshal(one)
-	// if err != nil {
-	// 	log.Error("get detail fail %v", err)
-	// 	return nil
-	// }
+
+	// 转化一下uid为accountid
+	nowYear, ok := one["CreateTime"].(int64)
+	if ok {
+		thisYear := time.Unix(nowYear, 0)
+		record := one["MatchRecord"]
+		records := [][]util.MatchRecord{}
+		if slice, ok := record.([]interface{}); ok {
+			for _, v := range slice {
+				tmp, err := json.Marshal(v)
+				if err != nil {
+					log.Error("err:%v", err)
+				} else {
+					oneRecords := []util.MatchRecord{}
+					if err := json.Unmarshal(tmp, &oneRecords); err == nil {
+						for i := range oneRecords {
+							oneRecords[i].UID += thisYear.Year() * 100
+						}
+						records = append(records, oneRecords)
+					}
+				}
+			}
+		}
+		// tmp, err := json.Marshal(record)
+		// if err != nil {
+		// 	log.Error("err:%v", err)
+		// } else {
+		// 	fmt.Println(string(tmp))
+		// 	if err := json.Unmarshal(tmp, &records); err == nil {
+		// 		for i, v := range records {
+		// 			for j := range v {
+		// 				records[i][j].UID += thisYear.Year() * 100
+		// 			}
+		// 		}
+		// 	}
+		// }
+		one["MatchRecord"] = records
+		delete(one, "CreateTime")
+	}
 	return one
 }
 
@@ -532,8 +562,8 @@ func GetUserList(page, count int) ([]util.UserData, int) {
 	gs := gameDB.Ref()
 	defer gameDB.UnRef(gs)
 	data := []util.UserData{}
-	total, _ := s.DB(GDB).C("users").Find(bson.M{}).Count()
-	iter := s.DB(GDB).C("users").Find(bson.M{}).Sort("-createdat").Skip((page - 1) * count).Limit(count).Iter()
+	total, _ := s.DB(GDB).C("users").Find(bson.M{"accountid": bson.M{"$lt": 10000000000}}).Count()
+	iter := s.DB(GDB).C("users").Find(bson.M{"accountid": bson.M{"$lt": 10000000000}}).Sort("-createdat").Skip((page - 1) * count).Limit(count).Iter()
 	// if err != nil && err != mgo.ErrNotFound {
 	// 	log.Error("err:%v", err)
 	// 	return nil, total
@@ -619,44 +649,69 @@ func GetMatchReview(uid int) ([]map[string]interface{}, []map[string]interface{}
 	defer mongoDB.UnRef(s)
 	data := []map[string]interface{}{}
 	matchs := []map[string]interface{}{}
-	ids := []map[string]interface{}{}
+	// ids := []map[string]interface{}{}
 	s.DB(GDB).C("matchreview").Pipe([]bson.M{
 		{"$match": bson.M{"accountid": uid}},
 		{"$group": bson.M{"_id": "$matchtype"}},
 	}).All(&matchs)
 	log.Debug("matchs:%+v", matchs)
-	s.DB(GDB).C("matchreview").Pipe([]bson.M{
-		{"$match": bson.M{"accountid": uid}},
-		{"$group": bson.M{"_id": "$matchid"}},
-	}).All(&ids)
-	log.Debug("ids:%+v", ids)
+	// s.DB(GDB).C("matchreview").Pipe([]bson.M{
+	// 	{"$match": bson.M{"accountid": uid}},
+	// 	{"$group": bson.M{"_id": "$matchid"}},
+	// }).All(&ids)
+	// log.Debug("ids:%+v", ids)
+	// for _, matchType := range matchs {
+	// 	for _, id := range ids {
+	// 		// one := util.UserMatchReview{}
+	// 		one := map[string]interface{}{}
+	// 		// s.DB(GDB).C("matchreview").Find(bson.M{"accountid": uid, "matchtype": matchType["_id"], "matchid": id["_id"]}).One(&one)
+	// 		err := s.DB(GDB).C("matchreview").Pipe([]bson.M{
+	// 			{"$match": bson.M{"accountid": uid, "matchtype": matchType["_id"], "matchid": id["_id"]}},
+	// 			// {"$group": bson.M{"_id": "$matchtype", "matchtype": "$matchtype", "matchid": "$matchid", "matchtotal": "$matchtotal",
+	// 			// 	"matchwins": "$matchwins", "matchfails": "$matchfails", "coupon": "$coupon", "awardmoney": "$awardmoney", "personalprofit": "$personalprofit"}},
+	// 			{"$group": bson.M{"_id": "$matchtype", "matchtype": bson.M{"$first": "$matchtype"}, "matchid": bson.M{"$first": "$matchid"},
+	// 				"matchtotal": bson.M{"$sum": "$matchtotal"}, "matchwins": bson.M{"$sum": "$matchwins"}, "matchfails": bson.M{"$sum": "$matchfails"},
+	// 				"coupon": bson.M{"$sum": "$coupon"}, "awardmoney": bson.M{"$sum": "$awardmoney"}, "personalprofit": bson.M{"$sum": "$personalprofit"}}},
+	// 		}).One(&one)
+	// 		if err != nil && err != mgo.ErrNotFound {
+	// 			log.Error("err:%v", err)
+	// 			continue
+	// 		}
+	// 		// 由于游戏服采集算法有误,修改读取方式
+	// 		award, ok := one["awardmoney"].(int64)
+	// 		if ok {
+	// 			one["awardmoney"] = util.FormatFloat(float64(award)/100, 2)
+	// 			if len(one) > 0 {
+	// 				data = append(data, one)
+	// 			}
+	// 			if coupon, ok := one["coupon"].(int64); ok {
+	// 				one["personalprofit"] = util.FormatFloat(float64(award-coupon*100)/100, 2)
+	// 			}
+	// 		}
+	// 	}
+	// }
+
 	for _, matchType := range matchs {
-		for _, id := range ids {
-			// one := util.UserMatchReview{}
-			one := map[string]interface{}{}
-			// s.DB(GDB).C("matchreview").Find(bson.M{"accountid": uid, "matchtype": matchType["_id"], "matchid": id["_id"]}).One(&one)
-			err := s.DB(GDB).C("matchreview").Pipe([]bson.M{
-				{"$match": bson.M{"accountid": uid, "matchtype": matchType["_id"], "matchid": id["_id"]}},
-				// {"$group": bson.M{"_id": "$matchtype", "matchtype": "$matchtype", "matchid": "$matchid", "matchtotal": "$matchtotal",
-				// 	"matchwins": "$matchwins", "matchfails": "$matchfails", "coupon": "$coupon", "awardmoney": "$awardmoney", "personalprofit": "$personalprofit"}},
-				{"$group": bson.M{"_id": "$matchtype", "matchtype": bson.M{"$first": "$matchtype"}, "matchid": bson.M{"$first": "$matchid"},
-					"matchtotal": bson.M{"$sum": "$matchtotal"}, "matchwins": bson.M{"$sum": "$matchwins"}, "matchfails": bson.M{"$sum": "$matchfails"},
-					"coupon": bson.M{"$sum": "$coupon"}, "awardmoney": bson.M{"$sum": "$awardmoney"}, "personalprofit": bson.M{"$sum": "$personalprofit"}}},
-			}).One(&one)
-			if err != nil && err != mgo.ErrNotFound {
-				log.Error("err:%v", err)
-				continue
+		one := map[string]interface{}{}
+		err := s.DB(GDB).C("matchreview").Pipe([]bson.M{
+			{"$match": bson.M{"accountid": uid, "matchtype": matchType["_id"]}},
+			{"$group": bson.M{"_id": "$matchtype", "matchtype": bson.M{"$first": "$matchtype"}, "matchid": bson.M{"$first": "$matchid"},
+				"matchtotal": bson.M{"$sum": "$matchtotal"}, "matchwins": bson.M{"$sum": "$matchwins"}, "matchfails": bson.M{"$sum": "$matchfails"},
+				"coupon": bson.M{"$sum": "$coupon"}, "awardmoney": bson.M{"$sum": "$awardmoney"}, "personalprofit": bson.M{"$sum": "$personalprofit"}}},
+		}).One(&one)
+		if err != nil && err != mgo.ErrNotFound {
+			log.Error("err:%v", err)
+			continue
+		}
+		// 由于游戏服采集算法有误,修改读取方式
+		award, ok := one["awardmoney"].(int64)
+		if ok {
+			one["awardmoney"] = util.FormatFloat(float64(award)/100, 2)
+			if len(one) > 0 {
+				data = append(data, one)
 			}
-			// 由于游戏服采集算法有误,修改读取方式
-			award, ok := one["awardmoney"].(int64)
-			if ok {
-				one["awardmoney"] = util.FormatFloat(float64(award)/100, 2)
-				if len(one) > 0 {
-					data = append(data, one)
-				}
-				if coupon, ok := one["coupon"].(int64); ok {
-					one["personalprofit"] = util.FormatFloat(float64(award-coupon*100)/100, 2)
-				}
+			if coupon, ok := one["coupon"].(int64); ok {
+				one["personalprofit"] = util.FormatFloat(float64(award-coupon*100)/100, 2)
 			}
 		}
 	}
@@ -771,11 +826,11 @@ func GetUserOptLog(accountID, page, count, optType int, start, end int64) ([]uti
 	if optType > 0 {
 		total, _ = s.DB(GDB).C("itemlog").Find(bson.M{"uid": accountID, "opttype": optType, "createtime": bson.M{"$gt": start, "$lt": end}}).Count()
 		err = s.DB(GDB).C("itemlog").Find(bson.M{"uid": accountID, "opttype": optType, "createtime": bson.M{"$gt": start, "$lt": end}}).
-			Sort("-createtime").Skip((page - 1) * count).All(&ret)
+			Sort("-createtime").Skip((page - 1) * count).Limit(count).All(&ret)
 	} else {
 		total, _ = s.DB(GDB).C("itemlog").Find(bson.M{"uid": accountID, "createtime": bson.M{"$gt": start, "$lt": end}}).Count()
 		err = s.DB(GDB).C("itemlog").Find(bson.M{"uid": accountID, "createtime": bson.M{"$gt": start, "$lt": end}}).
-			Sort("-createtime").Skip((page - 1) * count).All(&ret)
+			Sort("-createtime").Skip((page - 1) * count).Limit(count).All(&ret)
 	}
 	if err != nil && err != mgo.ErrNotFound {
 		log.Error("err:%v", err)

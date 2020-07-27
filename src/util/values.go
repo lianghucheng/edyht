@@ -224,3 +224,18 @@ type KnapsackProp struct {
 	Desc      string
 	Createdat int64
 }
+
+// MatchRecord 记录一局比赛所有玩家的手牌，输赢信息等
+type MatchRecord struct {
+	RoundCount int    // 第几局
+	CardCount  int    // 第几副牌
+	RoomCount  int    // 房间编号
+	UID        int    // 用户id
+	Identity   int    //0 防守方 1 进攻方
+	Name       string // 玩家姓名
+	HandCards  []int  //手牌
+	ThreeCards []int  //底牌
+	Event      int    //0:失败 1:胜利
+	Score      int64  //得分
+	Multiples  string //倍数
+}
