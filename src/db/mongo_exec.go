@@ -420,14 +420,13 @@ func ReadFlowDatas(r *param.FlowDataHistoryReq) (*[]util.FlowData, int) {
 	}
 
 	query := getQueryByHistoryReq(r)
-
-	log.Debug("【query】%v  %v", query, (page-1)*per)
-
-	if r.Condition != nil {
+	if len(r.Condition) == 0 {
+		log.Debug("@@@@@@@@@@@")
 		query["flowtype"] = bson.M{
 			"$ne": 1,
 		}
 	}
+	log.Debug("【query】%v  %v", query, (page-1)*per)
 
 	flowDatas := new([]util.FlowData)
 	readAllByQueryPage(flowDatas, query, "flowdata", page, per)

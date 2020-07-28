@@ -437,7 +437,6 @@ func flowDataHistory(c *gin.Context) {
 	if code != util.Success {
 		return
 	}
-	log.Debug("%v", flowDataReq.Condition)
 
 	flowDatas, total := db.ReadFlowDatas(flowDataReq)
 
@@ -450,6 +449,9 @@ func uflow2Pflow(c *[]util.FlowData) *[]param.FlowData {
 		stat := 0
 		if v.FlowType != 1 {
 			stat = v.Status
+		}
+		if v.FlowType == 4 {
+			stat = 5
 		}
 		temp := param.FlowData{
 			ID:           v.ID,
