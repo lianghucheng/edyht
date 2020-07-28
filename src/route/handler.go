@@ -437,6 +437,7 @@ func flowDataHistory(c *gin.Context) {
 	if code != util.Success {
 		return
 	}
+	log.Debug("%v", flowDataReq.Condition)
 
 	flowDatas, total := db.ReadFlowDatas(flowDataReq)
 
@@ -1083,6 +1084,7 @@ func offlinePaymentAdd(c *gin.Context) {
 		offlinePaymentCol.AfterFee = ud.Fee + opar.ChangeFee
 	} else if opar.ActionType == 2 {
 		data := db.ReadKnapsackPropByAidPid(ud.AccountID, 10003)
+		log.Debug("************%v", *data)
 		offlinePaymentCol.BeforFee = float64(data.Num)
 		offlinePaymentCol.AfterFee = float64(data.Num) + opar.ChangeFee
 	}

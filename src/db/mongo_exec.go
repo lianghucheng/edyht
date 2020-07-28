@@ -423,6 +423,12 @@ func ReadFlowDatas(r *param.FlowDataHistoryReq) (*[]util.FlowData, int) {
 
 	log.Debug("【query】%v  %v", query, (page-1)*per)
 
+	if r.Condition != nil {
+		query["flowtype"] = bson.M{
+			"$ne": 1,
+		}
+	}
+
 	flowDatas := new([]util.FlowData)
 	readAllByQueryPage(flowDatas, query, "flowdata", page, per)
 
@@ -915,6 +921,6 @@ func ReadAllMatchConfig(condition base.Condition) *[]util.MatchManager {
 
 func ReadKnapsackPropByAidPid(aid, pid int) *util.KnapsackProp {
 	rt := new(util.KnapsackProp)
-	readGameByPipeline(GDB, "knapsack", []bson.M{{"$match": bson.M{"accountid": aid, "propid": pid}}}, rt, readTypeOne)
+	readGameByPipeline(GDB, "knapsackprop", []bson.M{{"$match": bson.M{"accountid": aid, "propid": pid}}}, rt, readTypeOne)
 	return rt
 }
