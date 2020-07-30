@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/szxby/tools/log"
 )
@@ -24,7 +25,7 @@ func PostToGame(url string, contentType string, send interface{}) error {
 	// req.Header.Set("X-Custom-Header", "myvalue")
 	req.Header.Set("Content-Type", contentType)
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Error("http post call err:%v", err)

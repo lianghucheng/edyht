@@ -83,8 +83,8 @@ func GetMatchReport(matchID string, start, end int64) []map[string]interface{} {
 	defer gameDB.UnRef(s)
 
 	var oneDay int64 = 24 * 60 * 60
-	len := (end - start) / oneDay
-	if len <= 0 {
+	length := (end - start) / oneDay
+	if length <= 0 {
 		log.Error("invalid time")
 		return nil
 	}
@@ -96,42 +96,91 @@ func GetMatchReport(matchID string, start, end int64) []map[string]interface{} {
 	// 	AllAward      float64
 	// 	AllLast       float64
 	// }{}
-	allReport := map[string]interface{}{}
-	allReport["AllSignPlayer"] = int(0)
-	allReport["AllSignFee"] = float64(0)
-	allReport["AllAward"] = float64(0)
-	allReport["AllLast"] = float64(0)
+	// allReport["AllSignPlayer"] = int(0)
+	// allReport["AllSignFee"] = float64(0)
+	// allReport["AllAward"] = float64(0)
+	// allReport["AllLast"] = float64(0)
+	AllSignPlayer := 0
+	var AllSignFee, AllAward, AllLast float64
 
 	// log.Debug("check,%v,%v", start, end)
 	result := make([]map[string]interface{}, 0)
+
+	/*
+		for i := end; i >= start; i = i - oneDay {
+			one := map[string]interface{}{}
+			// rt := time.Unix(i, 0).Format("2006-01-02")
+			// log.Debug("check,%v,%v", i, i+oneDay)
+			err := s.DB(GDB).C("match").Pipe([]bson.M{
+				{"$match": bson.M{"matchid": matchID}},
+				// {"$match": bson.M{"createtime": bson.M{"$gt": fmt.Sprintf("$%v", i), "$lte": fmt.Sprintf("$%v", i+oneDay)}}},
+				{"$match": bson.M{"createtime": bson.M{"$gt": i, "$lte": i + oneDay}}},
+				{"$project": bson.M{
+					// "RecordTime":  fmt.Sprintf("$%v", time.Unix(i, 0).Format("2006-01-02")),
+					"RecordTime":  "$createtime",
+					"SignInCount": bson.M{"$size": "$signinplayers"}, "_id": 0, "matchid": fmt.Sprintf("$%v", matchID),
+					"SignFee":  bson.M{"$multiply": []interface{}{bson.M{"$size": "$signinplayers"}, bson.M{"$divide": []interface{}{"$enterfee", util.CouponRate}}}},
+					"AwardNum": bson.M{"$size": "$award"},
+					"Money":    "$moneyaward",
+					"Coupon":   "$couponaward",
+					"LastMoney": bson.M{"$subtract": []interface{}{bson.M{
+						"$multiply": []interface{}{
+							bson.M{"$size": "$signinplayers"}, bson.M{"$divide": []interface{}{"$enterfee", util.CouponRate}}}},
+						// bson.M{"$add": []interface{}{"$moneyaward", bson.M{"$multiply": []interface{}{"$couponaward", util.CouponRate}}}}}}}},
+						"$moneyaward"}}}},
+				{"$group": bson.M{
+					"_id": "$matchid", "RecordTime": bson.M{"$first": "$RecordTime"}, "allMoney": bson.M{"$sum": "$Money"},
+					"allCoupon": bson.M{"$sum": "$Coupon"}, "allSign": bson.M{"$sum": "$SignInCount"},
+					"allSignFee": bson.M{"$sum": "$SignFee"}, "awardNum": bson.M{"$sum": "$AwardNum"},
+					"lastMoney": bson.M{"$sum": "$LastMoney"}}},
+				// {"$sort": bson.M{"count": -1}},
+			}).One(&one)
+			if err == mgo.ErrNotFound {
+				continue
+			}
+			if err != nil {
+				log.Error("get report fail:%v", err)
+				return nil
+			}
+			// 数据汇总
+			allReport["AllSignPlayer"] = allReport["AllSignPlayer"].(int) + one["allSign"].(int)
+			allReport["AllSignFee"] = allReport["AllSignFee"].(float64) + one["allSignFee"].(float64)
+			allReport["AllAward"] = allReport["AllAward"].(float64) + one["allMoney"].(float64)
+			allReport["AllLast"] = allReport["AllLast"].(float64) + one["lastMoney"].(float64)
+
+			one["allSignFee"] = util.Decimal(one["allSignFee"].(float64))
+			one["allMoney"] = util.Decimal(one["allMoney"].(float64))
+			one["lastMoney"] = util.Decimal(one["lastMoney"].(float64))
+			result = append(result, one)
+		}
+	*/
+
 	for i := end; i >= start; i = i - oneDay {
-		one := map[string]interface{}{}
-		// rt := time.Unix(i, 0).Format("2006-01-02")
-		// log.Debug("check,%v,%v", i, i+oneDay)
+		// all := []map[string]interface{}{}
+		// all := []struct {
+		// 	SignInCount int
+		// 	SignFee     float64
+		// 	AwardNum    int
+		// 	Money       float64
+		// 	AwardList   string
+		// 	LastMoney   float64
+		// }{}
+		all := []map[string]interface{}{}
+
 		err := s.DB(GDB).C("match").Pipe([]bson.M{
 			{"$match": bson.M{"matchid": matchID}},
-			// {"$match": bson.M{"createtime": bson.M{"$gt": fmt.Sprintf("$%v", i), "$lte": fmt.Sprintf("$%v", i+oneDay)}}},
 			{"$match": bson.M{"createtime": bson.M{"$gt": i, "$lte": i + oneDay}}},
 			{"$project": bson.M{
-				// "RecordTime":  fmt.Sprintf("$%v", time.Unix(i, 0).Format("2006-01-02")),
-				"RecordTime":  "$createtime",
 				"SignInCount": bson.M{"$size": "$signinplayers"}, "_id": 0, "matchid": fmt.Sprintf("$%v", matchID),
-				"SignFee":  bson.M{"$multiply": []interface{}{bson.M{"$size": "$signinplayers"}, bson.M{"$divide": []interface{}{"$enterfee", util.CouponRate}}}},
-				"AwardNum": bson.M{"$size": "$award"},
-				"Money":    "$moneyaward",
-				"Coupon":   "$couponaward",
+				"SignFee":   bson.M{"$multiply": []interface{}{bson.M{"$size": "$signinplayers"}, bson.M{"$divide": []interface{}{"$enterfee", util.CouponRate}}}},
+				"AwardNum":  bson.M{"$size": "$award"},
+				"Money":     "$moneyaward",
+				"AwardList": "$awardlist",
 				"LastMoney": bson.M{"$subtract": []interface{}{bson.M{
 					"$multiply": []interface{}{
 						bson.M{"$size": "$signinplayers"}, bson.M{"$divide": []interface{}{"$enterfee", util.CouponRate}}}},
-					// bson.M{"$add": []interface{}{"$moneyaward", bson.M{"$multiply": []interface{}{"$couponaward", util.CouponRate}}}}}}}},
 					"$moneyaward"}}}},
-			{"$group": bson.M{
-				"_id": "$matchid", "RecordTime": bson.M{"$first": "$RecordTime"}, "allMoney": bson.M{"$sum": "$Money"},
-				"allCoupon": bson.M{"$sum": "$Coupon"}, "allSign": bson.M{"$sum": "$SignInCount"},
-				"allSignFee": bson.M{"$sum": "$SignFee"}, "awardNum": bson.M{"$sum": "$AwardNum"},
-				"lastMoney": bson.M{"$sum": "$LastMoney"}}},
-			// {"$sort": bson.M{"count": -1}},
-		}).One(&one)
+		}).All(&all)
 		if err == mgo.ErrNotFound {
 			continue
 		}
@@ -139,29 +188,49 @@ func GetMatchReport(matchID string, start, end int64) []map[string]interface{} {
 			log.Error("get report fail:%v", err)
 			return nil
 		}
+		// log.Debug("all:%v", all)
 		// 数据汇总
-		allReport["AllSignPlayer"] = allReport["AllSignPlayer"].(int) + one["allSign"].(int)
-		allReport["AllSignFee"] = allReport["AllSignFee"].(float64) + one["allSignFee"].(float64)
-		allReport["AllAward"] = allReport["AllAward"].(float64) + one["allMoney"].(float64)
-		allReport["AllLast"] = allReport["AllLast"].(float64) + one["lastMoney"].(float64)
-
-		one["allSignFee"] = util.Decimal(one["allSignFee"].(float64))
-		one["allMoney"] = util.Decimal(one["allMoney"].(float64))
-		one["lastMoney"] = util.Decimal(one["lastMoney"].(float64))
+		// allReport["AllSignPlayer"] = allReport["AllSignPlayer"].(int) + one["allSign"].(int)
+		// allReport["AllSignFee"] = allReport["AllSignFee"].(float64) + one["allSignFee"].(float64)
+		// allReport["AllAward"] = allReport["AllAward"].(float64) + one["allMoney"].(float64)
+		// allReport["AllLast"] = allReport["AllLast"].(float64) + one["lastMoney"].(float64)
+		var oneSignPlayer, oneAwardNum int
+		var oneSignFee, oneAward, oneLast float64
+		awardCount := map[string]float64{}
+		for _, v := range all {
+			oneSignPlayer += v["SignInCount"].(int)
+			oneSignFee += util.GetFloat(v["SignFee"])
+			oneAward += util.GetFloat(v["Money"])
+			oneLast += util.GetFloat(v["LastMoney"])
+			oneAwardNum += v["AwardNum"].(int)
+			util.ParseAwards(util.ParseAwardItem(v["AwardList"].(string)), awardCount)
+		}
+		var awardStr string
+		for i, v := range awardCount {
+			tmp := util.FormatFloat(v, 2) + i
+			if len(awardStr) == 0 {
+				awardStr += tmp
+			} else {
+				awardStr += "," + tmp
+			}
+		}
+		one := map[string]interface{}{}
+		one["RecordTime"] = time.Unix(i, 0).Format("2006-01-02")
+		one["allMoney"] = oneAward
+		one["allSign"] = oneSignPlayer
+		one["allSignFee"] = oneSignFee
+		one["awardNum"] = oneAwardNum
+		one["lastMoney"] = oneLast
+		one["awardList"] = awardStr
 		result = append(result, one)
 	}
-	// 最后一位保存汇总数据
-	// all, err := json.Marshal(allReport)
-	// if err != nil {
-	// 	log.Error("get report fail:%v", err)
-	// 	return nil
-	// }
 
-	allReport["AllSignFee"] = util.Decimal(allReport["AllSignFee"].(float64))
-	allReport["AllAward"] = util.Decimal(allReport["AllAward"].(float64))
-	allReport["AllLast"] = util.Decimal(allReport["AllLast"].(float64))
+	allReport := map[string]interface{}{}
+	allReport["AllSignPlayer"] = AllSignPlayer
+	allReport["AllSignFee"] = util.FormatFloat(AllSignFee, 2)
+	allReport["AllAward"] = util.FormatFloat(AllAward, 2)
+	allReport["AllLast"] = util.FormatFloat(AllLast, 2)
 	result = append(result, allReport)
-	// ret, _ := json.Marshal(result)
 	return result
 }
 
@@ -923,4 +992,27 @@ func ReadKnapsackPropByAidPid(aid, pid int) *util.KnapsackProp {
 	rt := new(util.KnapsackProp)
 	readGameByPipeline(GDB, "knapsackprop", []bson.M{{"$match": bson.M{"accountid": aid, "propid": pid}}}, rt, readTypeOne)
 	return rt
+}
+
+// GetWhiteList 获取白名单
+func GetWhiteList() (util.WhiteListConfig, error) {
+	gs := gameDB.Ref()
+	defer gameDB.UnRef(gs)
+	wConfig := util.WhiteListConfig{}
+	if err := gs.DB(GDB).C("serverconfig").Find(bson.M{"config": "whitelist"}).One(&wConfig); err != nil {
+		log.Error("err:%v", err)
+		return wConfig, err
+	}
+	return wConfig, nil
+}
+
+// UpdateWhiteList 更新白名单
+func UpdateWhiteList(selector interface{}, update interface{}) error {
+	gs := gameDB.Ref()
+	defer gameDB.UnRef(gs)
+	if err := gs.DB(GDB).C("serverconfig").Update(selector, update); err != nil {
+		log.Error("err:%v", err)
+		return err
+	}
+	return nil
 }

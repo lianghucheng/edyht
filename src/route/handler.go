@@ -17,6 +17,7 @@ import (
 
 	"github.com/szxby/tools/log"
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 
 	"github.com/gin-gonic/gin"
 )
@@ -1237,7 +1238,7 @@ func OrderHistory(c *gin.Context) {
 		switch v.Merchant {
 		case 1:
 			merchant = "体总"
-		case 0://之前没有写入过的数据
+		case 0: //之前没有写入过的数据
 			merchant = "体总"
 		default:
 			merchant = "异常"
@@ -1396,10 +1397,10 @@ func robotMatch(c *gin.Context) {
 					continue
 				}
 				*rt = append(*rt, param.RobotMatch{
-					MatchType   :v,
-					MatchNum     :0,
-					RobotTotal  :0,
-					RobotJoinNum :0,
+					MatchType:    v,
+					MatchNum:     0,
+					RobotTotal:   0,
+					RobotJoinNum: 0,
 				})
 			}
 		}
@@ -1408,10 +1409,10 @@ func robotMatch(c *gin.Context) {
 			mt, ok := cond["matchtype"]
 			if ok {
 				*rt = append(*rt, param.RobotMatch{
-					MatchType   :mt.(string),
-					MatchNum     :0,
-					RobotTotal  :0,
-					RobotJoinNum :0,
+					MatchType:    mt.(string),
+					MatchNum:     0,
+					RobotTotal:   0,
+					RobotJoinNum: 0,
 				})
 			}
 		}
@@ -1659,4 +1660,273 @@ func robotStartAll(c *gin.Context) {
 		}
 	}
 	return
+}
+
+func optWhitList(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	data := optWhitListReq{}
+	if err := c.ShouldBind(&data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	wConfig, err := db.GetWhiteList()
+	if err != nil {
+		code = util.Retry
+		desc = "操作出错，请重试！"
+		return
+	}
+	// opt := data.Open
+	// if *opt == wConfig.WhiteSwitch {
+	// 	code = util.Retry
+	// 	desc = "操作出错，请重试！"
+	// 	return
+	// }
+	wConfig.WhiteSwitch = *data.Open
+	db.UpdateWhiteList(bson.M{"config": "whitelist"}, wConfig)
+	if err := util.PostToGame(config.GetConfig().GameServer+"/editWhiteList", JSON, data); err != nil {
+		code = util.Retry
+		desc = "后台修改成功，通知游戏服失败！"
+		return
+	}
+}
+
+func addWhitList(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	data := addWhitListReq{}
+	if err := c.ShouldBind(&data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	log.Debug("data:%+v", data)
+	if data.AccountID <= 0 {
+		code = util.Retry
+		desc = "操作出错，请重试！"
+		return
+	}
+	wConfig, err := db.GetWhiteList()
+	if err != nil {
+		code = util.Retry
+		desc = "操作出错，请重试！"
+		return
+	}
+	accountID := data.AccountID
+	for _, v := range wConfig.WhiteList {
+		if v == accountID {
+			code = util.Retry
+			desc = "该用户已在白名单中！"
+			return
+		}
+	}
+	user, err := db.GetOneUser(data.AccountID, "", "")
+	log.Debug("user:%v", user)
+	if err == mgo.ErrNotFound {
+		code = util.Retry
+		desc = "该用户不存在！"
+		return
+	}
+	if err != nil {
+		code = util.Retry
+		desc = "查询出错！"
+		return
+	}
+	wConfig.WhiteList = append(wConfig.WhiteList, data.AccountID)
+	db.UpdateWhiteList(bson.M{"config": "whitelist"}, wConfig)
+	db.RedisCommonDelData(db.WhiteList)
+	if err := util.PostToGame(config.GetConfig().GameServer+"/editWhiteList", JSON, data); err != nil {
+		code = util.Retry
+		desc = "后台修改成功，通知游戏服失败！"
+		return
+	}
+}
+
+func delWhitList(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	data := addWhitListReq{}
+	if err := c.ShouldBind(&data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	log.Debug("delwhite:%+v", data)
+	wConfig, err := db.GetWhiteList()
+	if err != nil {
+		code = util.Retry
+		desc = "操作出错，请重试！"
+		return
+	}
+	accountID := data.AccountID
+	tag := false
+	for i, v := range wConfig.WhiteList {
+		if v == accountID {
+			tag = true
+			if i == len(wConfig.WhiteList)-1 {
+				wConfig.WhiteList = wConfig.WhiteList[:len(wConfig.WhiteList)-1]
+			} else {
+				wConfig.WhiteList = append(wConfig.WhiteList[:i], wConfig.WhiteList[i+1:]...)
+			}
+			break
+		}
+	}
+	if !tag {
+		code = util.Retry
+		desc = "操作用户不在白名单中！"
+		return
+	}
+	db.UpdateWhiteList(bson.M{"config": "whitelist"}, wConfig)
+	db.RedisCommonDelData(db.WhiteList)
+	if err := util.PostToGame(config.GetConfig().GameServer+"/editWhiteList", JSON, data); err != nil {
+		code = util.Retry
+		desc = "后台修改成功，通知游戏服失败！"
+		return
+	}
+}
+
+func getWhitList(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	list := []map[string]interface{}{}
+	total := 0
+	open := false
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code":  code,
+			"desc":  desc,
+			"list":  list,
+			"total": total,
+			"open":  open,
+		})
+	}()
+	data := normalPageListReq{}
+	if err := c.ShouldBind(&data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+
+	wConig, err := db.GetWhiteList()
+	if err != nil {
+		code = util.Retry
+		desc = "查询出错，请重试！"
+		return
+	}
+
+	redisData := db.RedisCommonGetData(db.WhiteList)
+	ret := []map[string]interface{}{}
+	if redisData != nil {
+		if err := json.Unmarshal(redisData, &ret); err != nil {
+			code = util.Retry
+			desc = "查询出错，请重试！"
+			return
+		}
+	} else {
+		for _, v := range wConig.WhiteList {
+			user, err := db.GetOneUser(v, "", "")
+			if err != nil {
+				continue
+			}
+			one := map[string]interface{}{}
+			one["AccountID"] = user.AccountID
+			one["Nickname"] = user.Nickname
+			one["Phone"] = user.Username
+			ret = append(ret, one)
+		}
+		db.RedisCommonSetData(db.WhiteList, ret)
+	}
+	total = len(ret)
+	if data.Page <= 0 || data.Count <= 0 {
+		log.Error("error page:%v,count:%v", data.Page, data.Count)
+		code = util.Retry
+		desc = "非法请求页码！"
+		return
+	}
+	if (data.Page-1)*data.Count >= total && total != 0 {
+		log.Error("error page:%v,count:%v,total:%v", data.Page, data.Count, total)
+		code = util.Retry
+		desc = "非法请求页码！"
+		return
+	}
+	last := data.Page * data.Count
+	if last > total {
+		last = total
+	}
+	list = ret[(data.Page-1)*data.Count : last]
+	open = wConig.WhiteSwitch
+}
+
+// 在白名单中查找用户
+func searchWhiteList(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	list := []map[string]interface{}{}
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+			"list": list,
+		})
+	}()
+	data := getOneUserReq{}
+	if err := c.ShouldBind(&data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	if data.AccountID <= 0 && data.Nickname == "" && data.Phone == "" {
+		code = util.Retry
+		desc = "搜索参数不能为空！"
+		return
+	}
+	wConfig, err := db.GetWhiteList()
+	if err != nil {
+		code = util.Retry
+		desc = "查询出错！"
+		return
+	}
+	user, err := db.GetOneUser(data.AccountID, data.Nickname, data.Phone)
+	if err == mgo.ErrNotFound {
+		return
+	}
+	if err != nil {
+		code = util.Retry
+		desc = "查询出错！"
+		return
+	}
+	tag := false
+	for _, v := range wConfig.WhiteList {
+		if v == user.AccountID {
+			tag = true
+			break
+		}
+	}
+	if !tag {
+		return
+	}
+	one := map[string]interface{}{}
+	one["AccountID"] = user.AccountID
+	one["Nickname"] = user.Nickname
+	one["Phone"] = user.Username
+	list = append(list, one)
 }

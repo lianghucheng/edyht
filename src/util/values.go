@@ -239,3 +239,10 @@ type MatchRecord struct {
 	Score      int64  //得分
 	Multiples  string //倍数
 }
+
+// WhiteListConfig 白名单配置
+type WhiteListConfig struct {
+	Config      string `bson:"config"`
+	WhiteSwitch bool   `bson:"whiteswitch"`
+	WhiteList   []int  `bson:"whitelist"`
+}

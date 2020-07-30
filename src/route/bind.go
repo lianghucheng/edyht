@@ -30,6 +30,11 @@ func bind(server *gin.Engine) {
 	server.POST("/getMatchReviewByName", getMatchReviewByName)
 	server.POST("/getUserOptLog", getUserOptLog)
 	server.POST("/clearRealInfo", clearRealInfo)
+	server.POST("/optWhitList", optWhitList)
+	server.POST("/addWhitList", addWhitList)
+	server.POST("/delWhitList", delWhitList)
+	server.POST("/getWhitList", getWhitList)
+	server.POST("/searchWhiteList", searchWhiteList)
 
 	server.GET("/download/matchIcon/*action", downloadMatchIcon)
 	server.POST("/upload/matchIcon", uploadMatchIcon)
@@ -170,4 +175,17 @@ type getUserOptLogReq struct {
 type clearInfoReq struct {
 	UID int `json:"UID" binding:"required"`
 	Opt int `json:"Opt" binding:"required"`
+}
+
+type optWhitListReq struct {
+	Open *bool `json:"Open"`
+}
+
+type addWhitListReq struct {
+	AccountID int `json:"AccountID"`
+}
+
+type normalPageListReq struct {
+	Page  int `json:"Page" binding:"required"`
+	Count int `json:"Count" binding:"required"`
 }

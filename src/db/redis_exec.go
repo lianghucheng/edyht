@@ -1,6 +1,8 @@
 package db
 
 import (
+	"encoding/json"
+
 	"github.com/szxby/tools/log"
 )
 
@@ -11,6 +13,7 @@ const (
 	MatchListKey   = "matchList"   // match list
 	TokenExportKey = "tokenExport" // token export
 	TokenUsrn      = "usrn"
+	WhiteList      = "whiteList" // whitelist
 )
 
 // 数据过期时间
@@ -138,4 +141,43 @@ func RedisGetTokenUsrn(token string) string {
 	}
 
 	return string(res)
+}
+
+// RedisCommonSetData 通用的存储数据方法
+func RedisCommonSetData(key string, data interface{}) {
+	store, err := json.Marshal(data)
+	if err != nil {
+		log.Error("err:%v", err)
+		return
+	}
+	_, err = Do("Set", key, store, "EX", expireTime)
+	if err != nil {
+		log.Error("set data fail:%v", err)
+		return
+	}
+	return
+}
+
+// RedisCommonGetData 通用的读取数据方法
+func RedisCommonGetData(key string) []byte {
+	data, err := Do("Get", key)
+	if err != nil {
+		log.Error("get data fail:%v", err)
+		return nil
+	}
+	ret, ok := data.([]byte)
+	if !ok {
+		log.Error("get data fail %v", ret)
+		return nil
+	}
+	return ret
+}
+
+// RedisCommonDelData 通用的读取数据方法
+func RedisCommonDelData(key string) {
+	_, err := Do("Del", key)
+	if err != nil {
+		log.Error("del data fail:%v", err)
+		return
+	}
 }
