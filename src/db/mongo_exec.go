@@ -923,3 +923,15 @@ func ReadKnapsackPropByAidPid(aid, pid int) *util.KnapsackProp {
 	readGameByPipeline(GDB, "knapsackprop", []bson.M{{"$match": bson.M{"accountid": aid, "propid": pid}}}, rt, readTypeOne)
 	return rt
 }
+
+func ReadMatchAwardRecord(req *param.MatchAwardRecordReq) *[]util.MatchAwardRecord {
+	mar := new([]util.MatchAwardRecord)
+	readByPipeline(GDB, "matchawardrecord", req.GetDataPipeline(), mar, readTypeAll)
+	return mar
+}
+
+func ReadMatchAwardRecordCount(req *param.MatchAwardRecordReq) int {
+	cnt := new(util.DataCount)
+	readByPipeline(GDB, "matchawardrecord", base.GetCountPipeline(req), cnt, readTypeOne)
+	return cnt.Count
+}

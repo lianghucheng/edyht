@@ -239,3 +239,16 @@ type MatchRecord struct {
 	Score      int64  //得分
 	Multiples  string //倍数
 }
+
+type MatchAwardRecord struct {
+	MatchName    string
+	AwardContent string
+	ID           int `bson:"_id"`
+	Userid       int
+	Accountid    int
+	MatchType    string
+	MatchID      string
+	CreatedAt    int64
+	Realname     string
+	Desc         string
+}

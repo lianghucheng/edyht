@@ -49,6 +49,7 @@ func bind(server *gin.Engine) {
 	server.POST("/robot/stop-all", robotStopAll)
 	server.POST("/robot/start", robotStart)
 	server.POST("/robot/start-all", robotStartAll)
+	server.POST("/match/award-record", matchAwardRecord)
 }
 
 type loginData struct {

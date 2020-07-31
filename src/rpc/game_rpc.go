@@ -53,7 +53,7 @@ func RpcAddCouponFrag(aid, amount int) {
 	resp, errHttpDo := client.Do(req)
 	b_resp, errReadIO := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
-	if errJson != nil || errNewReq != nil|| errHttpDo != nil|| errReadIO != nil {
+	if errJson != nil || errNewReq != nil || errHttpDo != nil || errReadIO != nil {
 		log.Error("errJson:%v, errNewReq:%v, errHttpDo:%v, errReadIO:%v", errJson, errNewReq, errHttpDo, errReadIO)
 		return
 	}

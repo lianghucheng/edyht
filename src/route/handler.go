@@ -1239,7 +1239,7 @@ func OrderHistory(c *gin.Context) {
 		switch v.Merchant {
 		case 1:
 			merchant = "体总"
-		case 0://之前没有写入过的数据
+		case 0: //之前没有写入过的数据
 			merchant = "体总"
 		default:
 			merchant = "异常"
@@ -1398,10 +1398,10 @@ func robotMatch(c *gin.Context) {
 					continue
 				}
 				*rt = append(*rt, param.RobotMatch{
-					MatchType   :v,
-					MatchNum     :0,
-					RobotTotal  :0,
-					RobotJoinNum :0,
+					MatchType:    v,
+					MatchNum:     0,
+					RobotTotal:   0,
+					RobotJoinNum: 0,
 				})
 			}
 		}
@@ -1410,10 +1410,10 @@ func robotMatch(c *gin.Context) {
 			mt, ok := cond["matchtype"]
 			if ok {
 				*rt = append(*rt, param.RobotMatch{
-					MatchType   :mt.(string),
-					MatchNum     :0,
-					RobotTotal  :0,
-					RobotJoinNum :0,
+					MatchType:    mt.(string),
+					MatchNum:     0,
+					RobotTotal:   0,
+					RobotJoinNum: 0,
 				})
 			}
 		}
@@ -1489,6 +1489,7 @@ func robotSave(c *gin.Context) {
 	db.SaveRobotMatchNum(rmn)
 	rpc.MatchMaxRobotNumConf(rmn.PerMaxNum, rmn.MatchID)
 	rpc.RobotTotalConf(rmn.Total, rmn.MatchID)
+	log.Debug("!!!!!!!!!!!!!!!!!!!修改调试")
 	return
 }
 
@@ -1661,4 +1662,39 @@ func robotStartAll(c *gin.Context) {
 		}
 	}
 	return
+}
+
+func matchAwardRecord(c *gin.Context) {
+	code := util.Success
+	desc := util.ErrMsg[util.Success]
+	var resp interface{}
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+			"resp": resp,
+		})
+	}()
+	mar := new(param.MatchAwardRecordReq)
+	code, desc = parseJsonParam(c.Request, mar)
+	if code != util.Success {
+		code = util.FormatFail
+		desc = util.ErrMsg[code]
+		return
+	}
+	ret := db.ReadMatchAwardRecord(mar)
+	total := db.ReadMatchAwardRecordCount(mar)
+
+	rt := new([]param.MatchAward)
+	if err := transfer(ret, rt); err != nil {
+		code = util.FormatFail
+		desc = util.ErrMsg[code]
+		return
+	}
+	resp = &param.MatchAwardRecordResp{
+		Page:              mar.Page,
+		Per:               mar.Per,
+		Total:             total,
+		MatchAwardRecords: rt,
+	}
 }

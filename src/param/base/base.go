@@ -52,3 +52,18 @@ func GetPipeline(cond Condition) []bson.M {
 		{"$match": cond.(map[string]interface{})},
 	}
 }
+
+func GetUnionPipeline(cond Condition) []bson.M {
+	if cond == nil {
+		return nil
+	}
+	bson_arr := []bson.M{}
+	cond_map, ok := cond.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+	for k,v := range cond_map {
+		bson_arr = append(bson_arr, bson.M{k: v})
+	}
+	return []bson.M{{"$match": bson.M{"$or": bson_arr}}}
+}
