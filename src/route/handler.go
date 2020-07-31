@@ -2105,3 +2105,18 @@ func optRestart(c *gin.Context) {
 		return
 	}
 }
+
+// 首页数据
+func getFirstViewData(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	data := map[string]interface{}{}
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+			"data": data,
+		})
+	}()
+	data = db.GetFirstViewData()
+}

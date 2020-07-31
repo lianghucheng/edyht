@@ -60,7 +60,7 @@ func bind(server *gin.Engine) {
 	server.POST("/addRestart", addRestart)
 	server.POST("/editRestart", editRestart)
 	server.POST("/optRestart", optRestart)
-
+	server.GET("/getFirstViewData", getFirstViewData)
 }
 
 type loginData struct {
