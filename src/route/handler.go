@@ -747,21 +747,6 @@ func downloadMatchIcon(c *gin.Context) {
 	http.ServeFile(c.Writer, c.Request, filePath)
 }
 
-func getGameVersion(c *gin.Context) {
-	code := util.OK
-	desc := "OK"
-	var version, url string
-	defer func() {
-		c.JSON(http.StatusOK, gin.H{
-			"code":    code,
-			"desc":    desc,
-			"version": version,
-			"url":     url,
-		})
-	}()
-	version, url = db.GetGameVersion()
-}
-
 func getUserList(c *gin.Context) {
 	code := util.OK
 	desc := "OK"
@@ -1929,4 +1914,194 @@ func searchWhiteList(c *gin.Context) {
 	one["Nickname"] = user.Nickname
 	one["Phone"] = user.Username
 	list = append(list, one)
+}
+
+func getRestartList(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	list := []util.RestartConfig{}
+	total := 0
+	var online, match interface{}
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code":   code,
+			"desc":   desc,
+			"list":   list,
+			"total":  total,
+			"online": online,
+			"match":  match,
+		})
+	}()
+	data := getRestartListReq{}
+	if err := c.ShouldBind(&data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	wConig, total, err := db.GetRestartList(data.Page, data.Count, data.Start, data.End)
+	if err != nil {
+		code = util.Retry
+		desc = "查询出错，请重试！"
+		return
+	}
+	list = wConig
+
+	gameResp, _ := util.PostToGameResp(config.GetConfig().GameServer+"/getOnline", JSON, data)
+	if gameResp != nil {
+		if gameResp["online"] != nil {
+			online = gameResp["online"]
+		}
+		if gameResp["match"] != nil {
+			match = gameResp["match"]
+		}
+	}
+}
+
+func addRestart(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	data := addRestartReq{}
+	if err := c.ShouldBind(&data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	last, err := db.GetLastestRestart()
+	if err != nil {
+		code = util.Retry
+		desc = "添加失败,请重试!"
+		return
+	}
+	log.Debug("last:%+v", last)
+	if last.Status != util.RestartStatusFinish {
+		code = util.Retry
+		desc = "上次更新未完成!"
+		return
+	}
+	if data.EndTime <= 0 || data.RestartContent == "" || data.RestartTime <= 0 ||
+		data.RestartTitle == "" || data.RestartType == "" || data.TipsTime <= 0 ||
+		data.TipsTime >= data.RestartTime || data.RestartTime >= data.EndTime || data.TipsTime < time.Now().Unix() {
+		code = util.Retry
+		desc = "参数有误，请确认后重试！"
+		return
+	}
+	one := util.RestartConfig{}
+	one.ID = util.RandomString(5)
+	one.CreateTime = time.Now().Unix()
+	one.Status = util.RestartStatusWait
+	one.Config = "restart"
+	one.TipsTime = data.TipsTime
+	one.RestartTime = data.RestartTime
+	one.EndTime = data.EndTime
+	one.RestartTitle = data.RestartTitle
+	one.RestartType = data.RestartType
+	one.RestartContent = data.RestartContent
+	if err := db.InsertRestart(one); err != nil {
+		code = util.Retry
+		desc = "操作失败，请重试！"
+		return
+	}
+	if err := util.PostToGame(config.GetConfig().GameServer+"/restart", JSON, data); err != nil {
+		code = util.Retry
+		desc = "后台添加成功，通知游戏服失败！"
+		return
+	}
+}
+
+func editRestart(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	data := editRestartReq{}
+	if err := c.ShouldBind(&data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	one, err := db.GetOneRestart(bson.M{"id": data.ID})
+	if err != nil {
+		code = util.Retry
+		desc = "操作失败，请重试！"
+		return
+	}
+	if one.Status == util.RestartStatusIng {
+		code = util.Retry
+		desc = "服务器维护进行中,无法修改!"
+		return
+	}
+	if one.Status >= util.RestartStatusFinish {
+		code = util.Retry
+		desc = "服务器维护已完成,无法修改!"
+		return
+	}
+	newOne := util.RestartConfig{}
+	newOne.ID = one.ID
+	newOne.Config = one.Config
+	newOne.CreateTime = one.CreateTime
+	newOne.Status = one.Status
+	newOne.TipsTime = data.TipsTime
+	newOne.RestartTime = data.RestartTime
+	newOne.EndTime = data.EndTime
+	newOne.RestartTitle = data.RestartTitle
+	newOne.RestartType = data.RestartType
+	newOne.RestartContent = data.RestartContent
+	if err := db.UpdatetRestart(bson.M{"id": data.ID}, newOne); err != nil {
+		code = util.Retry
+		desc = "操作失败，请重试！"
+		return
+	}
+	if err := util.PostToGame(config.GetConfig().GameServer+"/restart", JSON, data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+}
+
+func optRestart(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	data := optRestartReq{}
+	if err := c.ShouldBind(&data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	one, err := db.GetOneRestart(bson.M{"id": data.ID})
+	if err != nil {
+		code = util.Retry
+		desc = "操作失败，请重试！"
+		return
+	}
+	if one.Status >= data.Status {
+		code = util.Retry
+		desc = "操作失败，请重试！"
+		return
+	}
+	if err := db.UpdatetRestart(bson.M{"id": data.ID}, bson.M{"$set": bson.M{"status": data.Status}}); err != nil {
+		code = util.Retry
+		desc = "操作失败，请重试！"
+		return
+	}
+	if err := util.PostToGame(config.GetConfig().GameServer+"/restart", JSON, data); err != nil {
+		code = util.Retry
+		desc = "后台修改成功，通知游戏服失败！"
+		return
+	}
 }

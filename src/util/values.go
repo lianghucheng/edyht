@@ -1,6 +1,8 @@
 package util
 
-import "os"
+import (
+	"os"
+)
 
 // 后台账号管理员分组
 const (
@@ -246,3 +248,24 @@ type WhiteListConfig struct {
 	WhiteSwitch bool   `bson:"whiteswitch"`
 	WhiteList   []int  `bson:"whitelist"`
 }
+
+// RestartConfig 服务器重启配置
+type RestartConfig struct {
+	Config         string `bson:"config"`
+	ID             string `bson:"id"`
+	TipsTime       int64  `bson:"tipstime"`
+	RestartTime    int64  `bson:"restarttime"`
+	EndTime        int64  `bson:"endtime"`
+	RestartTitle   string `bson:"restarttitle"`
+	RestartType    string `bson:"restarttype"`
+	Status         int    `bson:"status"`
+	RestartContent string `bson:"restartcontent"`
+	CreateTime     int64  `bson:"createtime"`
+}
+
+// 服务器重启更新状态
+const (
+	RestartStatusWait = iota + 1
+	RestartStatusIng
+	RestartStatusFinish
+)

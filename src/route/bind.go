@@ -41,6 +41,7 @@ func bind(server *gin.Engine) {
 	server.GET("/download/playerIcon/*action", downloadPlayerIcon)
 	server.POST("/upload/playerIcon", uploadPlayerIcon)
 	server.GET("/getGameVersion", getGameVersion)
+	server.GET("/getNotice", getNotice)
 
 	server.POST("/offlinepayment/list", offlinePaymentList)
 	server.POST("/offlinepayment/add", offlinePaymentAdd)
@@ -54,6 +55,12 @@ func bind(server *gin.Engine) {
 	server.POST("/robot/stop-all", robotStopAll)
 	server.POST("/robot/start", robotStart)
 	server.POST("/robot/start-all", robotStartAll)
+
+	server.POST("/getRestartList", getRestartList)
+	server.POST("/addRestart", addRestart)
+	server.POST("/editRestart", editRestart)
+	server.POST("/optRestart", optRestart)
+
 }
 
 type loginData struct {
@@ -188,4 +195,35 @@ type addWhitListReq struct {
 type normalPageListReq struct {
 	Page  int `json:"Page" binding:"required"`
 	Count int `json:"Count" binding:"required"`
+}
+
+type addRestartReq struct {
+	TipsTime       int64  `json:"TipsTime" binding:"required"`
+	RestartTime    int64  `json:"RestartTime" binding:"required"`
+	EndTime        int64  `json:"EndTime" binding:"required"`
+	RestartTitle   string `json:"RestartTitle" binding:"required"`
+	RestartType    string `json:"RestartType" binding:"required"`
+	RestartContent string `json:"RestartContent" binding:"required"`
+}
+
+type editRestartReq struct {
+	ID             string `json:"ID" binding:"required"`
+	TipsTime       int64  `json:"TipsTime" binding:"required"`
+	RestartTime    int64  `json:"RestartTime" binding:"required"`
+	EndTime        int64  `json:"EndTime" binding:"required"`
+	RestartTitle   string `json:"RestartTitle" binding:"required"`
+	RestartType    string `json:"RestartType" binding:"required"`
+	RestartContent string `json:"RestartContent" binding:"required"`
+}
+
+type optRestartReq struct {
+	ID     string `json:"ID" binding:"required"`
+	Status int    `json:"Status" binding:"required"`
+}
+
+type getRestartListReq struct {
+	Start int64 `json:"Start" `
+	End   int64 `json:"End"`
+	Page  int   `json:"Page" binding:"required"`
+	Count int   `json:"Count" binding:"required"`
 }

@@ -1016,3 +1016,70 @@ func UpdateWhiteList(selector interface{}, update interface{}) error {
 	}
 	return nil
 }
+
+// GetRestartList 获取重启信息表
+func GetRestartList(page, count int, start, end int64) ([]util.RestartConfig, int, error) {
+	gs := gameDB.Ref()
+	defer gameDB.UnRef(gs)
+	rConfigs := []util.RestartConfig{}
+	selector := bson.M{"config": "restart"}
+	if start > 0 && end > 0 {
+		selector["restarttime"] = bson.M{"$gte": start, "$lt": end}
+	}
+	total, _ := gs.DB(GDB).C("serverconfig").Find(selector).Count()
+	if err := gs.DB(GDB).C("serverconfig").Find(selector).Sort("-createtime").Skip((page - 1) * count).Limit(count).All(&rConfigs); err != nil {
+		log.Error("err:%v", err)
+		return rConfigs, total, err
+	}
+	return rConfigs, total, nil
+}
+
+// InsertRestart 新建重启信息表
+func InsertRestart(data interface{}) error {
+	gs := gameDB.Ref()
+	defer gameDB.UnRef(gs)
+	err := gs.DB(GDB).C("serverconfig").Insert(data)
+	if err != nil {
+		log.Error("err:%v", err)
+		return err
+	}
+	return nil
+}
+
+// UpdatetRestart 更新重启信息表
+func UpdatetRestart(selector interface{}, update interface{}) error {
+	gs := gameDB.Ref()
+	defer gameDB.UnRef(gs)
+	err := gs.DB(GDB).C("serverconfig").Update(selector, update)
+	if err != nil {
+		log.Error("err:%v", err)
+		return err
+	}
+	return nil
+}
+
+// GetOneRestart 获取单条重启信息
+func GetOneRestart(selector interface{}) (util.RestartConfig, error) {
+	gs := gameDB.Ref()
+	defer gameDB.UnRef(gs)
+	one := util.RestartConfig{}
+	err := gs.DB(GDB).C("serverconfig").Find(selector).One(&one)
+	if err != nil {
+		log.Error("err:%v", err)
+		return one, err
+	}
+	return one, nil
+}
+
+// GetLastestRestart 获取最新的重启信息
+func GetLastestRestart() (util.RestartConfig, error) {
+	gs := gameDB.Ref()
+	defer gameDB.UnRef(gs)
+	one := util.RestartConfig{}
+	err := gs.DB(GDB).C("serverconfig").Find(bson.M{"config": "restart"}).Sort("-createtime").Limit(1).One(&one)
+	if err != nil && err != mgo.ErrNotFound {
+		log.Error("err:%v", err)
+		return one, err
+	}
+	return one, nil
+}
