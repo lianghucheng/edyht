@@ -2,12 +2,14 @@ package util
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"math"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/szxby/tools/log"
@@ -89,4 +91,92 @@ func GetLastDateOfMonth(d time.Time) time.Time {
 // GetZeroTime 获取某一天的0点时间
 func GetZeroTime(d time.Time) time.Time {
 	return time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, d.Location())
+}
+
+// ParseAwardItem 根据奖励字段拆解出奖励数目及名称
+func ParseAwardItem(list string) []string {
+	tmp := map[string]interface{}{}
+	err := json.Unmarshal([]byte(list), &tmp)
+	if err != nil {
+		log.Error("unmarshal fail %v", err)
+		return nil
+	}
+	awards := make([]string, len(tmp))
+	for i, v := range tmp {
+		num := []byte{}
+		for _, s := range []byte(i) {
+			if s <= 57 && s >= 46 {
+				num = append(num, s)
+			}
+		}
+		rank, err := strconv.Atoi(string(num))
+		if err != nil {
+			continue
+		}
+		// log.Debug("check:%v", rank)
+		award, ok := v.(string)
+		if !ok {
+			continue
+		}
+		if rank-1 < 0 || rank > len(awards) {
+			continue
+		}
+		// log.Debug("award:%v", award)
+		awards[rank-1] = award
+	}
+	log.Debug("match award:%v", awards)
+	return awards
+}
+
+// ParseAwards 解析奖励
+func ParseAwards(awards []string, count map[string]float64) {
+	// var ret string
+	// 按名次循环
+	for _, award := range awards {
+		s := strings.Split(award, ",")
+		for _, one := range s {
+			num := []byte{}
+			awardNames := []byte{}
+			for _, b := range []byte(one) {
+				if b <= 57 && b >= 46 {
+					num = append(num, b)
+				} else {
+					awardNames = append(awardNames, b)
+				}
+			}
+			oneNum, err := strconv.ParseFloat(string(num), 64)
+			if err != nil {
+				log.Error("err:%v", err)
+				continue
+			}
+			if count[string(awardNames)] != 0 {
+				tmp := count[string(awardNames)]
+				tmp += oneNum
+				count[string(awardNames)] = tmp
+			} else {
+				count[string(awardNames)] = oneNum
+			}
+		}
+	}
+	// for i, v := range count {
+	// 	tmp := FormatFloat(v, 2) + i
+	// 	if len(ret) == 0 {
+	// 		ret += tmp
+	// 	} else {
+	// 		ret += "," + tmp
+	// 	}
+	// }
+	// return count
+}
+
+// GetFloat 转为float
+func GetFloat(data interface{}) float64 {
+	switch data.(type) {
+	case int:
+		return float64(data.(int))
+	case float64, float32:
+		return data.(float64)
+	default:
+		return 0
+	}
 }

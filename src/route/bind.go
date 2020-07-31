@@ -30,12 +30,18 @@ func bind(server *gin.Engine) {
 	server.POST("/getMatchReviewByName", getMatchReviewByName)
 	server.POST("/getUserOptLog", getUserOptLog)
 	server.POST("/clearRealInfo", clearRealInfo)
+	server.POST("/optWhitList", optWhitList)
+	server.POST("/addWhitList", addWhitList)
+	server.POST("/delWhitList", delWhitList)
+	server.POST("/getWhitList", getWhitList)
+	server.POST("/searchWhiteList", searchWhiteList)
 
 	server.GET("/download/matchIcon/*action", downloadMatchIcon)
 	server.POST("/upload/matchIcon", uploadMatchIcon)
 	server.GET("/download/playerIcon/*action", downloadPlayerIcon)
 	server.POST("/upload/playerIcon", uploadPlayerIcon)
 	server.GET("/getGameVersion", getGameVersion)
+	server.GET("/getNotice", getNotice)
 
 	server.POST("/offlinepayment/list", offlinePaymentList)
 	server.POST("/offlinepayment/add", offlinePaymentAdd)
@@ -50,6 +56,12 @@ func bind(server *gin.Engine) {
 	server.POST("/robot/start", robotStart)
 	server.POST("/robot/start-all", robotStartAll)
 	server.POST("/match/award-record", matchAwardRecord)
+
+	server.POST("/getRestartList", getRestartList)
+	server.POST("/addRestart", addRestart)
+	server.POST("/editRestart", editRestart)
+	server.POST("/optRestart", optRestart)
+	server.GET("/getFirstViewData", getFirstViewData)
 }
 
 type loginData struct {
@@ -171,4 +183,48 @@ type getUserOptLogReq struct {
 type clearInfoReq struct {
 	UID int `json:"UID" binding:"required"`
 	Opt int `json:"Opt" binding:"required"`
+}
+
+type optWhitListReq struct {
+	Open *bool `json:"Open"`
+}
+
+type addWhitListReq struct {
+	AccountID int `json:"AccountID"`
+}
+
+type normalPageListReq struct {
+	Page  int `json:"Page" binding:"required"`
+	Count int `json:"Count" binding:"required"`
+}
+
+type addRestartReq struct {
+	TipsTime       int64  `json:"TipsTime" binding:"required"`
+	RestartTime    int64  `json:"RestartTime" binding:"required"`
+	EndTime        int64  `json:"EndTime" binding:"required"`
+	RestartTitle   string `json:"RestartTitle" binding:"required"`
+	RestartType    string `json:"RestartType" binding:"required"`
+	RestartContent string `json:"RestartContent" binding:"required"`
+}
+
+type editRestartReq struct {
+	ID             string `json:"ID" binding:"required"`
+	TipsTime       int64  `json:"TipsTime" binding:"required"`
+	RestartTime    int64  `json:"RestartTime" binding:"required"`
+	EndTime        int64  `json:"EndTime" binding:"required"`
+	RestartTitle   string `json:"RestartTitle" binding:"required"`
+	RestartType    string `json:"RestartType" binding:"required"`
+	RestartContent string `json:"RestartContent" binding:"required"`
+}
+
+type optRestartReq struct {
+	ID     string `json:"ID" binding:"required"`
+	Status int    `json:"Status" binding:"required"`
+}
+
+type getRestartListReq struct {
+	Start int64 `json:"Start" `
+	End   int64 `json:"End"`
+	Page  int   `json:"Page" binding:"required"`
+	Count int   `json:"Count" binding:"required"`
 }
