@@ -220,7 +220,7 @@ func matchReport(c *gin.Context) {
 		desc = "非法请求时间！"
 		return
 	}
-	if over.Sub(begin) >= time.Duration(31*24*time.Hour) {
+	if over.Sub(begin) > time.Duration(31*24*time.Hour) {
 		code = util.Retry
 		desc = "单次查询时间不能超过一个月！"
 		return
@@ -328,7 +328,7 @@ func matchList(c *gin.Context) {
 		desc = "非法请求时间！"
 		return
 	}
-	if over.Sub(begin) >= time.Duration(31*24*time.Hour) {
+	if over.Sub(begin) > time.Duration(31*24*time.Hour) {
 		code = util.Retry
 		desc = "单次查询时间不能超过一个月！"
 		return
@@ -955,7 +955,7 @@ func getUserOptLog(c *gin.Context) {
 		desc = "非法请求时间！"
 		return
 	}
-	if over.Sub(begin) >= time.Duration(31*24*time.Hour) {
+	if over.Sub(begin) > time.Duration(31*24*time.Hour) {
 		code = util.Retry
 		desc = "单次查询时间不能超过一个月！"
 		return
@@ -2016,7 +2016,7 @@ func addRestart(c *gin.Context) {
 		return
 	}
 	log.Debug("last:%+v", last)
-	if last.Status != util.RestartStatusFinish {
+	if len(last.ID) > 0 && last.Status != util.RestartStatusFinish {
 		code = util.Retry
 		desc = "上次更新未完成!"
 		return
