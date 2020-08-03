@@ -1123,8 +1123,8 @@ func GetFirstViewData() map[string]interface{} {
 	defer gameDB.UnRef(gs)
 
 	// start 为游戏上线时间,只查询上线后的数据
-	var delta int64 = 5 * 60 * 60
-	start := util.GetZeroTime(time.Now().AddDate(0, 0, -10)).Unix() - delta
+	tmp, _ := time.ParseInLocation("2006-01-02 15:04:05", "2020-07-17 19:00:00", time.Local)
+	start := tmp.Unix()
 
 	matchData := map[string]interface{}{}
 	err := gs.DB(GDB).C("match").Pipe([]bson.M{
@@ -1173,8 +1173,8 @@ func GetFirstViewData() map[string]interface{} {
 	ret["TotalSignFee"] = 0
 	ret["TotalAward"] = 0
 	ret["TotalLast"] = 0
-	if chargeData["AllCharge"] != nil {
-		ret["TotalCharge"] = chargeData["AllCharge"]
+	if chargeData["charge"] != nil {
+		ret["TotalCharge"] = chargeData["charge"]
 	}
 	if matchData["allSignFee"] != nil {
 		ret["TotalSignFee"] = matchData["allSignFee"]
