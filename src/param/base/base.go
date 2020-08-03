@@ -50,7 +50,7 @@ func GetPipeline(cond Condition) []bson.M {
 	}
 	return []bson.M{
 		{"$match": cond.(map[string]interface{})},
-	}
+}
 }
 
 func GetUnionPipeline(cond Condition) []bson.M {
@@ -60,6 +60,9 @@ func GetUnionPipeline(cond Condition) []bson.M {
 	bson_arr := []bson.M{}
 	cond_map, ok := cond.(map[string]interface{})
 	if !ok {
+		return nil
+	}
+	if len(cond_map) == 0 {
 		return nil
 	}
 	for k,v := range cond_map {
