@@ -39,6 +39,7 @@ func GetMatchManagerList(page int, count int) ([]map[string]interface{}, int) {
 	err := s.DB(GDB).C("matchmanager").Pipe([]bson.M{
 		{"$match": bson.M{"state": bson.M{"$lt": util.Delete}}},
 		{"$project": bson.M{
+			"MatchSource":   "$matchsource",
 			"MatchID":       "$matchid",
 			"MatchName":     "$matchname",
 			"MatchType":     "$matchtype",
