@@ -70,3 +70,15 @@ func GetUnionPipeline(cond Condition) []bson.M {
 	}
 	return []bson.M{{"$match": bson.M{"$or": bson_arr}}}
 }
+
+type ObjectID interface {
+	GetOnePipeline() []bson.M
+}
+
+type OID struct {
+	ID int//唯一标识
+}
+
+func (ctx *OID)GetOnePipeline() []bson.M {
+	return []bson.M{{"$match": bson.M{"_id": ctx.ID}}}
+}

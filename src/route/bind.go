@@ -62,6 +62,22 @@ func bind(server *gin.Engine) {
 	server.POST("/editRestart", editRestart)
 	server.POST("/optRestart", optRestart)
 	server.GET("/getFirstViewData", getFirstViewData)
+	server.POST("/shop/merchant-insert", shopMerchantInsert)
+	server.POST("/shop/merchant-list", shopMerchantList)
+	server.POST("/shop/merchant-update", shopMerchantUpdate)
+	server.POST("/shop/merchant-delete", shopMerchantDelete)
+	server.POST("/shop/payaccount-insert", shopPayAccountInsert)
+	server.POST("/shop/payaccount-delete", shopPayAccountDelete)
+	server.POST("/shop/payaccount-list", shopPayAccountList)
+	server.POST("/shop/payaccount-update", shopPayAccountUpdate)
+	server.POST("/shop/goodstype-insert", shopGoodsTypeInsert)
+	server.POST("/shop/goodstype-update", shopGoodsTypeUpdate)
+	server.POST("/shop/goodstype-delete", shopGoodsTypeDelete)
+	server.POST("/shop/goodstype-list", shopGoodsTypeList)
+	server.POST("/shop/goods-insert", shopGoodsInsert)
+	server.POST("/shop/goods-delete", shopGoodsDelete)
+	server.POST("/shop/goods-List", shopGoodsList)
+	server.POST("/shop/goods-Update", shopGoodsUpdate)
 }
 
 type loginData struct {

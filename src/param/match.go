@@ -19,6 +19,7 @@ func (ctx *MatchAwardRecordReq) GetPipeline() []bson.M {
 
 func (ctx *MatchAwardRecordReq) GetDataPipeline() []bson.M {
 	pipeline := []bson.M{}
+	pipeline = append(pipeline, bson.M{"$sort": bson.M{"createdat": -1}})
 	pipeline = append(pipeline, ctx.TimeRange.GetPipeline()...)
 	pipeline = append(pipeline, base.GetUnionPipeline(ctx.Condition)...)
 	pipeline = append(pipeline, ctx.DivPage.GetPipeline()...)

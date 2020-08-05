@@ -9,6 +9,8 @@ const (
 	MatchNotExist       = 10005
 	MatchRobotConfExist = 10006
 	RobotNotBan         = 10007
+	MongoDBCreFail      = 10008
+	ModelTransferFail   = 10009
 )
 
 var ErrMsg = map[int]string{
@@ -20,4 +22,6 @@ var ErrMsg = map[int]string{
 	MatchNotExist:       "该赛事不存在",
 	MatchRobotConfExist: "该赛事机器人配置已存在",
 	RobotNotBan:         "该赛事机器人没有金禁用",
+	MongoDBCreFail: 	 "MongoDB自增错误",
+	ModelTransferFail:   "模型格式转换失败",
 }
