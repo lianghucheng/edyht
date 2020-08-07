@@ -110,8 +110,10 @@ type UserData struct {
 	TakenFee          float64
 	FirstLogin        bool
 	BankCard          *BankCard
-	ChargeAmount      string // 充值金额
-	LoginTime         int64  `bson:"logintime"`
+	ChargeAmount      string  // 充值金额
+	LoginTime         int64   `bson:"logintime"`
+	MatchCount        int     `bson:"-"` // 参赛次数
+	AwardAvailable    float64 `bson:"-"` // 可提现奖金
 }
 
 type BankCard struct {

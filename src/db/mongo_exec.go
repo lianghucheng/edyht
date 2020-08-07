@@ -687,6 +687,30 @@ func GetUserList(page, count int) ([]util.UserData, int) {
 		}
 		one.Fee = awardAmount
 
+		// 可提现奖金
+		award = map[string]interface{}{}
+		gs.DB(GDB).C("flowdata").Pipe([]bson.M{
+			{"$match": bson.M{"flowtype": 1, "status": 0}},
+			{"$match": bson.M{"userid": one.UserID}},
+			{"$project": bson.M{
+				"Total": "$changeamount",
+			}},
+			{"$group": bson.M{
+				"_id": "$accountid",
+				"all": bson.M{"$sum": "$Total"},
+			}},
+		}).One(&award)
+		var awardAvailable float64
+		// log.Debug("fee:%v", reflect.TypeOf(fee["all"]))
+		if awardAdd, ok := award["all"].(float64); ok {
+			awardAvailable = float64(awardAdd)
+		}
+		one.AwardAvailable = awardAvailable
+
+		// 参赛次数
+		matchCount, _ := gs.DB(GDB).C("gamerecord").Find(bson.M{"userid": one.UserID}).Count()
+		one.MatchCount = matchCount
+
 		data = append(data, one)
 		one = util.UserData{}
 	}

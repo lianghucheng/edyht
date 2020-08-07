@@ -180,3 +180,15 @@ func GetFloat(data interface{}) float64 {
 		return 0
 	}
 }
+
+// GetInt 转为Int
+func GetInt(data interface{}) int {
+	switch data.(type) {
+	case int:
+		return data.(int)
+	case float64, float32:
+		return int(data.(float64))
+	default:
+		return 0
+	}
+}
