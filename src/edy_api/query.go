@@ -45,15 +45,13 @@ func MatchInfoQuery(data util.MatchInfoQuery) (map[string]interface{}, error) {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	if err := checkCode(ret); err != nil {
-		return nil, err
-	}
 	msg := map[string]interface{}{}
 	if err := json.Unmarshal(ret, &msg); err != nil {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	return msg, nil
+	err = checkCode(ret)
+	return msg, err
 }
 
 // SonMatchQuery 子比赛信息查询
@@ -76,7 +74,8 @@ func SonMatchQuery(data util.SonMatchQuery) (map[string]interface{}, error) {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	return msg, nil
+	err = checkCode(ret)
+	return msg, err
 }
 
 // PlayerCashout 玩家提现
@@ -91,15 +90,13 @@ func PlayerCashout(data util.PlayerCashoutReq) (map[string]interface{}, error) {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	if err := checkCode(ret); err != nil {
-		return nil, err
-	}
 	msg := map[string]interface{}{}
 	if err := json.Unmarshal(ret, &msg); err != nil {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	return msg, nil
+	err = checkCode(ret)
+	return msg, err
 }
 
 // AwardResult 发奖结果查询接口
@@ -115,15 +112,13 @@ func AwardResult(data util.AwardResultReq) (map[string]interface{}, error) {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	if err := checkCode(ret); err != nil {
-		return nil, err
-	}
 	msg := map[string]interface{}{}
 	if err := json.Unmarshal(ret, &msg); err != nil {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	return msg, nil
+	err = checkCode(ret)
+	return msg, err
 }
 
 // PlayerWalletInfoQuery 用户钱包余额及明细查询
@@ -139,15 +134,13 @@ func PlayerWalletInfoQuery(data util.PlayerWalletInfoQuery) (map[string]interfac
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	if err := checkCode(ret); err != nil {
-		return nil, err
-	}
 	msg := map[string]interface{}{}
 	if err := json.Unmarshal(ret, &msg); err != nil {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	return msg, nil
+	err = checkCode(ret)
+	return msg, err
 }
 
 // PlayerWalletBalanceQuery 用户钱包余额查询
@@ -162,15 +155,13 @@ func PlayerWalletBalanceQuery(data util.PlayerWalletBalanceQuery) (map[string]in
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	if err := checkCode(ret); err != nil {
-		return nil, err
-	}
 	msg := map[string]interface{}{}
 	if err := json.Unmarshal(ret, &msg); err != nil {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	return msg, nil
+	err = checkCode(ret)
+	return msg, err
 }
 
 // PlayerWalletListQuery 用户钱包明細查询
@@ -186,15 +177,13 @@ func PlayerWalletListQuery(data util.PlayerWalletListQuery) (map[string]interfac
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	if err := checkCode(ret); err != nil {
-		return nil, err
-	}
 	msg := map[string]interface{}{}
 	if err := json.Unmarshal(ret, &msg); err != nil {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	return msg, nil
+	err = checkCode(ret)
+	return msg, err
 }
 
 // PlayerMasterScoreQuery 玩家大师分查询
@@ -210,15 +199,13 @@ func PlayerMasterScoreQuery(data util.PlayerMasterScoreQuery) (map[string]interf
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	if err := checkCode(ret); err != nil {
-		return nil, err
-	}
 	msg := map[string]interface{}{}
 	if err := json.Unmarshal(ret, &msg); err != nil {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	return msg, nil
+	err = checkCode(ret)
+	return msg, err
 }
 
 // PlayerMasterScoreQuery2 玩家按身份证查询大师分
@@ -234,15 +221,13 @@ func PlayerMasterScoreQuery2(data util.PlayerMasterScoreQuery) (map[string]inter
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	if err := checkCode(ret); err != nil {
-		return nil, err
-	}
 	msg := map[string]interface{}{}
 	if err := json.Unmarshal(ret, &msg); err != nil {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	return msg, nil
+	err = checkCode(ret)
+	return msg, err
 }
 
 // PlayerMasterScoreMatchQuery 按赛事ID查询大师分
@@ -255,15 +240,13 @@ func PlayerMasterScoreMatchQuery(matchID string) (map[string]interface{}, error)
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	if err := checkCode(ret); err != nil {
-		return nil, err
-	}
 	msg := map[string]interface{}{}
 	if err := json.Unmarshal(ret, &msg); err != nil {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	return msg, nil
+	err = checkCode(ret)
+	return msg, err
 }
 
 // AllMasterScoreQuery 厂商用户大师分排名列表查询
@@ -276,15 +259,13 @@ func AllMasterScoreQuery(page, size int) (map[string]interface{}, error) {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	if err := checkCode(ret); err != nil {
-		return nil, err
-	}
 	msg := map[string]interface{}{}
 	if err := json.Unmarshal(ret, &msg); err != nil {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	return msg, nil
+	err = checkCode(ret)
+	return msg, err
 }
 
 // CountryMasterScoreQuery 全国大师分排名查询
@@ -297,15 +278,13 @@ func CountryMasterScoreQuery(page, size int) (map[string]interface{}, error) {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	if err := checkCode(ret); err != nil {
-		return nil, err
-	}
 	msg := map[string]interface{}{}
 	if err := json.Unmarshal(ret, &msg); err != nil {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	return msg, nil
+	err = checkCode(ret)
+	return msg, err
 }
 
 // PlayerMasterScoreMatchDetail 玩家大师分详情查询
@@ -318,15 +297,13 @@ func PlayerMasterScoreMatchDetail(accountID, matchID, rank string) (map[string]i
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	if err := checkCode(ret); err != nil {
-		return nil, err
-	}
 	msg := map[string]interface{}{}
 	if err := json.Unmarshal(ret, &msg); err != nil {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	return msg, nil
+	err = checkCode(ret)
+	return msg, err
 }
 
 // PlayerWalletTransaction 用户钱包交易接口
@@ -341,15 +318,13 @@ func PlayerWalletTransaction(data util.PlayerWalletTransaction) (map[string]inte
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	if err := checkCode(ret); err != nil {
-		return nil, err
-	}
 	msg := map[string]interface{}{}
 	if err := json.Unmarshal(ret, &msg); err != nil {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	return msg, nil
+	err = checkCode(ret)
+	return msg, err
 }
 
 // PlayerWalletTransactionStatus 用户钱包交易状态查询接口
@@ -362,13 +337,11 @@ func PlayerWalletTransactionStatus(orderID string) (map[string]interface{}, erro
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	if err := checkCode(ret); err != nil {
-		return nil, err
-	}
 	msg := map[string]interface{}{}
 	if err := json.Unmarshal(ret, &msg); err != nil {
 		log.Error("err:%v", err)
 		return nil, err
 	}
-	return msg, nil
+	err = checkCode(ret)
+	return msg, err
 }
