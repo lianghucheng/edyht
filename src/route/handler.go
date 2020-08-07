@@ -157,6 +157,16 @@ func editMatch(c *gin.Context) {
 		desc = err.Error()
 		return
 	}
+	if data.DownShelfTime > 0 && data.DownShelfTime < time.Now().Unix() {
+		code = 1
+		desc = "下架时间有误!"
+		return
+	}
+	if data.DownShelfTime < data.ShelfTime && data.DownShelfTime > 0 && data.ShelfTime > 0 {
+		code = 1
+		desc = "下架时间不能在上架时间之前!"
+		return
+	}
 	if err := util.PostToGame(config.GetConfig().GameServer+"/editMatch", JSON, data); err != nil {
 		code = util.Retry
 		desc = err.Error()
