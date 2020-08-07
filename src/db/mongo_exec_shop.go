@@ -11,8 +11,16 @@ import (
 func SaveShopMerchant(data *util.ShopMerchant) {
 	if len(data.UpPayBranchs) != 0 {
 		data.UpDownStatus = 1
+	} else if len(data.UpPayBranchs) == 0 {
+		data.UpDownStatus = 0
 	}
 	save(DB, data, "shopmerchant", data.ID)
+	if err := rpc.RpcNotifyPayAccount(); err != nil {
+		log.Error(err.Error())
+	}
+	if err := rpc.RpcNotifyPriceMenu(); err != nil {
+		log.Error(err.Error())
+	}
 }
 
 func ReadShopMerchantList(req *param.ShopMerchantListReq) *[]util.ShopMerchant {
@@ -63,10 +71,14 @@ func SaveGoodsType(data *util.GoodsType) {
 	if err := rpc.RpcNotifyPriceMenu(); err != nil {
 		log.Error(err.Error())
 	}
+	if err := rpc.RpcNotifyGoodsType(); err != nil {
+		log.Error(err.Error())
+	}
 }
 
 func ReadGoodsTypeList(req *param.ShopGoodsTypeListReq) *[]util.GoodsType {
 	datas := new([]util.GoodsType)
+	log.Debug("查看商品类型：%v", req.GetDataPipeline())
 	readByPipeline(DB, "shopgoodstype", req.GetDataPipeline(), datas, readTypeAll)
 	return datas
 }

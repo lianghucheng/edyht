@@ -33,6 +33,14 @@ func shopMerchantInsert(c *gin.Context) {
 		log.Error(err.Error())
 		return
 	}
+
+	if shopMerchant.MerchantType <= 0 {
+		code = util.ModelTransferFail
+		desc = util.ErrMsg[code]
+		log.Error("The merchant type can not is nil")
+		return
+	}
+
 	id, err := db.MongoDBNextSeq("shopmerchant")
 	if err != nil {
 		code = util.MongoDBCreFail
@@ -77,9 +85,9 @@ func shopMerchantList(c *gin.Context) {
 		return
 	}
 	resp = &param.ShopMerchantListResp{
-		Page:              req.Page,
-		Per:               req.Per,
-		Total:             total,
+		Page:          req.Page,
+		Per:           req.Per,
+		Total:         total,
 		ShopMerchants: rt,
 	}
 }
@@ -162,6 +170,14 @@ func shopPayAccountInsert(c *gin.Context) {
 		log.Error(err.Error())
 		return
 	}
+
+	if shopPayAccount.MerchantID <= 0 {
+		code = util.ModelTransferFail
+		desc = util.ErrMsg[code]
+		log.Error("The merchant type can not is nil")
+		return
+	}
+
 	id, err := db.MongoDBNextSeq("shoppayaccount")
 	if err != nil {
 		code = util.MongoDBCreFail
@@ -229,9 +245,9 @@ func shopPayAccountList(c *gin.Context) {
 		return
 	}
 	resp = &param.ShopPayAccountListResp{
-		Page:              req.Page,
-		Per:               req.Per,
-		Total:             total,
+		Page:        req.Page,
+		Per:         req.Per,
+		Total:       total,
 		PayAccounts: rt,
 	}
 }
@@ -282,6 +298,12 @@ func shopGoodsTypeInsert(c *gin.Context) {
 		code = util.ModelTransferFail
 		desc = util.ErrMsg[code]
 		log.Error(err.Error())
+		return
+	}
+	if shopGoodsType.MerchantID <= 0 {
+		code = util.ModelTransferFail
+		desc = util.ErrMsg[code]
+		log.Error("The merchant type can not is nil")
 		return
 	}
 	id, err := db.MongoDBNextSeq("shopgoodstype")
@@ -376,10 +398,18 @@ func shopGoodsTypeList(c *gin.Context) {
 		desc = util.ErrMsg[code]
 		return
 	}
+
+	goods := new(param.ShopGoodsListReq)
+	m := make(map[string]interface{})
+	for k, v := range *rt {
+		m["goodstypeid"] = v.ID
+		(*rt)[k].Num = db.ReadGoodsCount(goods)
+	}
+
 	resp = &param.ShopGoodsTypeListResp{
-		Page:              req.Page,
-		Per:               req.Per,
-		Total:             total,
+		Page:       req.Page,
+		Per:        req.Per,
+		Total:      total,
 		GoodsTypes: rt,
 	}
 }
@@ -404,6 +434,12 @@ func shopGoodsInsert(c *gin.Context) {
 		code = util.ModelTransferFail
 		desc = util.ErrMsg[code]
 		log.Error(err.Error())
+		return
+	}
+	if shopGoods.GoodsTypeID <= 0 {
+		code = util.ModelTransferFail
+		desc = util.ErrMsg[code]
+		log.Error("The merchant type can not is nil")
 		return
 	}
 	id, err := db.MongoDBNextSeq("shopgoods")
@@ -473,9 +509,9 @@ func shopGoodsList(c *gin.Context) {
 		return
 	}
 	resp = &param.ShopGoodsListResp{
-		Page:              req.Page,
-		Per:               req.Per,
-		Total:             total,
+		Page:    req.Page,
+		Per:     req.Per,
+		Total:   total,
 		Goodses: rt,
 	}
 }

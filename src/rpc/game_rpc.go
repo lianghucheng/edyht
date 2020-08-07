@@ -64,7 +64,8 @@ func RpcAddCouponFrag(aid, amount int) {
 const rpcNotifyPayAccount = "/notify/payaccount"
 
 func RpcNotifyPayAccount() error {
-	resp, err := http.Get(host+port+rpcNotifyPayAccount)
+	log.Debug("RpcNotifyPayAccount")
+	resp, err := http.Get(host + port + rpcNotifyPayAccount)
 	if err != nil {
 		return err
 	}
@@ -74,7 +75,7 @@ func RpcNotifyPayAccount() error {
 		return err
 	}
 	m := struct {
-		Code int
+		Code   int
 		Errmsg string
 	}{}
 	if err := json.Unmarshal(buf, &m); err != nil {
@@ -89,7 +90,8 @@ func RpcNotifyPayAccount() error {
 const rpcNotidyPriceMenu = "/notify/pricemenu"
 
 func RpcNotifyPriceMenu() error {
-	resp, err := http.Get(host+port+rpcNotidyPriceMenu)
+	log.Debug("RpcNotifyPriceMenu")
+	resp, err := http.Get(host + port + rpcNotidyPriceMenu)
 	if err != nil {
 		return err
 	}
@@ -99,7 +101,33 @@ func RpcNotifyPriceMenu() error {
 		return err
 	}
 	m := struct {
-		Code int
+		Code   int
+		Errmsg string
+	}{}
+	if err := json.Unmarshal(buf, &m); err != nil {
+		return err
+	}
+	if m.Code != 10000 {
+		return errors.New(fmt.Sprintf("request fail, the code is %v. ", m.Code))
+	}
+	return nil
+}
+
+const rpcNotidyGoodsType = "/notify/goodstype"
+
+func RpcNotifyGoodsType() error {
+	log.Debug("RpcNotifyGoodsType")
+	resp, err := http.Get(host + port + rpcNotidyGoodsType)
+	if err != nil {
+		return err
+	}
+	buf, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		return err
+	}
+	m := struct {
+		Code   int
 		Errmsg string
 	}{}
 	if err := json.Unmarshal(buf, &m); err != nil {
