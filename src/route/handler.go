@@ -460,11 +460,13 @@ func uflow2Pflow(c *[]util.FlowData) *[]param.FlowData {
 	rt := new([]param.FlowData)
 	for _, v := range *c {
 		stat := 0
-		if v.FlowType != 1 {
+		switch v.FlowType {
+		case util.FlowTypeWithDraw:
 			stat = v.Status
-		}
-		if v.FlowType == 4 {
-			stat = 5
+		case util.FlowTypeGift:
+			stat = util.FlowDataStatusGift
+		case util.FlowTypeSign:
+			stat = util.FlowDataStatusSign
 		}
 		temp := param.FlowData{
 			ID:           v.ID,

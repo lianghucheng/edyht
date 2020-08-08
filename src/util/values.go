@@ -56,10 +56,19 @@ type MatchManager struct {
 }
 
 const (
-	FlowDataStatusNormal = 0 //比赛获得
-	FlowDataStatusAction = 1 //提奖中
-	FlowDataStatusOver   = 2 //已提奖
-	FlowDataStatusBack   = 3 //已退款
+	FlowTypeAward    = 1
+	FlowTypeWithDraw = 2
+	FlowTypeGift     = 3
+	FlowTypeSign     = 4
+)
+
+const (
+	FlowDataStatusNormal = 0
+	FlowDataStatusAction = 1
+	FlowDataStatusOver   = 2
+	FlowDataStatusBack   = 3
+	FlowDataStatusGift   = 4
+	FlowDataStatusSign   = 5
 )
 
 type FlowData struct {
