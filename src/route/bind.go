@@ -22,6 +22,7 @@ func bind(server *gin.Engine) {
 	server.POST("/flowdata/payments", flowDataPayments)
 	server.POST("/flowdata/refunds", flowDataRefunds)
 	server.POST("/flowdata/export", flowDataExport)
+	server.POST("/flowdata/pass", flowDataPass)
 
 	server.POST("/getUserList", getUserList)
 	server.POST("/getOneUser", getOneUser)

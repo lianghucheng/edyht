@@ -9,7 +9,7 @@
         "MongoAddr":"mongodb://192.168.1.8",
         "GameMongo":"mongodb://192.168.1.8",
         "GameServer":"http://127.0.0.1:9084",
-        "LocalIP":"http://192.168.1.8",
+        "LocalIP":"http://192.168.1.134",
         "PassURL":["/getGameVersion","/download/matchIcon", "/download/playerIcon", "/upload/playerIcon","/getNotice"],
         "ExportURL": ["/flowdata/refunds", "/flowdata/payments"],
         "BackDB":"backstage",

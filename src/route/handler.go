@@ -3,10 +3,12 @@ package route
 import (
 	"bs/config"
 	"bs/db"
+	"bs/edy_api"
 	"bs/param"
 	"bs/rpc"
 	"bs/util"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -667,6 +669,42 @@ func flowDataExport(c *gin.Context) {
 
 	resp = fes
 	db.RedisSetTokenExport(c.GetHeader("token"), true)
+	return
+}
+
+func flowDataPass(c *gin.Context) {
+	code := util.Success
+	desc := util.ErrMsg[util.Success]
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	req := new(param.FlowDataPassReq)
+	code, desc = parseJsonParam(c.Request, req)
+	if code != util.Success {
+		return
+	}
+	flowData := db.ReadFlowDataByID(req.Id)
+	if flowData.Status != 1 {
+		code = util.Fail
+		desc = util.ErrMsg[util.Fail]
+		return
+	}
+	flowData.PassStatus = 1
+	db.SaveFlowData(flowData)
+	ud := db.ReadUserDataByAID(flowData.Accountid)
+	msg, err := edy_api.PlayerCashout(util.PlayerCashoutReq{
+		Player_id:        fmt.Sprintf("%v", flowData.Accountid),
+		Player_id_number: fmt.Sprintf("%v", ud.IDCardNo),
+	})
+
+	if err != nil {
+		therefund(req.Id, msg["resp_msg"].(string))
+	} else {
+		thepayment(req.Id, "提现成功")
+	}
 	return
 }
 
