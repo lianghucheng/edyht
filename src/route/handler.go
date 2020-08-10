@@ -95,6 +95,15 @@ func addMatch(c *gin.Context) {
 		desc = err.Error()
 		return
 	}
+	if data.MatchSource == util.MatchSourceSportsCenter && data.MatchLevel <= 0 {
+		code = util.Retry
+		desc = "体总赛事需配置赛事等级!"
+		return
+	}
+	// 非体总赛事置为0
+	if data.MatchSource != util.MatchSourceSportsCenter {
+		data.MatchLevel = 0
+	}
 	err := util.PostToGame(config.GetConfig().GameServer+"/addMatch", JSON, data)
 	if err != nil {
 		code = util.Retry
@@ -301,7 +310,7 @@ func matchList(c *gin.Context) {
 	code := util.OK
 	desc := "OK"
 	total := 0
-	resp := []map[string]interface{}{}
+	var resp interface{}
 	defer func() {
 		c.JSON(http.StatusOK, gin.H{
 			"code":  code,
@@ -320,7 +329,9 @@ func matchList(c *gin.Context) {
 	if len(data.MatchID) > 0 {
 		tmp := db.GetMatch(data.MatchID)
 		if tmp != nil {
-			resp = append(resp, tmp)
+			// ret := []map[string]interface{}{}
+			// ret = append(ret, tmp)
+			resp = tmp
 			total = 1
 		}
 		return
@@ -349,7 +360,7 @@ func matchList(c *gin.Context) {
 	last := data.Page * data.Count
 	// 查看redis中是否有缓存
 	if redisData := db.RedisGetMatchList(data.MatchType, data.Start, data.End); redisData != nil {
-		ret := []map[string]interface{}{}
+		ret := []util.MatchManager{}
 		json.Unmarshal(redisData, &ret)
 		total = len(ret)
 		if (data.Page-1)*data.Count >= total {
