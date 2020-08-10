@@ -1282,12 +1282,16 @@ func OrderHistory(c *gin.Context) {
 		default:
 			payStatus = "异常"
 		}
+
 		merchant := ""
 		switch v.Merchant {
 		case 1:
 			merchant = "体总"
 		case 0: //之前没有写入过的数据
 			merchant = "体总"
+		case 2:
+			merchant = "真人美女斗地主"
+			payStatus = "支付成功"
 		default:
 			merchant = "异常"
 		}
