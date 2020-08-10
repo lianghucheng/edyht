@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"bs/config"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -91,7 +92,7 @@ const rpcNotidyPriceMenu = "/notify/pricemenu"
 
 func RpcNotifyPriceMenu() error {
 	log.Debug("RpcNotifyPriceMenu")
-	resp, err := http.Get(host + port + rpcNotidyPriceMenu)
+	resp, err := http.Get(config.GetConfig().GameServer + rpcNotidyPriceMenu)
 	if err != nil {
 		return err
 	}
@@ -117,7 +118,7 @@ const rpcNotidyGoodsType = "/notify/goodstype"
 
 func RpcNotifyGoodsType() error {
 	log.Debug("RpcNotifyGoodsType")
-	resp, err := http.Get(host + port + rpcNotidyGoodsType)
+	resp, err := http.Get(config.GetConfig().GameServer + rpcNotidyGoodsType)
 	if err != nil {
 		return err
 	}

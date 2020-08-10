@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"bs/config"
 	"fmt"
 	"github.com/szxby/tools/log"
 	"io/ioutil"
@@ -9,7 +10,7 @@ import (
 
 func RobotTotalConf(total int, matchid string) {
 	log.Debug("!!!!!!!!!!1rpc RobotTotalConf")
-	resp, err := http.Get(fmt.Sprintf("http://localhost:9086/conf/num-limit?robot_total=%v&matchid=%v", total, matchid))
+	resp, err := http.Get(fmt.Sprintf(config.GetConfig().GameServer+"/conf/num-limit?robot_total=%v&matchid=%v", total, matchid))
 	if err != nil {
 		log.Error(err.Error())
 		return
@@ -25,7 +26,7 @@ func RobotTotalConf(total int, matchid string) {
 
 func RobotStatusConf(status int, matchid string) {
 	log.Debug("!!!!!!!!!!!1rpc RobotStatusConf")
-	resp, err := http.Get(fmt.Sprintf("http://localhost:9086/conf/robot-status?status=%v&matchid=%v", status, matchid))
+	resp, err := http.Get(fmt.Sprintf(config.GetConfig().GameServer+"/conf/robot-status?status=%v&matchid=%v", status, matchid))
 	if err != nil {
 		log.Error(err.Error())
 		return

@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"bs/config"
 	"bytes"
 	"encoding/json"
 	"github.com/szxby/tools/log"
@@ -27,7 +28,7 @@ func RpcUpdateHeadImg(aid int, headimg string) {
 		log.Error(err.Error())
 		return
 	}
-	req, err := http.NewRequest("GET", host+port+updateHeadImgUri, bytes.NewBuffer(b))
+	req, err := http.NewRequest("GET", config.GetConfig().GameServer+updateHeadImgUri, bytes.NewBuffer(b))
 	if err != nil {
 		log.Error(err.Error())
 		return

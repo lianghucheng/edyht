@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"bs/config"
 	"bytes"
 	"encoding/json"
 	"github.com/szxby/tools/log"
@@ -28,7 +29,7 @@ func AddAward(aid int, amount float64) {
 		log.Error(err.Error())
 		return
 	}
-	req, err := http.NewRequest("GET", host+port+addAwardUri, bytes.NewBuffer(b))
+	req, err := http.NewRequest("GET", config.GetConfig().GameServer+addAwardUri, bytes.NewBuffer(b))
 	_, err = (&http.Client{}).Do(req)
 	if err != nil {
 		log.Error(err.Error())
