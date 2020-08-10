@@ -63,7 +63,7 @@ func GetMatchManagerList(page int, count int) ([]util.MatchManager, int) {
 		// 	"TotalMatch":    "$totalmatch",
 		// 	"_id":           0,
 		// }},
-		{"$sort": bson.M{"Sort": 1}},
+		{"$sort": bson.M{"sort": 1}},
 		{"$skip": (page - 1) * count},
 		{"$limit": count},
 	}).All(&list)
@@ -312,7 +312,7 @@ func GetMatchList(matchType string, start, end int64) []util.MatchManager {
 			// 	"EnterFee":    "$enterfee",
 			// 	"_id":         0,
 			// }},
-			{"$sort": bson.M{"CreateTime": -1}},
+			{"$sort": bson.M{"createtime": -1}},
 		}).Iter()
 	} else {
 		iter = s.DB(GDB).C("match").Pipe([]bson.M{
@@ -333,7 +333,7 @@ func GetMatchList(matchType string, start, end int64) []util.MatchManager {
 			// 	"EnterFee":    "$enterfee",
 			// 	"_id":         0,
 			// }},
-			{"$sort": bson.M{"CreateTime": -1}},
+			{"$sort": bson.M{"createtime": -1}},
 		}).Iter()
 	}
 	for iter.Next(&one) {
@@ -342,6 +342,7 @@ func GetMatchList(matchType string, start, end int64) []util.MatchManager {
 		// 	log.Error("get report fail:%v", err)
 		// 	return nil
 		// }
+		one.MatchID = one.SonMatchID
 		result = append(result, one)
 		one = util.MatchManager{}
 	}
