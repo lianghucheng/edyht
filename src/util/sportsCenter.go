@@ -67,3 +67,15 @@ type PlayerWalletTransaction struct {
 	Notes      string  `json:"notes"`
 	Notify_url string  `json:"notify_url"`
 }
+
+type PlayerMasterScoreRet struct {
+	Resp_code   string `json:"resp_code"`
+	Resp_msg    string `json:"resp_msg"`
+	Ranking     int    `json:"ranking"`
+	Level_name  string `json:"level_name"`
+	G           string `json:"g"`
+	S           string `json:"s"`
+	R           string `json:"r"`
+	B           string `json:"b"`
+	Player_name string `json:"player_name"`
+}

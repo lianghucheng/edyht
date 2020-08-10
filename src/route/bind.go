@@ -76,6 +76,7 @@ type matchManagerReq struct {
 
 type addManagerReq struct {
 	MatchSource int      `json:"MatchSource" binding:"required"` // 赛事来源
+	MatchLevel  int      `json:"MatchLevel"`                     // 赛事级别
 	MatchID     string   `json:"MatchID" binding:"required"`     // 赛事id号
 	MatchType   string   `json:"MatchType" binding:"required"`   // 赛事类型
 	MatchName   string   `json:"MatchName" binding:"required"`   // 赛事名称

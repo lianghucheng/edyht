@@ -45,6 +45,7 @@ func MatchInfoQuery(data util.MatchInfoQuery) (map[string]interface{}, error) {
 		log.Error("err:%v", err)
 		return nil, err
 	}
+	log.Debug("ret:%+v", string(ret))
 	msg := map[string]interface{}{}
 	if err := json.Unmarshal(ret, &msg); err != nil {
 		log.Error("err:%v", err)
@@ -187,22 +188,22 @@ func PlayerWalletListQuery(data util.PlayerWalletListQuery) (map[string]interfac
 }
 
 // PlayerMasterScoreQuery 玩家大师分查询
-func PlayerMasterScoreQuery(data util.PlayerMasterScoreQuery) (map[string]interface{}, error) {
+func PlayerMasterScoreQuery(data util.PlayerMasterScoreQuery) (util.PlayerMasterScoreRet, error) {
 	// data.Cp_id = base.CpID
 	// str, _ := json.Marshal(data)
 	// log.Debug("str:%v", string(str))
-	c := base.NewClient("/rating/by_identity_number", fmt.Sprintf("cp_id=%v&player_id_number=%v", base.CpID,
+	c := base.NewClient("/edy/rating/by_identity_number", fmt.Sprintf("cp_id=%v&player_id_number=%v", base.CpID,
 		data.Player_id_number), base.ReqGet)
 	c.GenerateSign(base.ReqGet)
 	ret, err := c.DoGet()
+	msg := util.PlayerMasterScoreRet{}
 	if err != nil {
 		log.Error("err:%v", err)
-		return nil, err
+		return msg, err
 	}
-	msg := map[string]interface{}{}
 	if err := json.Unmarshal(ret, &msg); err != nil {
 		log.Error("err:%v", err)
-		return nil, err
+		return msg, err
 	}
 	err = checkCode(ret)
 	return msg, err
@@ -213,7 +214,7 @@ func PlayerMasterScoreQuery2(data util.PlayerMasterScoreQuery) (map[string]inter
 	// data.Cp_id = base.CpID
 	// str, _ := json.Marshal(data)
 	// log.Debug("str:%v", string(str))
-	c := base.NewClient("/rating/by_player_id_number", fmt.Sprintf("cp_id=%v&player_id_number=%v", base.CpID,
+	c := base.NewClient("/edy/rating/by_player_id_number", fmt.Sprintf("cp_id=%v&player_id_number=%v", base.CpID,
 		data.Player_id_number), base.ReqGet)
 	c.GenerateSign(base.ReqGet)
 	ret, err := c.DoGet()
@@ -232,7 +233,7 @@ func PlayerMasterScoreQuery2(data util.PlayerMasterScoreQuery) (map[string]inter
 
 // PlayerMasterScoreMatchQuery 按赛事ID查询大师分
 func PlayerMasterScoreMatchQuery(matchID string) (map[string]interface{}, error) {
-	c := base.NewClient("/rating/by_match_id", fmt.Sprintf("cp_id=%v&match_id=%v", base.CpID,
+	c := base.NewClient("/edy/rating/by_match_id", fmt.Sprintf("cp_id=%v&match_id=%v", base.CpID,
 		matchID), base.ReqGet)
 	c.GenerateSign(base.ReqGet)
 	ret, err := c.DoGet()
@@ -251,7 +252,7 @@ func PlayerMasterScoreMatchQuery(matchID string) (map[string]interface{}, error)
 
 // AllMasterScoreQuery 厂商用户大师分排名列表查询
 func AllMasterScoreQuery(page, size int) (map[string]interface{}, error) {
-	c := base.NewClient("/rating/rank/list", fmt.Sprintf("cp_id=%v&page=%v&page_size=%v", base.CpID,
+	c := base.NewClient("/edy/rating/rank/list", fmt.Sprintf("cp_id=%v&page=%v&page_size=%v", base.CpID,
 		page, size), base.ReqGet)
 	c.GenerateSign(base.ReqGet)
 	ret, err := c.DoGet()
@@ -270,7 +271,7 @@ func AllMasterScoreQuery(page, size int) (map[string]interface{}, error) {
 
 // CountryMasterScoreQuery 全国大师分排名查询
 func CountryMasterScoreQuery(page, size int) (map[string]interface{}, error) {
-	c := base.NewClient("/rating/rank/all/list", fmt.Sprintf("cp_id=%v&page=%v&page_size=%v", base.CpID,
+	c := base.NewClient("/edy/rating/rank/all/list", fmt.Sprintf("cp_id=%v&page=%v&page_size=%v", base.CpID,
 		page, size), base.ReqGet)
 	c.GenerateSign(base.ReqGet)
 	ret, err := c.DoGet()
@@ -289,7 +290,7 @@ func CountryMasterScoreQuery(page, size int) (map[string]interface{}, error) {
 
 // PlayerMasterScoreMatchDetail 玩家大师分详情查询
 func PlayerMasterScoreMatchDetail(accountID, matchID, rank string) (map[string]interface{}, error) {
-	c := base.NewClient("/rating/detail", fmt.Sprintf("cp_id=%v&player_id=%v&match_id=%v&rank=%v", base.CpID,
+	c := base.NewClient("/edy/rating/detail", fmt.Sprintf("cp_id=%v&player_id=%v&match_id=%v&rank=%v", base.CpID,
 		accountID, matchID, rank), base.ReqGet)
 	c.GenerateSign(base.ReqGet)
 	ret, err := c.DoGet()

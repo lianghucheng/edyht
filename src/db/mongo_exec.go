@@ -29,39 +29,40 @@ func GetUser(account string) (user *util.User) {
 }
 
 // GetMatchManagerList 获取比赛类型列表
-func GetMatchManagerList(page int, count int) ([]map[string]interface{}, int) {
+func GetMatchManagerList(page int, count int) ([]util.MatchManager, int) {
 	s := gameDB.Ref()
 	defer gameDB.UnRef(s)
-	// one := map[string]interface{}{}
-	list := []map[string]interface{}{}
+	// list := []map[string]interface{}{}
+	list := []util.MatchManager{}
 	total, _ := s.DB(GDB).C("matchmanager").Find(bson.M{"state": bson.M{"$lt": util.Delete}}).Count()
 	// iter := s.DB(GDB).C("matchmanager").Find(bson.M{"state": bson.M{"gte": 0}}).Sort("-shelftime").Skip((page - 1) * count).Limit(count).Iter()
 	err := s.DB(GDB).C("matchmanager").Pipe([]bson.M{
 		{"$match": bson.M{"state": bson.M{"$lt": util.Delete}}},
-		{"$project": bson.M{
-			"MatchSource":   "$matchsource",
-			"MatchID":       "$matchid",
-			"MatchName":     "$matchname",
-			"MatchType":     "$matchtype",
-			"MatchIcon":     "$matchicon",
-			"RoundNum":      "$roundnum",
-			"StartTime":     "$starttime",
-			"StartType":     "$starttype",
-			"LimitPlayer":   "$limitplayer",
-			"Recommend":     "$recommend",
-			"Eliminate":     "$eliminate",
-			"EnterFee":      "$enterfee",
-			"UseCount":      "$usematch",
-			"LastMatch":     bson.M{"$subtract": []interface{}{"$totalmatch", "$usematch"}},
-			"ShelfTime":     "$shelftime",
-			"DownShelfTime": "$downshelftime",
-			"ShowHall":      "$showhall",
-			"Sort":          "$sort",
-			"State":         "$state",
-			"AwardList":     "$awardlist",
-			"TotalMatch":    "$totalmatch",
-			"_id":           0,
-		}},
+		// {"$project": bson.M{
+		// 	"MatchSource":   "$matchsource",
+		// 	"MatchLevel":    "$matchlevel",
+		// 	"MatchID":       "$matchid",
+		// 	"MatchName":     "$matchname",
+		// 	"MatchType":     "$matchtype",
+		// 	"MatchIcon":     "$matchicon",
+		// 	"RoundNum":      "$roundnum",
+		// 	"StartTime":     "$starttime",
+		// 	"StartType":     "$starttype",
+		// 	"LimitPlayer":   "$limitplayer",
+		// 	"Recommend":     "$recommend",
+		// 	"Eliminate":     "$eliminate",
+		// 	"EnterFee":      "$enterfee",
+		// 	"UseCount":      "$usematch",
+		// 	"LastMatch":     bson.M{"$subtract": []interface{}{"$totalmatch", "$usematch"}},
+		// 	"ShelfTime":     "$shelftime",
+		// 	"DownShelfTime": "$downshelftime",
+		// 	"ShowHall":      "$showhall",
+		// 	"Sort":          "$sort",
+		// 	"State":         "$state",
+		// 	"AwardList":     "$awardlist",
+		// 	"TotalMatch":    "$totalmatch",
+		// 	"_id":           0,
+		// }},
 		{"$sort": bson.M{"Sort": 1}},
 		{"$skip": (page - 1) * count},
 		{"$limit": count},
@@ -75,6 +76,10 @@ func GetMatchManagerList(page int, count int) ([]map[string]interface{}, int) {
 	if err != nil {
 		log.Error("get match manager fail %v", err)
 		return nil, 0
+	}
+
+	for i := range list {
+		list[i].LastMatch = list[i].TotalMatch - list[i].UseMatch
 	}
 	return list, total
 }
@@ -237,25 +242,27 @@ func GetMatchReport(matchID string, start, end int64) []map[string]interface{} {
 }
 
 // GetMatch 获取单场赛事
-func GetMatch(matchID string) map[string]interface{} {
+func GetMatch(matchID string) []util.MatchManager {
 	s := gameDB.Ref()
 	defer gameDB.UnRef(s)
 
-	one := map[string]interface{}{}
+	// one := map[string]interface{}{}
+	one := util.MatchManager{}
+	ret := []util.MatchManager{}
 	err := s.DB(GDB).C("match").Pipe([]bson.M{
 		{"$match": bson.M{"sonmatchid": matchID}},
-		{"$project": bson.M{
-			"MatchType":   "$matchtype",
-			"MatchName":   "$matchname",
-			"MatchID":     "$sonmatchid",
-			"CreateTime":  "$createtime",
-			"RoundNum":    "$roundnum",
-			"LimitPlayer": "$limitplayer",
-			"Recommend":   "$recommend",
-			"StartType":   "$starttype",
-			"Eliminate":   "$eliminate",
-			"EnterFee":    "$enterfee",
-		}},
+		// {"$project": bson.M{
+		// 	"MatchType":   "$matchtype",
+		// 	"MatchName":   "$matchname",
+		// 	"MatchID":     "$sonmatchid",
+		// 	"CreateTime":  "$createtime",
+		// 	"RoundNum":    "$roundnum",
+		// 	"LimitPlayer": "$limitplayer",
+		// 	"Recommend":   "$recommend",
+		// 	"StartType":   "$starttype",
+		// 	"Eliminate":   "$eliminate",
+		// 	"EnterFee":    "$enterfee",
+		// }},
 		// {"$group": bson.M{
 		// 	"_id": "$matchid", "RecordTime": bson.M{"$first": "$RecordTime"}, "allMoney": bson.M{"$sum": "$Money"},
 		// 	"allCoupon": bson.M{"$sum": "$Coupon"}, "allSign": bson.M{"$sum": "$SignInCount"},
@@ -267,11 +274,12 @@ func GetMatch(matchID string) map[string]interface{} {
 		log.Error("get match fail %v", err)
 		return nil
 	}
-	return one
+	ret = append(ret, one)
+	return ret
 }
 
 // GetMatchList 获取某个时间段的赛事
-func GetMatchList(matchType string, start, end int64) []map[string]interface{} {
+func GetMatchList(matchType string, start, end int64) []util.MatchManager {
 	s := gameDB.Ref()
 	defer gameDB.UnRef(s)
 
@@ -282,46 +290,49 @@ func GetMatchList(matchType string, start, end int64) []map[string]interface{} {
 		return nil
 	}
 
-	var result []map[string]interface{}
-	one := map[string]interface{}{}
+	var result []util.MatchManager
+	// one := map[string]interface{}{}
+	one := util.MatchManager{}
 	var iter *mgo.Iter
 	if len(matchType) == 0 {
 		iter = s.DB(GDB).C("match").Pipe([]bson.M{
 			{"$match": bson.M{"createtime": bson.M{"$gt": start, "$lte": end + oneDay}}},
-			{"$project": bson.M{
-				"MatchType":   "$matchtype",
-				"MatchName":   "$matchname",
-				"MatchID":     "$sonmatchid",
-				"CreateTime":  "$createtime",
-				"RoundNum":    "$roundnum",
-				"LimitPlayer": "$limitplayer",
-				"Recommend":   "$recommend",
-				"StartType":   "$starttype",
-				"StartTime":   "$starttime",
-				"Eliminate":   "$eliminate",
-				"EnterFee":    "$enterfee",
-				"_id":         0,
-			}},
+			// {"$project": bson.M{
+			// 	"MatchType":   "$matchtype",
+			// 	"MatchSource": "$matchsource",
+			// 	"MatchName":   "$matchname",
+			// 	"MatchID":     "$sonmatchid",
+			// 	"CreateTime":  "$createtime",
+			// 	"RoundNum":    "$roundnum",
+			// 	"LimitPlayer": "$limitplayer",
+			// 	"Recommend":   "$recommend",
+			// 	"StartType":   "$starttype",
+			// 	"StartTime":   "$starttime",
+			// 	"Eliminate":   "$eliminate",
+			// 	"EnterFee":    "$enterfee",
+			// 	"_id":         0,
+			// }},
 			{"$sort": bson.M{"CreateTime": -1}},
 		}).Iter()
 	} else {
 		iter = s.DB(GDB).C("match").Pipe([]bson.M{
 			{"$match": bson.M{"matchtype": matchType}},
 			{"$match": bson.M{"createtime": bson.M{"$gt": start, "$lte": end + oneDay}}},
-			{"$project": bson.M{
-				"MatchType":   "$matchtype",
-				"MatchName":   "$matchname",
-				"MatchID":     "$sonmatchid",
-				"CreateTime":  "$createtime",
-				"RoundNum":    "$roundnum",
-				"LimitPlayer": "$limitplayer",
-				"Recommend":   "$recommend",
-				"StartType":   "$starttype",
-				"StartTime":   "$starttime",
-				"Eliminate":   "$eliminate",
-				"EnterFee":    "$enterfee",
-				"_id":         0,
-			}},
+			// {"$project": bson.M{
+			// 	"MatchType":   "$matchtype",
+			// 	"MatchSource": "$matchsource",
+			// 	"MatchName":   "$matchname",
+			// 	"MatchID":     "$sonmatchid",
+			// 	"CreateTime":  "$createtime",
+			// 	"RoundNum":    "$roundnum",
+			// 	"LimitPlayer": "$limitplayer",
+			// 	"Recommend":   "$recommend",
+			// 	"StartType":   "$starttype",
+			// 	"StartTime":   "$starttime",
+			// 	"Eliminate":   "$eliminate",
+			// 	"EnterFee":    "$enterfee",
+			// 	"_id":         0,
+			// }},
 			{"$sort": bson.M{"CreateTime": -1}},
 		}).Iter()
 	}
@@ -332,7 +343,7 @@ func GetMatchList(matchType string, start, end int64) []map[string]interface{} {
 		// 	return nil
 		// }
 		result = append(result, one)
-		one = map[string]interface{}{}
+		one = util.MatchManager{}
 	}
 	log.Debug("result:%v", result)
 	// if len(result) == 0 {

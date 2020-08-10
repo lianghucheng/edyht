@@ -30,6 +30,12 @@ const (
 	Delete         // 删除赛事
 )
 
+// 赛事来源
+const (
+	MatchSourceSportsCenter = iota + 1 // 体总
+	MatchSourceBackstage               // 后台
+)
+
 // User 用户类
 type User struct {
 	Account  string `bson:"account"`
@@ -39,20 +45,30 @@ type User struct {
 
 // MatchManager 比赛类
 type MatchManager struct {
-	MatchID     string `bson:"matchid"`     // 赛事id号（与赛事管理的matchid不是同一个，共用一个字段）
-	MatchType   string `bson:"matchtype"`   // 赛事类型
-	MatchName   string `bson:"matchname"`   // 赛事名称
-	RoundNum    string `bson:"roundnum"`    // 赛制制(2局1副)
-	StartTime   int64  `bson:"starttime"`   // 比赛开始时间
-	LimitPlayer int    `bson:"limitplayer"` // 比赛开始的最少人数
-	Recommend   string `bson:"recommend"`   // 赛事推荐介绍(在赛事列表界面倒计时左侧的文字信息)
-	TotalMatch  int    `bson:"totalmatch"`  // 后台配置的该种比赛可创建的比赛次数
-	UseMatch    int    `bson:"usematch"`    // 已使用次数
-	Eliminate   []int  `bson:"eliminate"`   // 每轮淘汰人数
-	EnterFee    int64  `bson:"enterfee"`    // 报名费
-	ShelfTime   int64  `bson:"shelftime"`   // 上架时间
-	Sort        int    `bson:"sort"`        // 赛事排序
-	State       int    `bson:"state"`       // 赛事状态
+	MatchSource   int    `bson:"matchsource"`   // 比赛来源,1体总,2自己后台
+	MatchLevel    int    `bson:"matchlevel"`    // 体总赛事级别
+	MatchID       string `bson:"matchid"`       // 赛事id号（与赛事管理的matchid不是同一个，共用一个字段）
+	MatchType     string `bson:"matchtype"`     // 赛事类型
+	MatchName     string `bson:"matchname"`     // 赛事名称
+	MatchIcon     string `bson:"matchicon"`     // 赛事图标
+	RoundNum      string `bson:"roundnum"`      // 赛制制(2局1副)
+	StartTime     int64  `bson:"starttime"`     // 比赛开始时间
+	StartType     int    `bson:"starttype"`     // 开赛条件(1表示满足三人即可开赛,2表示倒计时多久开赛判断,3表示比赛到点开赛) '添加赛事时的必填字段'
+	LimitPlayer   int    `bson:"limitplayer"`   // 比赛开始的最少人数
+	Recommend     string `bson:"recommend"`     // 赛事推荐介绍(在赛事列表界面倒计时左侧的文字信息)
+	TotalMatch    int    `bson:"totalmatch"`    // 后台配置的该种比赛可创建的比赛次数
+	UseMatch      int    `bson:"usematch"`      // 已使用次数
+	LastMatch     int    `bson:"-"`             // 剩余次数
+	Eliminate     []int  `bson:"eliminate"`     // 每轮淘汰人数
+	EnterFee      int64  `bson:"enterfee"`      // 报名费
+	ShelfTime     int64  `bson:"shelftime"`     // 上架时间
+	DownShelfTime int64  `bson:"downshelftime"` // 下架时间
+	EndTime       int64  `bson:"endtime"`       // 结束时间
+	Sort          int    `bson:"sort"`          // 赛事排序
+	State         int    `bson:"state"`         // 赛事状态
+	ShowHall      bool   `bson:"showhall"`      // 是否首页展示
+	AwardList     string `bson:"awardlist"`     // 奖励列表 '添加赛事时的必填字段'
+	CreateTime    int64  `bson:"createtime"`    // 比赛创建时间
 }
 
 const (
@@ -110,10 +126,28 @@ type UserData struct {
 	TakenFee          float64
 	FirstLogin        bool
 	BankCard          *BankCard
-	ChargeAmount      string  // 充值金额
-	LoginTime         int64   `bson:"logintime"`
-	MatchCount        int     `bson:"-"` // 参赛次数
-	AwardAvailable    float64 `bson:"-"` // 可提现奖金
+	ChargeAmount      string          // 充值金额
+	LoginTime         int64           `bson:"logintime"`
+	MatchCount        int             `bson:"-"` // 参赛次数
+	AwardAvailable    float64         `bson:"-"` // 可提现奖金
+	SportCenter       SportCenterData // 体总数据
+}
+
+type SportCenterData struct {
+	BlueScore       float64 // 蓝分
+	RedScore        float64 // 红分
+	SilverScore     float64 // 银分
+	GoldScore       float64 // 金分
+	Level           string  // 等级称号
+	Ranking         int     // 排名
+	SyncTime        int64   // 与体总同步时间
+	LastBlueScore   float64 // 同步前蓝分
+	LastRedScore    float64 // 同步前红分
+	LastSilverScore float64 // 同步前银分
+	LastGoldScore   float64 // 同步前金分
+	LastLevel       string  // 同步前等级称号
+	LastRanking     int     // 同步前排名
+	WalletStatus    int     // 钱包状态 0锁定,1正常
 }
 
 type BankCard struct {
