@@ -48,6 +48,7 @@ type MatchManager struct {
 	MatchSource   int    `bson:"matchsource"`   // 比赛来源,1体总,2自己后台
 	MatchLevel    int    `bson:"matchlevel"`    // 体总赛事级别
 	MatchID       string `bson:"matchid"`       // 赛事id号（与赛事管理的matchid不是同一个，共用一个字段）
+	SonMatchID    string `bson:"sonmatchid"`    // 子赛事id
 	MatchType     string `bson:"matchtype"`     // 赛事类型
 	MatchName     string `bson:"matchname"`     // 赛事名称
 	MatchIcon     string `bson:"matchicon"`     // 赛事图标
