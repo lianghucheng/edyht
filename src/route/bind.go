@@ -79,6 +79,9 @@ func bind(server *gin.Engine) {
 	server.POST("/shop/goods-delete", shopGoodsDelete)
 	server.POST("/shop/goods-list", shopGoodsList)
 	server.POST("/shop/goods-update", shopGoodsUpdate)
+
+	server.POST("/feedback/list", feedbackList)
+	server.POST("/feedback/update", feedbackUpdate)
 }
 
 type loginData struct {
