@@ -197,6 +197,9 @@ type ItemLog struct {
 	After      int64  `bson:"after"`      // 操作后余额
 	OptType    int    `bson:"opttype"`    // 操作类型
 	MatchID    string `bson:"matchid"`    // 赛事id
+	ShowAmount string // 显示数量
+	ShowBefore string // 显示数量
+	ShowAfter  string // 显示数量
 }
 
 type OfflinePayment struct {

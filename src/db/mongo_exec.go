@@ -6,6 +6,7 @@ import (
 	"bs/util"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"strconv"
@@ -677,6 +678,20 @@ func GetUserList(page, count int) ([]util.UserData, int) {
 		if feeAdd, ok := fee["all"].(int64); ok {
 			chargeAmount = int64(feeAdd)
 		}
+		fee2 := map[string]interface{}{}
+		gs.DB("dzddz").C("alipayresult").Pipe([]bson.M{
+			{"$match": bson.M{"status": true, "userid": one.AccountID + 1e8}},
+			{"$project": bson.M{
+				"TotalFee": "$totalamount",
+			}},
+			{"$group": bson.M{
+				"_id": "$userid",
+				"all": bson.M{"$sum": "$TotalFee"},
+			}},
+		}).One(&fee2)
+		if feeAdd, ok := fee2["all"].(float64); ok {
+			chargeAmount += int64(feeAdd * 100)
+		}
 		one.ChargeAmount = util.FormatFloat(float64(chargeAmount/100), 2)
 
 		// 查询累计获得奖金
@@ -698,6 +713,7 @@ func GetUserList(page, count int) ([]util.UserData, int) {
 			awardAmount = float64(awardAdd)
 		}
 		one.Fee = awardAmount
+		one.TakenFee = 0
 
 		// 可提现奖金
 		award = map[string]interface{}{}
@@ -771,7 +787,43 @@ func GetOneUser(accountID int, nickname, phone string) (*util.UserData, error) {
 	if feeAdd, ok := fee["all"].(int64); ok {
 		chargeAmount = int64(feeAdd)
 	}
+
+	fee2 := map[string]interface{}{}
+	gs.DB("dzddz").C("alipayresult").Pipe([]bson.M{
+		{"$match": bson.M{"status": true, "userid": data.AccountID + 1e8}},
+		{"$project": bson.M{
+			"TotalFee": "$totalamount",
+		}},
+		{"$group": bson.M{
+			"_id": "$userid",
+			"all": bson.M{"$sum": "$TotalFee"},
+		}},
+	}).One(&fee2)
+	if feeAdd, ok := fee2["all"].(float64); ok {
+		chargeAmount += int64(feeAdd * 100)
+	}
 	data.ChargeAmount = util.FormatFloat(float64(chargeAmount/100), 2)
+
+	// 查询累计获得奖金
+	award := map[string]interface{}{}
+	gs.DB(GDB).C("flowdata").Pipe([]bson.M{
+		{"$match": bson.M{"flowtype": 1}},
+		{"$match": bson.M{"userid": data.UserID}},
+		{"$project": bson.M{
+			"Total": "$changeamount",
+		}},
+		{"$group": bson.M{
+			"_id": "$accountid",
+			"all": bson.M{"$sum": "$Total"},
+		}},
+	}).One(&award)
+	var awardAmount float64
+	// log.Debug("fee:%v", reflect.TypeOf(fee["all"]))
+	if awardAdd, ok := award["all"].(float64); ok {
+		awardAmount = float64(awardAdd)
+	}
+	data.Fee = awardAmount
+	data.TakenFee = 0
 
 	return data, nil
 }
@@ -967,6 +1019,14 @@ func GetUserOptLog(accountID, page, count, optType int, start, end int64) ([]uti
 	}
 	if err != nil && err != mgo.ErrNotFound {
 		log.Error("err:%v", err)
+	}
+
+	for i := range ret {
+		if ret[i].Item == "奖金" || strings.Index(ret[i].Item, "分") != -1 {
+			ret[i].ShowAmount = util.FormatFloat(float64(ret[i].Amount)/100, 2)
+			ret[i].ShowBefore = util.FormatFloat(float64(ret[i].Before)/100, 2)
+			ret[i].ShowAfter = util.FormatFloat(float64(ret[i].After)/100, 2)
+		}
 	}
 	return ret, total
 }
