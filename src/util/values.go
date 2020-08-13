@@ -282,3 +282,17 @@ const (
 	RestartStatusIng
 	RestartStatusFinish
 )
+
+const (
+	MerchantSportCentralAthketicAssociation = 1
+)
+
+var MerchantIDs = []int{MerchantSportCentralAthketicAssociation}
+
+type MerchantPayBranch struct {
+	ID int `bson:"_id"`
+	MerchantNo string
+	MerchantName string
+	MerchantID int
+	PayBranch []int
+}
