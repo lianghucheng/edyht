@@ -504,12 +504,12 @@ func ReadFlowDatas(r *param.FlowDataHistoryReq) (*[]util.FlowData, int) {
 	}
 
 	query := getQueryByHistoryReq(r)
-	if len(r.Condition) == 0 {
-		log.Debug("@@@@@@@@@@@")
-		query["flowtype"] = bson.M{
-			"$ne": 1,
-		}
-	}
+	//if len(r.Condition) == 0 {
+	//	log.Debug("@@@@@@@@@@@")
+	//	query["flowtype"] = bson.M{
+	//		"$ne": 1,
+	//	}
+	//}
 	log.Debug("【query】%v  %v", query, (page-1)*per)
 
 	flowDatas := new([]util.FlowData)
@@ -555,9 +555,10 @@ func getQueryByHistoryReq(r *param.FlowDataHistoryReq) bson.M {
 		}
 
 		//if status != 0 {
-			query["flowtype"] = 2
+		//	query["flowtype"] = 2
 		//}
 	}
+	query["flowtype"] = 2
 	return query
 }
 
