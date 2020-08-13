@@ -223,6 +223,22 @@ func initCollection() {
 	if err != nil {
 		log.Fatal("ensure counter error: %v", err)
 	}
+	err = db.EnsureCounter(DB, "counters", "shopmerchant")
+	if err != nil {
+		log.Fatal("ensure counter error: %v", err)
+	}
+	err = db.EnsureCounter(DB, "counters", "shoppayaccount")
+	if err != nil {
+		log.Fatal("ensure counter error: %v", err)
+	}
+	err = db.EnsureCounter(DB, "counters", "shopgoodstype")
+	if err != nil {
+		log.Fatal("ensure counter error: %v", err)
+	}
+	err = db.EnsureCounter(DB, "counters", "shopgoods")
+	if err != nil {
+		log.Fatal("ensure counter error: %v", err)
+	}
 }
 
 // GetDB return init mongodb

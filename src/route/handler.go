@@ -3,10 +3,12 @@ package route
 import (
 	"bs/config"
 	"bs/db"
+	"bs/edy_api"
 	"bs/param"
 	"bs/rpc"
 	"bs/util"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -93,6 +95,15 @@ func addMatch(c *gin.Context) {
 		desc = err.Error()
 		return
 	}
+	if data.MatchSource == util.MatchSourceSportsCenter && data.MatchLevel <= 0 {
+		code = util.Retry
+		desc = "体总赛事需配置赛事等级!"
+		return
+	}
+	// 非体总赛事置为0
+	if data.MatchSource != util.MatchSourceSportsCenter {
+		data.MatchLevel = 0
+	}
 	err := util.PostToGame(config.GetConfig().GameServer+"/addMatch", JSON, data)
 	if err != nil {
 		code = util.Retry
@@ -155,6 +166,16 @@ func editMatch(c *gin.Context) {
 	if err := c.ShouldBind(&data); err != nil {
 		code = util.Retry
 		desc = err.Error()
+		return
+	}
+	if data.DownShelfTime > 0 && data.DownShelfTime < time.Now().Unix() {
+		code = 1
+		desc = "下架时间有误!"
+		return
+	}
+	if data.DownShelfTime < data.ShelfTime && data.DownShelfTime > 0 && data.ShelfTime > 0 {
+		code = 1
+		desc = "下架时间不能在上架时间之前!"
 		return
 	}
 	if err := util.PostToGame(config.GetConfig().GameServer+"/editMatch", JSON, data); err != nil {
@@ -289,7 +310,7 @@ func matchList(c *gin.Context) {
 	code := util.OK
 	desc := "OK"
 	total := 0
-	resp := []map[string]interface{}{}
+	var resp interface{}
 	defer func() {
 		c.JSON(http.StatusOK, gin.H{
 			"code":  code,
@@ -308,7 +329,9 @@ func matchList(c *gin.Context) {
 	if len(data.MatchID) > 0 {
 		tmp := db.GetMatch(data.MatchID)
 		if tmp != nil {
-			resp = append(resp, tmp)
+			// ret := []map[string]interface{}{}
+			// ret = append(ret, tmp)
+			resp = tmp
 			total = 1
 		}
 		return
@@ -337,7 +360,7 @@ func matchList(c *gin.Context) {
 	last := data.Page * data.Count
 	// 查看redis中是否有缓存
 	if redisData := db.RedisGetMatchList(data.MatchType, data.Start, data.End); redisData != nil {
-		ret := []map[string]interface{}{}
+		ret := []util.MatchManager{}
 		json.Unmarshal(redisData, &ret)
 		total = len(ret)
 		if (data.Page-1)*data.Count >= total {
@@ -448,11 +471,13 @@ func uflow2Pflow(c *[]util.FlowData) *[]param.FlowData {
 	rt := new([]param.FlowData)
 	for _, v := range *c {
 		stat := 0
-		if v.FlowType != 1 {
+		switch v.FlowType {
+		case util.FlowTypeWithDraw:
 			stat = v.Status
-		}
-		if v.FlowType == 4 {
-			stat = 5
+		case util.FlowTypeGift:
+			stat = util.FlowDataStatusGift
+		case util.FlowTypeSign:
+			stat = util.FlowDataStatusSign
 		}
 		temp := param.FlowData{
 			ID:           v.ID,
@@ -657,6 +682,42 @@ func flowDataExport(c *gin.Context) {
 
 	resp = fes
 	db.RedisSetTokenExport(c.GetHeader("token"), true)
+	return
+}
+
+func flowDataPass(c *gin.Context) {
+	code := util.Success
+	desc := util.ErrMsg[util.Success]
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	req := new(param.FlowDataPassReq)
+	code, desc = parseJsonParam(c.Request, req)
+	if code != util.Success {
+		return
+	}
+	flowData := db.ReadFlowDataByID(req.Id)
+	if flowData.Status != 1 {
+		code = util.Fail
+		desc = util.ErrMsg[util.Fail]
+		return
+	}
+	flowData.PassStatus = 1
+	db.SaveFlowData(flowData)
+	ud := db.ReadUserDataByAID(flowData.Accountid)
+	msg, err := edy_api.PlayerCashout(util.PlayerCashoutReq{
+		Player_id:        fmt.Sprintf("%v", flowData.Accountid),
+		Player_id_number: fmt.Sprintf("%v", ud.IDCardNo),
+	})
+
+	if err != nil {
+		therefund(req.Id, msg["resp_msg"].(string))
+	} else {
+		thepayment(req.Id, "提现成功")
+	}
 	return
 }
 
@@ -1221,12 +1282,16 @@ func OrderHistory(c *gin.Context) {
 		default:
 			payStatus = "异常"
 		}
+
 		merchant := ""
 		switch v.Merchant {
 		case 1:
 			merchant = "体总"
 		case 0: //之前没有写入过的数据
 			merchant = "体总"
+		case 2:
+			merchant = "真人美女斗地主"
+			payStatus = "支付成功"
 		default:
 			merchant = "异常"
 		}

@@ -22,6 +22,7 @@ func bind(server *gin.Engine) {
 	server.POST("/flowdata/payments", flowDataPayments)
 	server.POST("/flowdata/refunds", flowDataRefunds)
 	server.POST("/flowdata/export", flowDataExport)
+	server.POST("/flowdata/pass", flowDataPass)
 
 	server.POST("/getUserList", getUserList)
 	server.POST("/getOneUser", getOneUser)
@@ -62,6 +63,22 @@ func bind(server *gin.Engine) {
 	server.POST("/editRestart", editRestart)
 	server.POST("/optRestart", optRestart)
 	server.GET("/getFirstViewData", getFirstViewData)
+	server.POST("/shop/merchant-insert", shopMerchantInsert)
+	server.POST("/shop/merchant-list", shopMerchantList)
+	server.POST("/shop/merchant-update", shopMerchantUpdate)
+	server.POST("/shop/merchant-delete", shopMerchantDelete)
+	server.POST("/shop/payaccount-insert", shopPayAccountInsert)
+	server.POST("/shop/payaccount-delete", shopPayAccountDelete)
+	server.POST("/shop/payaccount-list", shopPayAccountList)
+	server.POST("/shop/payaccount-update", shopPayAccountUpdate)
+	server.POST("/shop/goodstype-insert", shopGoodsTypeInsert)
+	server.POST("/shop/goodstype-update", shopGoodsTypeUpdate)
+	server.POST("/shop/goodstype-delete", shopGoodsTypeDelete)
+	server.POST("/shop/goodstype-list", shopGoodsTypeList)
+	server.POST("/shop/goods-insert", shopGoodsInsert)
+	server.POST("/shop/goods-delete", shopGoodsDelete)
+	server.POST("/shop/goods-list", shopGoodsList)
+	server.POST("/shop/goods-update", shopGoodsUpdate)
 }
 
 type loginData struct {
@@ -75,35 +92,44 @@ type matchManagerReq struct {
 }
 
 type addManagerReq struct {
-	MatchID       string   `json:"MatchID" binding:"required"`     // 赛事id号
-	MatchType     string   `json:"MatchType" binding:"required"`   // 赛事类型
-	MatchTypeIcon string   `json:"MatchTypeIcon"`                  // 赛事类型图标
-	MatchName     string   `json:"MatchName" binding:"required"`   // 赛事名称
-	MatchDesc     string   `json:"MatchDesc"`                      // 赛事描述
-	Round         int      `json:"Round" binding:"required"`       // 赛制几局
-	Card          int      `json:"Card" binding:"required"`        // 赛制几副
-	StartType     int      `json:"StartType" binding:"required"`   // 比赛开始类型
-	StartTime     int64    `json:"StartTime"`                      // 比赛开始时间
-	LimitPlayer   int      `json:"LimitPlayer" binding:"required"` // 比赛开始的最少人数
-	Recommend     string   `json:"Recommend" binding:"required"`   // 赛事推荐介绍(在赛事列表界面倒计时左侧的文字信息)
-	TotalMatch    int      `json:"TotalMatch" binding:"required"`  // 后台配置的该种比赛可创建的比赛次数
-	Eliminate     []int    `json:"Eliminate"`                      // 每轮淘汰人数
-	EnterFee      *int64   `json:"EnterFee" binding:"required"`    // 报名费
-	ShelfTime     int64    `json:"ShelfTime" binding:"required"`   // 上架时间
-	Sort          int      `json:"Sort" binding:"required"`        // 赛事排序
-	AwardDesc     string   `json:"AwardDesc"`                      // 奖励描述
-	AwardList     string   `json:"AwardList" binding:"required"`   // 奖励列表
-	TablePlayer   int      `json:"TablePlayer"`                    // 一桌的游戏人数
-	OfficalIDs    []string `json:"OfficalIDs"`                     // 后台配置的可用比赛id号
+	MatchSource int      `json:"MatchSource" binding:"required"` // 赛事来源
+	MatchLevel  int      `json:"MatchLevel"`                     // 赛事级别
+	MatchID     string   `json:"MatchID" binding:"required"`     // 赛事id号
+	MatchType   string   `json:"MatchType" binding:"required"`   // 赛事类型
+	MatchName   string   `json:"MatchName" binding:"required"`   // 赛事名称
+	MatchDesc   string   `json:"MatchDesc"`                      // 赛事描述
+	Round       int      `json:"Round" binding:"required"`       // 赛制几局
+	Card        int      `json:"Card" binding:"required"`        // 赛制几副
+	StartType   int      `json:"StartType" binding:"required"`   // 比赛开始类型
+	StartTime   int64    `json:"StartTime"`                      // 比赛开始时间
+	LimitPlayer int      `json:"LimitPlayer" binding:"required"` // 比赛开始的最少人数
+	Recommend   string   `json:"Recommend" binding:"required"`   // 赛事推荐介绍(在赛事列表界面倒计时左侧的文字信息)
+	TotalMatch  int      `json:"TotalMatch" binding:"required"`  // 后台配置的该种比赛可创建的比赛次数
+	Eliminate   []int    `json:"Eliminate"`                      // 每轮淘汰人数
+	EnterFee    *int64   `json:"EnterFee" binding:"required"`    // 报名费
+	ShelfTime   int64    `json:"ShelfTime" binding:"required"`   // 上架时间
+	Sort        int      `json:"Sort" binding:"required"`        // 赛事排序
+	AwardDesc   string   `json:"AwardDesc"`                      // 奖励描述
+	AwardList   string   `json:"AwardList" binding:"required"`   // 奖励列表
+	TablePlayer int      `json:"TablePlayer"`                    // 一桌的游戏人数
+	OfficalIDs  []string `json:"OfficalIDs"`                     // 后台配置的可用比赛id号
+	MatchIcon   string   `json:"MatchIcon" binding:"required"`   // 赛事图标
 }
 
 type editManagerReq struct {
-	MatchID    string `json:"MatchID" binding:"required"`    // 赛事id号
-	TotalMatch int    `json:"TotalMatch" binding:"required"` // 后台配置的该种比赛可创建的比赛次数
-	Eliminate  []int  `json:"Eliminate"`                     // 每轮淘汰人数
-	EnterFee   *int64 `json:"EnterFee" binding:"required"`   // 报名费
-	AwardList  string `json:"AwardList" binding:"required"`  // 奖励列表
-	MatchIcon  string `json:"MatchIcon" binding:"required"`  // 赛事图标
+	MatchID       string `json:"MatchID" binding:"required"` // 赛事id号
+	MatchName     string `json:"MatchName"`                  // 赛事名称
+	TotalMatch    int    `json:"TotalMatch"`                 // 后台配置的该种比赛可创建的比赛次数
+	Eliminate     []int  `json:"Eliminate"`                  // 每轮淘汰人数
+	EnterFee      *int64 `json:"EnterFee"`                   // 报名费
+	AwardList     string `json:"AwardList"`                  // 奖励列表
+	MatchIcon     string `json:"MatchIcon"`                  // 赛事图标
+	Card          int    `json:"Card"`                       // 赛制几副
+	StartType     int    `json:"StartType"`                  // 比赛开始类型
+	StartTime     int64  `json:"StartTime"`                  // 比赛开始时间
+	ShelfTime     int64  `json:"ShelfTime"`                  // 上架时间
+	DownShelfTime int64  `json:"DownShelfTime"`              // 下架时间
+	LimitPlayer   int    `json:"LimitPlayer"`                // 比赛开始的最少人数 '添加赛事时的必填字段'
 }
 
 type showHallReq struct {

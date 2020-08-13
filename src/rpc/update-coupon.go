@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"bs/config"
 	"bytes"
 	"encoding/json"
 	"github.com/szxby/tools/log"
@@ -26,7 +27,7 @@ func RpcUpdateCoupon(aid int, amount int) {
 		log.Error(err.Error())
 		return
 	}
-	req, err := http.NewRequest("GET", host+port+updateCouponUri, bytes.NewBuffer(b))
+	req, err := http.NewRequest("GET", config.GetConfig().GameServer+updateCouponUri, bytes.NewBuffer(b))
 	if err != nil {
 		log.Error(err.Error())
 		return

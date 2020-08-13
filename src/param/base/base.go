@@ -50,7 +50,7 @@ func GetPipeline(cond Condition) []bson.M {
 	}
 	return []bson.M{
 		{"$match": cond.(map[string]interface{})},
-}
+	}
 }
 
 func GetUnionPipeline(cond Condition) []bson.M {
@@ -65,8 +65,20 @@ func GetUnionPipeline(cond Condition) []bson.M {
 	if len(cond_map) == 0 {
 		return nil
 	}
-	for k,v := range cond_map {
+	for k, v := range cond_map {
 		bson_arr = append(bson_arr, bson.M{k: v})
 	}
 	return []bson.M{{"$match": bson.M{"$or": bson_arr}}}
+}
+
+type ObjectID interface {
+	GetOnePipeline() []bson.M
+}
+
+type OID struct {
+	ID int //唯一标识
+}
+
+func (ctx *OID) GetOnePipeline() []bson.M {
+	return []bson.M{{"$match": bson.M{"_id": ctx.ID}}}
 }

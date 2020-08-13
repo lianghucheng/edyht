@@ -30,6 +30,12 @@ const (
 	Delete         // 删除赛事
 )
 
+// 赛事来源
+const (
+	MatchSourceSportsCenter = iota + 1 // 体总
+	MatchSourceBackstage               // 后台
+)
+
 // User 用户类
 type User struct {
 	Account  string `bson:"account"`
@@ -39,27 +45,47 @@ type User struct {
 
 // MatchManager 比赛类
 type MatchManager struct {
-	MatchID     string `bson:"matchid"`     // 赛事id号（与赛事管理的matchid不是同一个，共用一个字段）
-	MatchType   string `bson:"matchtype"`   // 赛事类型
-	MatchName   string `bson:"matchname"`   // 赛事名称
-	RoundNum    string `bson:"roundnum"`    // 赛制制(2局1副)
-	StartTime   int64  `bson:"starttime"`   // 比赛开始时间
-	LimitPlayer int    `bson:"limitplayer"` // 比赛开始的最少人数
-	Recommend   string `bson:"recommend"`   // 赛事推荐介绍(在赛事列表界面倒计时左侧的文字信息)
-	TotalMatch  int    `bson:"totalmatch"`  // 后台配置的该种比赛可创建的比赛次数
-	UseMatch    int    `bson:"usematch"`    // 已使用次数
-	Eliminate   []int  `bson:"eliminate"`   // 每轮淘汰人数
-	EnterFee    int64  `bson:"enterfee"`    // 报名费
-	ShelfTime   int64  `bson:"shelftime"`   // 上架时间
-	Sort        int    `bson:"sort"`        // 赛事排序
-	State       int    `bson:"state"`       // 赛事状态
+	MatchSource   int    `bson:"matchsource"`   // 比赛来源,1体总,2自己后台
+	MatchLevel    int    `bson:"matchlevel"`    // 体总赛事级别
+	MatchID       string `bson:"matchid"`       // 赛事id号（与赛事管理的matchid不是同一个，共用一个字段）
+	SonMatchID    string `bson:"sonmatchid"`    // 子赛事id
+	MatchType     string `bson:"matchtype"`     // 赛事类型
+	MatchName     string `bson:"matchname"`     // 赛事名称
+	MatchIcon     string `bson:"matchicon"`     // 赛事图标
+	RoundNum      string `bson:"roundnum"`      // 赛制制(2局1副)
+	StartTime     int64  `bson:"starttime"`     // 比赛开始时间
+	StartType     int    `bson:"starttype"`     // 开赛条件(1表示满足三人即可开赛,2表示倒计时多久开赛判断,3表示比赛到点开赛) '添加赛事时的必填字段'
+	LimitPlayer   int    `bson:"limitplayer"`   // 比赛开始的最少人数
+	Recommend     string `bson:"recommend"`     // 赛事推荐介绍(在赛事列表界面倒计时左侧的文字信息)
+	TotalMatch    int    `bson:"totalmatch"`    // 后台配置的该种比赛可创建的比赛次数
+	UseMatch      int    `bson:"usematch"`      // 已使用次数
+	LastMatch     int    `bson:"-"`             // 剩余次数
+	Eliminate     []int  `bson:"eliminate"`     // 每轮淘汰人数
+	EnterFee      int64  `bson:"enterfee"`      // 报名费
+	ShelfTime     int64  `bson:"shelftime"`     // 上架时间
+	DownShelfTime int64  `bson:"downshelftime"` // 下架时间
+	EndTime       int64  `bson:"endtime"`       // 结束时间
+	Sort          int    `bson:"sort"`          // 赛事排序
+	State         int    `bson:"state"`         // 赛事状态
+	ShowHall      bool   `bson:"showhall"`      // 是否首页展示
+	AwardList     string `bson:"awardlist"`     // 奖励列表 '添加赛事时的必填字段'
+	CreateTime    int64  `bson:"createtime"`    // 比赛创建时间
 }
 
 const (
-	FlowDataStatusNormal = 0 //比赛获得
-	FlowDataStatusAction = 1 //提奖中
-	FlowDataStatusOver   = 2 //已提奖
-	FlowDataStatusBack   = 3 //已退款
+	FlowTypeAward    = 1
+	FlowTypeWithDraw = 2
+	FlowTypeGift     = 3
+	FlowTypeSign     = 4
+)
+
+const (
+	FlowDataStatusNormal = 0
+	FlowDataStatusAction = 1
+	FlowDataStatusOver   = 2
+	FlowDataStatusBack   = 3
+	FlowDataStatusGift   = 4
+	FlowDataStatusSign   = 5
 )
 
 type FlowData struct {
@@ -77,6 +103,7 @@ type FlowData struct {
 	TakenFee     float64
 	AtferTaxFee  float64
 	Desc         string
+	PassStatus   int //1是已通过，0是未通过
 }
 
 type UserData struct {
@@ -110,8 +137,28 @@ type UserData struct {
 	TakenFee          float64
 	FirstLogin        bool
 	BankCard          *BankCard
-	ChargeAmount      string // 充值金额
-	LoginTime         int64  `bson:"logintime"`
+	ChargeAmount      string          // 充值金额
+	LoginTime         int64           `bson:"logintime"`
+	MatchCount        int             `bson:"-"` // 参赛次数
+	AwardAvailable    float64         `bson:"-"` // 可提现奖金
+	SportCenter       SportCenterData // 体总数据
+}
+
+type SportCenterData struct {
+	BlueScore       float64 // 蓝分
+	RedScore        float64 // 红分
+	SilverScore     float64 // 银分
+	GoldScore       float64 // 金分
+	Level           string  // 等级称号
+	Ranking         int     // 排名
+	SyncTime        int64   // 与体总同步时间
+	LastBlueScore   float64 // 同步前蓝分
+	LastRedScore    float64 // 同步前红分
+	LastSilverScore float64 // 同步前银分
+	LastGoldScore   float64 // 同步前金分
+	LastLevel       string  // 同步前等级称号
+	LastRanking     int     // 同步前排名
+	WalletStatus    int     // 钱包状态 0锁定,1正常
 }
 
 type BankCard struct {
@@ -150,6 +197,9 @@ type ItemLog struct {
 	After      int64  `bson:"after"`      // 操作后余额
 	OptType    int    `bson:"opttype"`    // 操作类型
 	MatchID    string `bson:"matchid"`    // 赛事id
+	ShowAmount string // 显示数量
+	ShowBefore string // 显示数量
+	ShowAfter  string // 显示数量
 }
 
 type OfflinePayment struct {
@@ -295,4 +345,79 @@ type MerchantPayBranch struct {
 	MerchantName string
 	MerchantID int
 	PayBranch []int
+}
+var MerchantPay = []int{MerchantSportCentralAthketicAssociation}
+
+const (
+	DownStatus = 0
+	UpStatus   = 1
+)
+
+const (
+	PayBranchWX  = 1
+	PayBranchAli = 2
+	PayBranchIOS = 3
+)
+
+type ShopMerchant struct {
+	ID             int    `bson:"_id"`
+	MerchantType   int    //商户类型。1是体总
+	MerchantNo     string //商户编号
+	PayMin         int    //支付最低值，百分制
+	PayMax         int    //支付最高值，百分制
+	PublicKey      string //公钥
+	PrivateKey     string //私钥
+	Order          int    //次序
+	UpPayBranchs   []int  //上架支付类型，1是微信，2是支付宝，3是IOS
+	DownPayBranchs []int  //下架支付类型，1是微信，2是支付宝，3是IOS
+	UpDownStatus   int    //上下架状态。0是下架，1是上架
+	UpdatedAt      int    //更新时间戳
+	CreatedAt      int
+	DeletedAt      int
+}
+
+type PayAccount struct {
+	ID         int    `bson:"_id"`
+	MerchantID int    //商户唯一标识
+	PayBranch  int    //支付渠道标识
+	Order      int    //次序
+	Account    string //账户
+	UpdatedAt  int    //更新时间戳
+	CreatedAt  int    //更新时间戳
+	DeletedAt  int    //删除时间戳
+}
+
+type GoodsType struct {
+	ID         int    `bson:"_id"` //唯一标识
+	MerchantID int    //商户唯一标识
+	TypeName   string //商品名称
+	ImgUrl     string //商品图标
+	Order      int    //次序
+	UpdatedAt  int    //更新时间戳
+	CreatedAt  int    //创建时间戳
+	DeletedAt  int    //删除时间戳
+}
+
+const (
+	TakenTypeRMB = 1
+)
+
+const (
+	PropTypeCoupon = 1
+)
+
+type Goods struct {
+	ID          int    `bson:"_id"`
+	GoodsTypeID int    //商品类型唯一标识
+	TakenType   int    //花费类型。1是RMB
+	Price       int    //花费数量（价格，百分制）
+	PropType    int    //道具类型。1是点券
+	GetAmount   int    //获得数量
+	GiftAmount  int    //赠送数量
+	Expire      int    //过期时间，单位秒，-1为永久
+	ImgUrl      string //商品图标
+	Order       int    //次序
+	UpdatedAt   int    //更新时间戳
+	CreatedAt   int    //创建时间戳
+	DeletedAt   int    //删除时间戳
 }

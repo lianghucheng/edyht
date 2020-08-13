@@ -1,8 +1,10 @@
 package rpc
 
 import (
+	"bs/config"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/szxby/tools/log"
 	"io/ioutil"
@@ -58,4 +60,82 @@ func RpcAddCouponFrag(aid, amount int) {
 		return
 	}
 	log.Debug(string(b_resp))
+}
+
+const rpcNotifyPayAccount = "/notify/payaccount"
+
+func RpcNotifyPayAccount() error {
+	log.Debug("RpcNotifyPayAccount")
+	resp, err := http.Get(host + port + rpcNotifyPayAccount)
+	if err != nil {
+		return err
+	}
+	buf, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		return err
+	}
+	m := struct {
+		Code   int
+		Errmsg string
+	}{}
+	if err := json.Unmarshal(buf, &m); err != nil {
+		return err
+	}
+	if m.Code != 10000 {
+		return errors.New(fmt.Sprintf("request fail, the code is %v. ", m.Code))
+	}
+	return nil
+}
+
+const rpcNotidyPriceMenu = "/notify/pricemenu"
+
+func RpcNotifyPriceMenu() error {
+	log.Debug("RpcNotifyPriceMenu")
+	resp, err := http.Get(config.GetConfig().GameServer + rpcNotidyPriceMenu)
+	if err != nil {
+		return err
+	}
+	buf, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		return err
+	}
+	m := struct {
+		Code   int
+		Errmsg string
+	}{}
+	if err := json.Unmarshal(buf, &m); err != nil {
+		return err
+	}
+	if m.Code != 10000 {
+		return errors.New(fmt.Sprintf("request fail, the code is %v. ", m.Code))
+	}
+	return nil
+}
+
+const rpcNotidyGoodsType = "/notify/goodstype"
+
+func RpcNotifyGoodsType() error {
+	log.Debug("RpcNotifyGoodsType")
+	resp, err := http.Get(config.GetConfig().GameServer + rpcNotidyGoodsType)
+	if err != nil {
+		return err
+	}
+	buf, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		return err
+	}
+	m := struct {
+		Code   int
+		Errmsg string
+	}{}
+	if err := json.Unmarshal(buf, &m); err != nil {
+		return err
+	}
+	if m.Code != 10000 {
+		return errors.New(fmt.Sprintf("request fail, the code is %v. ", m.Code))
+	}
+	return nil
 }
