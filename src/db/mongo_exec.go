@@ -504,12 +504,12 @@ func ReadFlowDatas(r *param.FlowDataHistoryReq) (*[]util.FlowData, int) {
 	}
 
 	query := getQueryByHistoryReq(r)
-	if len(r.Condition) == 0 {
-		log.Debug("@@@@@@@@@@@")
-		query["flowtype"] = bson.M{
-			"$ne": 1,
-		}
-	}
+	//if len(r.Condition) == 0 {
+	//	log.Debug("@@@@@@@@@@@")
+	//	query["flowtype"] = bson.M{
+	//		"$ne": 1,
+	//	}
+	//}
 	log.Debug("【query】%v  %v", query, (page-1)*per)
 
 	flowDatas := new([]util.FlowData)
@@ -554,10 +554,11 @@ func getQueryByHistoryReq(r *param.FlowDataHistoryReq) bson.M {
 			}
 		}
 
-		if status != 0 {
-			query["flowtype"] = 2
-		}
+		//if status != 0 {
+		//	query["flowtype"] = 2
+		//}
 	}
+	query["flowtype"] = 2
 	return query
 }
 
@@ -662,36 +663,7 @@ func GetUserList(page, count int) ([]util.UserData, int) {
 		bank := ReadBankCardByID(one.UserID)
 		one.BankCard = bank
 		// 查询充值
-		fee := map[string]interface{}{}
-		gs.DB(GDB).C("edyorder").Pipe([]bson.M{
-			{"$match": bson.M{"status": true, "accountid": one.AccountID}},
-			{"$project": bson.M{
-				"TotalFee": "$fee",
-			}},
-			{"$group": bson.M{
-				"_id": "$accountid",
-				"all": bson.M{"$sum": "$TotalFee"},
-			}},
-		}).One(&fee)
-		var chargeAmount int64
-		// log.Debug("fee:%v", reflect.TypeOf(fee["all"]))
-		if feeAdd, ok := fee["all"].(int64); ok {
-			chargeAmount = int64(feeAdd)
-		}
-		fee2 := map[string]interface{}{}
-		gs.DB("dzddz").C("alipayresult").Pipe([]bson.M{
-			{"$match": bson.M{"status": true, "userid": one.AccountID + 1e8}},
-			{"$project": bson.M{
-				"TotalFee": "$totalamount",
-			}},
-			{"$group": bson.M{
-				"_id": "$userid",
-				"all": bson.M{"$sum": "$TotalFee"},
-			}},
-		}).One(&fee2)
-		if feeAdd, ok := fee2["all"].(float64); ok {
-			chargeAmount += int64(feeAdd * 100)
-		}
+		chargeAmount := GetPlayerCharge(one.AccountID)
 		one.ChargeAmount = util.FormatFloat(float64(chargeAmount/100), 2)
 
 		// 查询累计获得奖金
@@ -771,37 +743,7 @@ func GetOneUser(accountID int, nickname, phone string) (*util.UserData, error) {
 	data.BankCard = bank
 
 	// 查询充值
-	fee := map[string]interface{}{}
-	gs.DB(GDB).C("edyorder").Pipe([]bson.M{
-		{"$match": bson.M{"status": true, "accountid": data.AccountID}},
-		{"$project": bson.M{
-			"TotalFee": "$fee",
-		}},
-		{"$group": bson.M{
-			"_id": "$accountid",
-			"all": bson.M{"$sum": "$TotalFee"},
-		}},
-	}).One(&fee)
-	var chargeAmount int64
-	// log.Debug("fee:%v", reflect.TypeOf(fee["all"]))
-	if feeAdd, ok := fee["all"].(int64); ok {
-		chargeAmount = int64(feeAdd)
-	}
-
-	fee2 := map[string]interface{}{}
-	gs.DB("dzddz").C("alipayresult").Pipe([]bson.M{
-		{"$match": bson.M{"status": true, "userid": data.AccountID + 1e8}},
-		{"$project": bson.M{
-			"TotalFee": "$totalamount",
-		}},
-		{"$group": bson.M{
-			"_id": "$userid",
-			"all": bson.M{"$sum": "$TotalFee"},
-		}},
-	}).One(&fee2)
-	if feeAdd, ok := fee2["all"].(float64); ok {
-		chargeAmount += int64(feeAdd * 100)
-	}
+	chargeAmount := GetPlayerCharge(data.AccountID)
 	data.ChargeAmount = util.FormatFloat(float64(chargeAmount/100), 2)
 
 	// 查询累计获得奖金
@@ -1249,30 +1191,30 @@ func GetFirstViewData() map[string]interface{} {
 		return nil
 	}
 
-	chargeData := map[string]interface{}{}
-	gs.DB(GDB).C("edyorder").Pipe([]bson.M{
-		{"$match": bson.M{"createdat": bson.M{"$gt": start}}},
-		{"$match": bson.M{"status": true}},
-		{"$project": bson.M{
-			"fee": "$fee",
-		}},
-		{"$group": bson.M{
-			"_id": "AllCharge", "charge": bson.M{"$sum": "$fee"},
-		},
-		}}).One(&chargeData)
+	// chargeData := map[string]interface{}{}
+	// gs.DB(GDB).C("edyorder").Pipe([]bson.M{
+	// 	{"$match": bson.M{"createdat": bson.M{"$gt": start}}},
+	// 	{"$match": bson.M{"status": true}},
+	// 	{"$project": bson.M{
+	// 		"fee": "$fee",
+	// 	}},
+	// 	{"$group": bson.M{
+	// 		"_id": "AllCharge", "charge": bson.M{"$sum": "$fee"},
+	// 	},
+	// 	}}).One(&chargeData)
 
 	totalUser, _ := gs.DB(GDB).C("users").Find(bson.M{}).Count()
 
 	// 返回数据汇总
 	ret := map[string]interface{}{}
 	ret["TotalUser"] = totalUser
-	ret["TotalCharge"] = 0
+	ret["TotalCharge"] = GetTotalCharge(start)
 	ret["TotalSignFee"] = 0
 	ret["TotalAward"] = 0
 	ret["TotalLast"] = 0
-	if chargeData["charge"] != nil {
-		ret["TotalCharge"] = chargeData["charge"]
-	}
+	// if chargeData["charge"] != nil {
+	// 	ret["TotalCharge"] = chargeData["charge"]
+	// }
 	if matchData["allSignFee"] != nil {
 		ret["TotalSignFee"] = matchData["allSignFee"]
 	}
@@ -1285,4 +1227,80 @@ func GetFirstViewData() map[string]interface{} {
 	log.Debug("ret:%+v", ret)
 
 	return ret
+}
+
+// GetPlayerCharge 获取某一玩家的充值
+func GetPlayerCharge(accountID int) int64 {
+	gs := gameDB.Ref()
+	defer gameDB.UnRef(gs)
+	// 查询充值
+	fee := map[string]interface{}{}
+	gs.DB(GDB).C("edyorder").Pipe([]bson.M{
+		{"$match": bson.M{"status": true, "accountid": accountID}},
+		{"$project": bson.M{
+			"TotalFee": "$fee",
+		}},
+		{"$group": bson.M{
+			"_id": "$accountid",
+			"all": bson.M{"$sum": "$TotalFee"},
+		}},
+	}).One(&fee)
+	var chargeAmount int64
+	// log.Debug("fee:%v", reflect.TypeOf(fee["all"]))
+	if feeAdd, ok := fee["all"].(int64); ok {
+		chargeAmount += int64(feeAdd)
+	}
+	fee2 := map[string]interface{}{}
+	gs.DB("dzddz").C("alipayresult").Pipe([]bson.M{
+		{"$match": bson.M{"status": true, "userid": accountID + 1e8}},
+		{"$project": bson.M{
+			"TotalFee": "$totalamount",
+		}},
+		{"$group": bson.M{
+			"_id": "$userid",
+			"all": bson.M{"$sum": "$TotalFee"},
+		}},
+	}).One(&fee2)
+	if feeAdd, ok := fee2["all"].(float64); ok {
+		chargeAmount += int64(feeAdd * 100)
+	}
+	return chargeAmount
+}
+
+// GetTotalCharge 获取总充值
+func GetTotalCharge(start int64) int64 {
+	gs := gameDB.Ref()
+	defer gameDB.UnRef(gs)
+	// 查询充值
+	fee := map[string]interface{}{}
+	gs.DB(GDB).C("edyorder").Pipe([]bson.M{
+		{"$match": bson.M{"status": true, "createdat": bson.M{"$gt": start}}},
+		{"$project": bson.M{
+			"TotalFee": "$fee",
+		}},
+		{"$group": bson.M{
+			"_id": "$accountid",
+			"all": bson.M{"$sum": "$TotalFee"},
+		}},
+	}).One(&fee)
+	var chargeAmount int64
+	// log.Debug("fee:%v", reflect.TypeOf(fee["all"]))
+	if feeAdd, ok := fee["all"].(int64); ok {
+		chargeAmount += int64(feeAdd)
+	}
+	fee2 := map[string]interface{}{}
+	gs.DB("dzddz").C("alipayresult").Pipe([]bson.M{
+		{"$match": bson.M{"status": true, "createdat": bson.M{"$gt": start}}},
+		{"$project": bson.M{
+			"TotalFee": "$totalamount",
+		}},
+		{"$group": bson.M{
+			"_id": "$userid",
+			"all": bson.M{"$sum": "$TotalFee"},
+		}},
+	}).One(&fee2)
+	if feeAdd, ok := fee2["all"].(float64); ok {
+		chargeAmount += int64(feeAdd * 100)
+	}
+	return chargeAmount
 }
