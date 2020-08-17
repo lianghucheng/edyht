@@ -34,8 +34,8 @@ func SaveFeedback(data *util.FeedBack) error {
 			TargetID:    int64(ud.UserID),
 			MailType:    mailType,
 			MailServiceType: data.MailServiceType,
-			Title:       data.Title,
-			Content:     data.Content,
+			Title:       data.ReplyTitle,
+			Content:     data.MailContent,
 			Annexes:     annexes,
 			ExpireValue: 30,
 		}

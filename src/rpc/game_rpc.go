@@ -184,8 +184,12 @@ type MailBoxReq struct {
 const pushMail = "/pushmail"
 
 func RpcPushMail(req *MailBoxReq) error {
-	log.Debug("RpcPushMail")
-	resp, err := http.Get(config.GetConfig().GameServer + pushMail)
+	log.Debug("RpcPushMail   %+v", req)
+	req_buf,err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+	resp, err := http.Get(config.GetConfig().GameServer + pushMail+"?data="+string(req_buf))
 	if err != nil {
 		return err
 	}
@@ -201,8 +205,8 @@ func RpcPushMail(req *MailBoxReq) error {
 	if err := json.Unmarshal(buf, &m); err != nil {
 		return err
 	}
-	if m.Code != 10000 {
-		return errors.New(fmt.Sprintf("request fail, the code is %v. ", m.Code))
+	if m.Code != 0 {
+		return errors.New(fmt.Sprintf("request fail, the code is %v. the errmsg is %v. ", m.Code, m.Errmsg))
 	}
 	return nil
 }

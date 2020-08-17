@@ -208,19 +208,21 @@ func feedbackUpdate(c *gin.Context) {
 		desc = err.Error()
 		return
 	}
-	data.MailType = req.MailServiceType
-	data.ReplyTitle = req.ReplyTitle
-	data.AwardType  = req.AwardType
-	data.AwardNum   = req.AwardNum
-	data.MailContent= req.MailContent
-	data.ReadStatus = req.ReadStatus
-	data.ReplyStatus = req.ReplyStatus
+	flag := data.ReplyStatus
 
-	log.Debug("更新反馈的请求数据：%+v", *req)
-	if err := db.SaveFeedback(data); err != nil {
-		code = util.FormatFail
-		desc = util.ErrMsg[code]
-		return
+	if !flag {
+		data.MailServiceType = req.MailServiceType
+		data.ReplyTitle = req.ReplyTitle
+		data.AwardType  = req.AwardType
+		data.AwardNum   = req.AwardNum
+		data.MailContent= req.MailContent
+		data.ReadStatus = req.ReadStatus
+		data.ReplyStatus = req.ReplyStatus
+		if err := db.SaveFeedback(data); err != nil {
+			code = util.Fail
+			desc = err.Error()
+			return
+		}
 	}
 
 	return
