@@ -22,22 +22,22 @@ func SaveFeedback(data *util.FeedBack) error {
 			} else {
 				mailType = rpc.MailTypeAward
 			}
-
+			propType := util.PropID2Type[data.AwardType]
 			annexes = append(annexes, rpc.Annex{
-				Type: data.AwardType,
-				Num:  data.AwardNum,
+				PropType: propType,
+				Num:  float64(data.AwardNum),
 				Desc: "~",
 			})
 		}
 
 		req := &rpc.MailBoxReq{
-			TargetID:    int64(ud.UserID),
-			MailType:    mailType,
+			TargetID:        int64(ud.UserID),
+			MailType:        mailType,
 			MailServiceType: data.MailServiceType,
-			Title:       data.ReplyTitle,
-			Content:     data.MailContent,
-			Annexes:     annexes,
-			ExpireValue: 30,
+			Title:           data.ReplyTitle,
+			Content:         data.MailContent,
+			Annexes:         annexes,
+			ExpireValue:     30,
 		}
 
 		if err := rpc.RpcPushMail(req); err != nil {

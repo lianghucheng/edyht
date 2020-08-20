@@ -140,56 +140,63 @@ func RpcNotifyGoodsType() error {
 	return nil
 }
 
-
 const (
 	MailTypeText  = 1
 	MailTypeAward = 2
 	MailTypeMix   = 3
 )
 
-type MailBox struct {
-	ID          int64   `bson:"_id"`          //唯一id
-	TargetID    int64   `json:"target_id"`    //目标用户， -1表示所有用户
-	MailType    int     `json:"mail_type"`    //邮箱邮件类型
-	CreatedAt   int64   `json:"created_at"`   //收件时间
-	Title       string  `json:"title"`        //主题
-	Content     string  `json:"content"`      //内容
-	Annexes     []Annex `json:"annexes"`      //附件
-	Status      int64   `json:"status"`       //邮箱邮件状态
-	ExpireValue int64   `json:"expire_value"` //有效时长
-	MailServiceType int //邮件服务类型
-}
-
-const (
-	AnnexTypeCoupon = 1
-	AnnexTypeCouponFrag = 2
-)
-
 type Annex struct {
-	Type int    `json:"type"`
-	Num  int    `json:"num"`
+	PropType int    `json:"prop_type"`
+	Num  float64    `json:"num"`
 	Desc string `json:"desc"`
 }
 
 type MailBoxReq struct {
-	TargetID    int64   `json:"target_id"`    //目标用户， -1表示所有用户
-	MailType    int     `json:"mail_type"`    //邮箱邮件类型
-	MailServiceType int `json:"mail_service_type"`//邮件服务类型
-	Title       string  `json:"title"`        //主题
-	Content     string  `json:"content"`      //内容
-	Annexes     []Annex `json:"annexes"`      //附件
-	ExpireValue int64   `json:"expire_value"` //有效时长
+	TargetID        int64   `json:"target_id"`         //目标用户， -1表示所有用户
+	MailType        int     `json:"mail_type"`         //邮箱邮件类型
+	MailServiceType int     `json:"mail_service_type"` //邮件服务类型
+	Title           string  `json:"title"`             //主题
+	Content         string  `json:"content"`           //内容
+	Annexes         []Annex `json:"annexes"`           //附件
+	ExpireValue     int64   `json:"expire_value"`      //有效时长
 }
 
 const pushMail = "/pushmail"
 
 func RpcPushMail(req *MailBoxReq) error {
 	log.Debug("RpcPushMail   %+v", req)
-	req_buf,err := json.Marshal(req)
+	req_buf, err := json.Marshal(req)
 	if err != nil {
 		return err
 	}
-	resp, err := http.Get(config.GetConfig().GameServer + pushMail+"?data="+string(req_buf))
+	resp, err := http.Get(config.GetConfig().GameServer + pushMail + "?data=" + string(req_buf))
+	if err != nil {
+		return err
+	}
+	buf, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		return err
+	}
+	m := struct {
+		Code   int
+		Errmsg string
+	}{}
+	if err := json.Unmarshal(buf, &m); err != nil {
+		return err
+	}
+	if m.Code != 0 {
+		return errors.New(fmt.Sprintf("request fail, the code is %v. the errmsg is %v. ", m.Code, m.Errmsg))
+	}
+	return nil
+}
+
+const setPropBaseConfig = "/set/propbaseconfig"
+
+func RpcSetPropBaseConfig() error {
+	log.Debug("RpcSetPropBaseConfig")
+	resp, err := http.Get(config.GetConfig().GameServer + setPropBaseConfig)
 	if err != nil {
 		return err
 	}

@@ -6,18 +6,18 @@ import (
 )
 
 type FeedbackInsertReq struct {
-	AccountID   int    //用户id
-	Title       string //反馈标题
-	Content     string //反馈内容
-	PhoneNum    string //联系方式
-	ReadStatus  bool   //false是未查看，true是已查看
-	Nickname    string //昵称
-	ReplyStatus bool   //false是未回复，true是已回复
-	MailServiceType    int    //0是系统邮件，1是赛事邮件，2是活动邮件
-	ReplyTitle  string //回复标题
-	AwardType   int    //0是未选择，10002是报名券，10003是报名券碎片
-	AwardNum    int    //奖励数量
-	MailContent string //邮箱内容
+	AccountID       int    //用户id
+	Title           string //反馈标题
+	Content         string //反馈内容
+	PhoneNum        string //联系方式
+	ReadStatus      bool   //false是未查看，true是已查看
+	Nickname        string //昵称
+	ReplyStatus     bool   //false是未回复，true是已回复
+	MailServiceType int    //0是系统邮件，1是赛事邮件，2是活动邮件
+	ReplyTitle      string //回复标题
+	AwardType       int    //0是未选择，10002是报名券，10003是报名券碎片
+	AwardNum        int    //奖励数量
+	MailContent     string //邮箱内容
 }
 
 type FeedbackDeleteReq struct {
@@ -42,7 +42,7 @@ func (ctx *FeedbackListReq) GetPipeline() []bson.M {
 	pipeline := []bson.M{{"$match": bson.M{"deletedat": 0}}}
 	pipeline = append(pipeline, ctx.TimeRange.GetPipeline()...)
 	pipeline = append(pipeline, base.GetPipeline(ctx.Condition)...)
-	return []bson.M{{"$match": bson.M{"deletedat": 0}}}
+	return pipeline //[]bson.M{{"$match": bson.M{"deletedat": 0}}}
 }
 
 func (ctx *FeedbackListReq) GetDataPipeline() []bson.M {
@@ -56,19 +56,19 @@ func (ctx *FeedbackListReq) GetDataPipeline() []bson.M {
 }
 
 type Feedback struct {
-	ID          int    `bson:"_id"` //唯一标识
-	AccountID   int    //用户id
-	Title       string //反馈标题
-	Content     string //反馈内容
-	PhoneNum    string //联系方式
-	ReadStatus  bool   //false是未查看，true是已查看
-	Nickname    string //昵称
-	ReplyStatus bool   //false是未回复，true是已回复
-	MailServiceType    int    //0是系统邮件，1是赛事邮件，2是活动邮件
-	ReplyTitle  string //回复标题
-	AwardType   int    //0是未选择，10002是报名券，10003是报名券碎片
-	AwardNum    int    //奖励数量
-	MailContent string //邮箱内容
+	ID              int    `bson:"_id"` //唯一标识
+	AccountID       int    //用户id
+	Title           string //反馈标题
+	Content         string //反馈内容
+	PhoneNum        string //联系方式
+	ReadStatus      bool   //false是未查看，true是已查看
+	Nickname        string //昵称
+	ReplyStatus     bool   //false是未回复，true是已回复
+	MailServiceType int    //0是系统邮件，1是赛事邮件，2是活动邮件
+	ReplyTitle      string //回复标题
+	AwardType       int    //0是未选择，10002是报名券，10003是报名券碎片
+	AwardNum        int    //奖励数量
+	MailContent     string //邮箱内容
 
 	CreatedAt int64 //创建时间戳，0表示未创建
 	UpdatedAt int64 //更新时间戳，0表示未更新
@@ -82,12 +82,12 @@ type FeedbackListResp struct {
 }
 
 type FeedbackUpdateReq struct {
-	base.OID           //记录唯一标识
-	MailServiceType    int    //0是系统邮件，1是赛事邮件，2是活动邮件
-	ReplyTitle  string //回复标题
-	AwardType   int    //0是未选择，10002是报名券，10003是报名券碎片
-	AwardNum    int    //奖励数量
-	MailContent string //邮箱内容
-	ReadStatus  bool   //false是未查看，true是已查看
-	ReplyStatus bool   //false是未回复，true是已回复
+	base.OID               //记录唯一标识
+	MailServiceType int    //0是系统邮件，1是赛事邮件，2是活动邮件
+	ReplyTitle      string //回复标题
+	AwardType       int    //0是未选择，10002是报名券，10003是报名券碎片
+	AwardNum        int    //奖励数量
+	MailContent     string //邮箱内容
+	ReadStatus      bool   //false是未查看，true是已查看
+	ReplyStatus     bool   //false是未回复，true是已回复
 }
