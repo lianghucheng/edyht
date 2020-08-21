@@ -239,6 +239,10 @@ func initCollection() {
 	if err != nil {
 		log.Fatal("ensure counter error: %v", err)
 	}
+	err = db.EnsureCounter(DB, "counters", "propbaseconfig")
+	if err != nil {
+		log.Fatal("ensure counter error: %v", err)
+	}
 }
 
 // GetDB return init mongodb

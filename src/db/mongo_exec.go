@@ -1050,9 +1050,9 @@ func ReadAllMatchConfig(condition base.Condition) *[]util.MatchManager {
 	return rt
 }
 
-func ReadKnapsackPropByAidPid(aid, pid int) *util.KnapsackProp {
+func ReadKnapsackPropByAidPtype(aid, ptype int) *util.KnapsackProp {
 	rt := new(util.KnapsackProp)
-	readGameByPipeline(GDB, "knapsackprop", []bson.M{{"$match": bson.M{"accountid": aid, "propid": pid}}}, rt, readTypeOne)
+	readGameByPipeline(GDB, "knapsackprop", []bson.M{{"$match": bson.M{"accountid": aid, "proptype": ptype}}}, rt, readTypeOne)
 	return rt
 }
 

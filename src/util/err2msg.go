@@ -11,6 +11,9 @@ const (
 	RobotNotBan         = 10007
 	MongoDBCreFail      = 10008
 	ModelTransferFail   = 10009
+	PropBaseConfCacheFail       = 10010
+	MongoReadFail       = 10011
+	PropIDNotExist 		= 10012
 )
 
 var ErrMsg = map[int]string{
@@ -24,4 +27,7 @@ var ErrMsg = map[int]string{
 	RobotNotBan:         "该赛事机器人没有金禁用",
 	MongoDBCreFail:      "MongoDB自增错误",
 	ModelTransferFail:   "模型格式转换失败",
+	PropBaseConfCacheFail:       "道具配置失败，请重试",
+	MongoReadFail:       "数据库读取数据失败",
+	PropIDNotExist:		 "道具id不存在",
 }

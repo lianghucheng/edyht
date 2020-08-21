@@ -404,10 +404,6 @@ const (
 	TakenTypeRMB = 1
 )
 
-const (
-	PropTypeCoupon = 1
-)
-
 type Goods struct {
 	ID          int    `bson:"_id"`
 	GoodsTypeID int    //商品类型唯一标识
@@ -444,4 +440,33 @@ type FeedBack struct {
 	CreatedAt int64
 	UpdatedAt int64
 	DeletedAt int64
+}
+
+//sundries const
+const (
+	PropTypeCoupon     = 1
+	PropTypeAward      = 2
+	PropTypeCouponFrag = 3
+	PropTypeRedScore   = 4
+)
+
+var PropID2Type = map[int]int{
+	10001: PropTypeAward,
+	20001: PropTypeCoupon,
+	20002: PropTypeCouponFrag,
+	30001: PropTypeRedScore,
+}
+
+//prop_base_conf 道具基本配置
+type PropBaseConfig struct {
+	ID       int    `bson:"_id"` //唯一标识
+	PropType int    //道具类型, 1是点券，2是奖金，3点券碎片
+	PropID   int    //道具id
+	Name     string //名称
+	ImgUrl   string //图片url
+	Operator string //操作人
+
+	CreatedAt int //创建时间戳
+	UpdatedAt int //更新时间戳
+	DeletedAt int //删除时间戳，0表示没有删除
 }

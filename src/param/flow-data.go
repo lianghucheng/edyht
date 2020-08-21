@@ -39,7 +39,7 @@ type FlowData struct {
 	TakenFee     float64 `json:"taken_fee"`     //已提现金额
 	AtferTaxFee  float64 `json:"atfer_tax_fee"` //税后奖金
 	Desc         string  `json:"desc"`          //备注说明
-	PassStatus   int`json:"pass_status"`
+	PassStatus   int     `json:"pass_status"`
 }
 type FlowDataHistoryResp struct {
 	Per       int         `json:"per"`        //当前页数
@@ -69,5 +69,5 @@ type FlowDataRefundsReq struct {
 }
 
 type FlowDataPassReq struct {
-	Id  int  `json:"id"`  //选中的流水id
+	Id int `json:"id"` //选中的流水id
 }

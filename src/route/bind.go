@@ -83,6 +83,12 @@ func bind(server *gin.Engine) {
 
 	server.POST("/feedback/list", feedbackList)
 	server.POST("/feedback/update", feedbackUpdate)
+
+	server.POST("/propbase/config-insert", propBaseConfigInsert)
+	server.POST("/propbase/config-delete", propBaseConfigDelete)
+	server.POST("/propbase/config-read", propBaseConfigRead)
+	server.POST("/propbase/config-list", propBaseConfigList)
+	server.POST("/propbase/config-update", propBaseConfigUpdate)
 }
 
 type loginData struct {

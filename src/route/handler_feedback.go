@@ -5,8 +5,8 @@ import (
 	"bs/param"
 	"bs/util"
 	"github.com/gin-gonic/gin"
-	"net/http"
 	"github.com/name5566/leaf/log"
+	"net/http"
 	"time"
 )
 
@@ -131,7 +131,7 @@ func feedbackRead(c *gin.Context) {
 	}
 
 	resp = param.FeedbackReadResp{
-		Feedback:*feedBack,
+		Feedback: *feedBack,
 	}
 
 	return
@@ -178,9 +178,9 @@ func feedbackList(c *gin.Context) {
 	}
 
 	resp = &param.FeedbackListResp{
-		Page:          req.Page,
-		Per:           req.Per,
-		Total:         total,
+		Page:      req.Page,
+		Per:       req.Per,
+		Total:     total,
 		Feedbacks: rts,
 	}
 }
@@ -213,9 +213,9 @@ func feedbackUpdate(c *gin.Context) {
 	if !flag {
 		data.MailServiceType = req.MailServiceType
 		data.ReplyTitle = req.ReplyTitle
-		data.AwardType  = req.AwardType
-		data.AwardNum   = req.AwardNum
-		data.MailContent= req.MailContent
+		data.AwardType = req.AwardType
+		data.AwardNum = req.AwardNum
+		data.MailContent = req.MailContent
 		data.ReadStatus = req.ReadStatus
 		data.ReplyStatus = req.ReplyStatus
 		if err := db.SaveFeedback(data); err != nil {

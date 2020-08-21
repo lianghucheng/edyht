@@ -1132,7 +1132,7 @@ func offlinePaymentAdd(c *gin.Context) {
 		offlinePaymentCol.BeforFee = ud.Fee
 		offlinePaymentCol.AfterFee = ud.Fee + opar.ChangeFee
 	} else if opar.ActionType == 2 {
-		data := db.ReadKnapsackPropByAidPid(ud.AccountID, 10003)
+		data := db.ReadKnapsackPropByAidPtype(ud.AccountID, util.PropTypeCouponFrag)
 		log.Debug("************%v", *data)
 		offlinePaymentCol.BeforFee = float64(data.Num)
 		offlinePaymentCol.AfterFee = float64(data.Num) + opar.ChangeFee

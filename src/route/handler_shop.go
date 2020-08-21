@@ -508,6 +508,14 @@ func shopGoodsList(c *gin.Context) {
 		desc = util.ErrMsg[code]
 		return
 	}
+	for k := range *rt {
+		cfg, err := db.ReadPropBaseConfigByType((*rt)[k].PropType)
+		if err != nil {
+			log.Error(err.Error())
+			continue
+		}
+		(*rt)[k].ImgUrl = cfg.ImgUrl
+	}
 	resp = &param.ShopGoodsListResp{
 		Page:    req.Page,
 		Per:     req.Per,
