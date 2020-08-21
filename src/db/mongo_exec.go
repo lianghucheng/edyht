@@ -767,6 +767,8 @@ func GetOneUser(accountID int, nickname, phone string) (*util.UserData, error) {
 	data.Fee = awardAmount
 	data.TakenFee = 0
 
+	data.Remark = GetRemark(data.AccountID)
+
 	return data, nil
 }
 
@@ -1303,4 +1305,41 @@ func GetTotalCharge(start int64) int64 {
 		chargeAmount += int64(feeAdd * 100)
 	}
 	return chargeAmount
+}
+
+// UpdateRemark 更新玩家备注
+func UpdateRemark(accountID int, remark string) error {
+	gs := gameDB.Ref()
+	defer gameDB.UnRef(gs)
+
+	_, err := gs.DB(DB).C("remark").Upsert(bson.M{"AccountID": accountID}, bson.M{"$set": bson.M{"Remark": remark}})
+	if err != nil {
+		log.Error("err:%v", err)
+		return err
+	}
+	return nil
+}
+
+// GetRemark 获取玩家备注
+func GetRemark(accountID int) string {
+	gs := gameDB.Ref()
+	defer gameDB.UnRef(gs)
+
+	data := map[string]interface{}{}
+	err := gs.DB(DB).C("remark").Find(bson.M{"AccountID": accountID}).One(&data)
+	if err != nil {
+		log.Error("err:%v", err)
+		return ""
+	}
+	ret := data["Remark"]
+	if ret == nil {
+		log.Error("err:%v", data)
+		return ""
+	}
+	s, ok := ret.(string)
+	if !ok {
+		log.Error("err:%v", data)
+		return ""
+	}
+	return s
 }

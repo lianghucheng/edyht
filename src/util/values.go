@@ -142,6 +142,7 @@ type UserData struct {
 	MatchCount        int             `bson:"-"` // 参赛次数
 	AwardAvailable    float64         `bson:"-"` // 可提现奖金
 	SportCenter       SportCenterData // 体总数据
+	Remark            string          // 备注信息
 }
 
 type SportCenterData struct {
@@ -340,12 +341,13 @@ const (
 var MerchantIDs = []int{MerchantSportCentralAthketicAssociation}
 
 type MerchantPayBranch struct {
-	ID int `bson:"_id"`
-	MerchantNo string
+	ID           int `bson:"_id"`
+	MerchantNo   string
 	MerchantName string
-	MerchantID int
-	PayBranch []int
+	MerchantID   int
+	PayBranch    []int
 }
+
 var MerchantPay = []int{MerchantSportCentralAthketicAssociation}
 
 const (
@@ -423,21 +425,21 @@ type Goods struct {
 }
 
 type FeedBack struct {
-	ID int `bson:"_id"`
+	ID        int `bson:"_id"`
 	AccountID int
 	Title     string
 	Content   string
-	PhoneNum    string //联系方式
-	Nickname    string //昵称
+	PhoneNum  string //联系方式
+	Nickname  string //昵称
 
-	MailType    int      //邮箱邮件类型
-	MailServiceType    int    //0是系统邮件，1是赛事邮件，2是活动邮件
-	ReplyTitle  string //回复标题
-	AwardType   int    //0是未选择，10002是报名券，10003是报名券碎片
-	AwardNum    int    //奖励数量
-	MailContent string //邮箱内容
-	ReadStatus  bool   //false是未查看，true是已查看
-	ReplyStatus bool   //false是未回复，true是已回复
+	MailType        int    //邮箱邮件类型
+	MailServiceType int    //0是系统邮件，1是赛事邮件，2是活动邮件
+	ReplyTitle      string //回复标题
+	AwardType       int    //0是未选择，10002是报名券，10003是报名券碎片
+	AwardNum        int    //奖励数量
+	MailContent     string //邮箱内容
+	ReadStatus      bool   //false是未查看，true是已查看
+	ReplyStatus     bool   //false是未回复，true是已回复
 
 	CreatedAt int64
 	UpdatedAt int64

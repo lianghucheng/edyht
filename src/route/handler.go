@@ -2222,3 +2222,27 @@ func getFirstViewData(c *gin.Context) {
 	}()
 	data = db.GetFirstViewData()
 }
+
+// 首页数据
+func editRemark(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	data := editRemarkReq{}
+	if err := c.ShouldBind(&data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	err := db.UpdateRemark(data.AccountID, data.Remark)
+	if err != nil {
+		code = util.Retry
+		desc = "操作失败,请重试!"
+		return
+	}
+}

@@ -43,6 +43,7 @@ func bind(server *gin.Engine) {
 	server.POST("/upload/playerIcon", uploadPlayerIcon)
 	server.GET("/getGameVersion", getGameVersion)
 	server.GET("/getNotice", getNotice)
+	server.POST("/editRemark", editRemark)
 
 	server.POST("/offlinepayment/list", offlinePaymentList)
 	server.POST("/offlinepayment/add", offlinePaymentAdd)
@@ -256,4 +257,9 @@ type getRestartListReq struct {
 	End   int64 `json:"End"`
 	Page  int   `json:"Page" binding:"required"`
 	Count int   `json:"Count" binding:"required"`
+}
+
+type editRemarkReq struct {
+	AccountID int    `json:"AccountID" binding:"required"`
+	Remark    string `json:"Remark" binding:"required"`
 }
