@@ -708,10 +708,19 @@ func flowDataPass(c *gin.Context) {
 	flowData.PassStatus = 1
 	db.SaveFlowData(flowData)
 	ud := db.ReadUserDataByAID(flowData.Accountid)
-	msg, err := edy_api.PlayerCashout(util.PlayerCashoutReq{
-		Player_id:        fmt.Sprintf("%v", flowData.Accountid),
-		Player_id_number: fmt.Sprintf("%v", ud.IDCardNo),
-	})
+	var msg map[string]interface{}
+	var err error
+	if flowData.Accountid == 202002 {
+		msg, err = edy_api.PlayerCashout(util.PlayerCashoutReq{
+			Player_id:        fmt.Sprintf("%v", 2),
+			Player_id_number: fmt.Sprintf("%v", ud.IDCardNo),
+		})
+	}else {
+		msg, err = edy_api.PlayerCashout(util.PlayerCashoutReq{
+			Player_id:        fmt.Sprintf("%v", flowData.Accountid),
+			Player_id_number: fmt.Sprintf("%v", ud.IDCardNo),
+		})
+	}
 
 	if err != nil {
 		therefund(req.Id, msg["resp_msg"].(string))
