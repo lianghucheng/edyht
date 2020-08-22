@@ -88,4 +88,3 @@ func SetIP(list []string) error {
 	serverConfig.IPList = list
 	return nil
 }
-

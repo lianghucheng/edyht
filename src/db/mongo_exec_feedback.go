@@ -25,8 +25,8 @@ func SaveFeedback(data *util.FeedBack) error {
 			propType := util.PropID2Type[data.AwardType]
 			annexes = append(annexes, rpc.Annex{
 				PropType: propType,
-				Num:  float64(data.AwardNum),
-				Desc: "~",
+				Num:      float64(data.AwardNum),
+				Desc:     "~",
 			})
 		}
 

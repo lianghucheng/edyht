@@ -32,12 +32,12 @@ func ReadPropBaseConfigCount(req *param.PropBaseConfigListReq) (int, error) {
 
 func ReadPropBaseConfig(oid base.ObjectID) (*util.PropBaseConfig, error) {
 	data := new(util.PropBaseConfig)
-	readByPipeline(DB, "propbaseconfig", append(oid.GetOnePipeline(),bson.M{"$match": bson.M{"deletedat":0}}), data, readTypeOne)
+	readByPipeline(DB, "propbaseconfig", append(oid.GetOnePipeline(), bson.M{"$match": bson.M{"deletedat": 0}}), data, readTypeOne)
 	return data, nil
 }
 
 func ReadPropBaseConfigByType(propType int) (*util.PropBaseConfig, error) {
 	data := new(util.PropBaseConfig)
-	readByPipeline(DB, "propbaseconfig", []bson.M{bson.M{"$match": bson.M{"proptype":propType, "deletedat":0}}}, data, readTypeOne)
+	readByPipeline(DB, "propbaseconfig", []bson.M{bson.M{"$match": bson.M{"proptype": propType, "deletedat": 0}}}, data, readTypeOne)
 	return data, nil
 }

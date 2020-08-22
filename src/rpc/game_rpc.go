@@ -146,10 +146,16 @@ const (
 	MailTypeMix   = 3
 )
 
+const (
+	MailServiceTypeOfficial = 0
+	MailServiceTypeMatch    = 1
+	MailServiceTypeActivity = 2
+)
+
 type Annex struct {
-	PropType int    `json:"prop_type"`
-	Num  float64    `json:"num"`
-	Desc string `json:"desc"`
+	PropType int     `json:"prop_type"`
+	Num      float64 `json:"num"`
+	Desc     string  `json:"desc"`
 }
 
 type MailBoxReq struct {
@@ -159,7 +165,7 @@ type MailBoxReq struct {
 	Title           string  `json:"title"`             //主题
 	Content         string  `json:"content"`           //内容
 	Annexes         []Annex `json:"annexes"`           //附件
-	ExpireValue     int64   `json:"expire_value"`      //有效时长
+	ExpireValue     float64 `json:"expire_value"`      //有效时长
 }
 
 const pushMail = "/pushmail"

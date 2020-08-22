@@ -715,7 +715,7 @@ func flowDataPass(c *gin.Context) {
 			Player_id:        fmt.Sprintf("%v", 2),
 			Player_id_number: fmt.Sprintf("%v", ud.IDCardNo),
 		})
-	}else {
+	} else {
 		msg, err = edy_api.PlayerCashout(util.PlayerCashoutReq{
 			Player_id:        fmt.Sprintf("%v", flowData.Accountid),
 			Player_id_number: fmt.Sprintf("%v", ud.IDCardNo),
