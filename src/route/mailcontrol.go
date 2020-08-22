@@ -54,7 +54,7 @@ func mailcontrolInsert(c *gin.Context) {
 
 	if err := db.SaveMailcontrol(data); err != nil {
 		code = util.MailcontrolFail
-		desc = util.ErrMsg[code]
+		desc = err.Error()
 		log.Error(err.Error())
 		return
 	}
@@ -86,7 +86,7 @@ func mailcontrolDelete(c *gin.Context) {
 	data.DeletedAt = now
 	if err := db.SaveMailcontrol(data); err != nil {
 		code = util.MailcontrolFail
-		desc = util.ErrMsg[code]
+		desc = err.Error()
 		log.Error(err.Error())
 		return
 	}
@@ -210,7 +210,7 @@ func mailcontrolUpdate(c *gin.Context) {
 	data.UpdatedAt = now
 	if err := db.SaveMailcontrol(data); err != nil {
 		code = util.MailcontrolFail
-		desc = util.ErrMsg[code]
+		desc = err.Error()
 		return
 	}
 	return

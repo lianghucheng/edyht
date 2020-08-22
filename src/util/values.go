@@ -483,7 +483,7 @@ const (
 
 type Mailcontrol struct {
 	ID       int     `bson:"_id"` //唯一标识
-	TargetID int     //目标用户
+	TargetID []int   //目标用户
 	Title    string  //标题
 	Content  string  //内容
 	Annexes  []Annex //附件
