@@ -37,8 +37,13 @@ func SaveMailcontrol(data *util.Mailcontrol) error {
 				}
 			}
 
+			userID := ud.UserID
+			if targetID == -1 {
+				userID = -1
+			}
+
 			req := &rpc.MailBoxReq{
-				TargetID:        int64(ud.UserID),
+				TargetID:        int64(userID),
 				MailType:        mailType,
 				MailServiceType: rpc.MailServiceTypeOfficial,
 				Title:           data.Title,
@@ -55,9 +60,12 @@ func SaveMailcontrol(data *util.Mailcontrol) error {
 		}
 	}
 	var err error = nil
-	if len(failTarget) > 0 {
+	if len(failTarget) > 0 && len(failTarget) != len(data.TargetID) {
 		data.TargetID = util.Remove(data.TargetID, failTarget)
 		err = errors.New(fmt.Sprintf("以下用户ID：%v 由于网络原因操作失败，请重试", failTarget))
+	} else if len(failTarget) == len(data.TargetID) {
+		err = errors.New("操作失败，请重试")
+		return err
 	}
 	save(DB, data, "mailcontrol", data.ID)
 	return err

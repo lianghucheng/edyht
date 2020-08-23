@@ -45,8 +45,9 @@ func (ctx *MailcontrolListReq) GetDataPipeline() []bson.M {
 
 type Mailcontrol struct {
 	ID       int          `bson:"_id"` //唯一标识
-	TargetID int          //目标用户
+	TargetID []int          //目标用户
 	Title    string       //标题
+	Content  string
 	Annexes  []util.Annex //附件
 	Expire   int          //过期时间（单位：分钟）
 	Status   int          //状态，0是未发送，1是已发送
