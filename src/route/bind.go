@@ -93,6 +93,12 @@ func bind(server *gin.Engine) {
 	server.POST("/propbase/config-read", propBaseConfigRead)
 	server.POST("/propbase/config-list", propBaseConfigList)
 	server.POST("/propbase/config-update", propBaseConfigUpdate)
+
+	server.POST("/mailcontrol/insert", mailcontrolInsert)
+	server.POST("/mailcontrol/delete", mailcontrolDelete)
+	server.POST("/mailcontrol/read", mailcontrolRead)
+	server.POST("/mailcontrol/list", mailcontrolList)
+	server.POST("/mailcontrol/update", mailcontrolUpdate)
 }
 
 type loginData struct {

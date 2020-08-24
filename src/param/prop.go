@@ -6,9 +6,9 @@ import (
 )
 
 type PropBaseConfigInsertReq struct {
-	PropID   int    //道具id
-	Name     string //名称
-	ImgUrl   string //图片url
+	PropID int    //道具id
+	Name   string //名称
+	ImgUrl string //图片url
 }
 
 type PropBaseConfigDeleteReq struct {
@@ -43,6 +43,7 @@ func (ctx *PropBaseConfigListReq) GetDataPipeline() []bson.M {
 type PropBaseConfig struct {
 	ID       int    `bson:"_id"` //唯一标识
 	PropID   int    //道具id
+	PropType int    //道具类型, 1是点券，2是奖金，3点券碎片 todo:加进wiki文档
 	Name     string //名称
 	ImgUrl   string //图片url
 	Operator string //操作人
