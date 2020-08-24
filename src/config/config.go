@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/szxby/tools/log"
 )
@@ -38,10 +39,19 @@ var serverConfig = JSONConfig{}
 
 func init() {
 	log.Debug("init config")
-	file := "config.json"
-	f, err := os.Open(file)
+	local, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
 		log.Fatal("init config fail:%v", err)
+	}
+	file := local + "/config/config.json"
+	f, err := os.Open(file)
+	if err != nil {
+		log.Error("init config from /config fail:%v", err)
+		file = "config.json"
+		f, err = os.Open(file)
+		if err != nil {
+			log.Fatal("init config fail:%v", err)
+		}
 	}
 	defer f.Close()
 
