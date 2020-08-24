@@ -1,6 +1,8 @@
 package route
 
 import (
+	"bs/util"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -44,6 +46,8 @@ func bind(server *gin.Engine) {
 	server.GET("/getGameVersion", getGameVersion)
 	server.GET("/getNotice", getNotice)
 	server.POST("/editRemark", editRemark)
+	server.GET("/getDailyWelfareConfig", getDailyWelfareConfig)
+	server.POST("/editDailyWelfareConfig", editDailyWelfareConfig)
 
 	server.POST("/offlinepayment/list", offlinePaymentList)
 	server.POST("/offlinepayment/add", offlinePaymentAdd)
@@ -130,6 +134,7 @@ type editManagerReq struct {
 	MatchID       string `json:"MatchID" binding:"required"` // 赛事id号
 	MatchName     string `json:"MatchName"`                  // 赛事名称
 	TotalMatch    int    `json:"TotalMatch"`                 // 后台配置的该种比赛可创建的比赛次数
+	UseMatch      int    `json:"UseMatch"`                   // 后台配置的该种比赛已使用次数
 	Eliminate     []int  `json:"Eliminate"`                  // 每轮淘汰人数
 	EnterFee      *int64 `json:"EnterFee"`                   // 报名费
 	AwardList     string `json:"AwardList"`                  // 奖励列表
@@ -167,6 +172,7 @@ type matchReportReq struct {
 
 type matchListReq struct {
 	MatchID   string `json:"MatchID"`   // 赛事id号
+	AccountID int    `json:"AccountID"` // 玩家id
 	MatchType string `json:"MatchType"` // 赛事类型
 	Start     string `json:"Start"`     // 查询开始时间,格式"2006-01-02""
 	End       string `json:"End"`       // 查询结束时间
@@ -268,4 +274,8 @@ type getRestartListReq struct {
 type editRemarkReq struct {
 	AccountID int    `json:"AccountID" binding:"required"`
 	Remark    string `json:"Remark" binding:"required"`
+}
+
+type editDailyWelfareConfigReq struct {
+	Config util.OneDailyWelfareConfig `json:"Config"`
 }

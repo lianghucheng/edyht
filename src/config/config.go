@@ -11,20 +11,21 @@ import (
 
 // JSONConfig config in json
 type JSONConfig struct {
-	RWC        chan bool
-	IPList     []string `json:"IpList"`
-	Port       string   `json:"Port"`
-	RedisAddr  string   `json:"RedisAddr"`  // redis地址
-	RedisPass  string   `json:"RedisPass"`  // redis密码
-	RedisDB    int      `json:"RedisDB"`    // redis库
-	MongoAddr  string   `json:"MongoAddr"`  // mongo地址
-	GameMongo  string   `json:"GameMongo"`  // mongo地址
-	GameServer string   `json:"GameServer"` // 游戏服地址
-	LocalIP    string   `json:"LocalIP"`    // 本地ip
-	PassURL    []string `json:"PassURL"`    // 跳过验证
-	ExportURL  []string `json:"ExportURL"`  // 批量打款操作
-	BackDB     string   `json:"BackDB"`     // 后台数据库
-	GameDB     string   `json:"GameDB"`     // 游戏数据库
+	RWC            chan bool
+	IPList         []string `json:"IpList"`
+	Port           string   `json:"Port"`
+	RedisAddr      string   `json:"RedisAddr"`      // redis地址
+	RedisPass      string   `json:"RedisPass"`      // redis密码
+	RedisDB        int      `json:"RedisDB"`        // redis库
+	MongoAddr      string   `json:"MongoAddr"`      // mongo地址
+	GameMongo      string   `json:"GameMongo"`      // mongo地址
+	GameServer     string   `json:"GameServer"`     // 游戏服地址
+	ActivityServer string   `json:"ActivityServer"` // 活动服地址
+	LocalIP        string   `json:"LocalIP"`        // 本地ip
+	PassURL        []string `json:"PassURL"`        // 跳过验证
+	ExportURL      []string `json:"ExportURL"`      // 批量打款操作
+	BackDB         string   `json:"BackDB"`         // 后台数据库
+	GameDB         string   `json:"GameDB"`         // 游戏数据库
 }
 
 // Enviroment develop----0 release----1
@@ -88,4 +89,3 @@ func SetIP(list []string) error {
 	serverConfig.IPList = list
 	return nil
 }
-

@@ -470,3 +470,34 @@ type PropBaseConfig struct {
 	UpdatedAt int //更新时间戳
 	DeletedAt int //删除时间戳，0表示没有删除
 }
+
+// OneDailyWelfareConfig 单条每日福利配置
+type OneDailyWelfareConfig struct {
+	WelfareType int             `bson:"WelfareType"` // 福利类型
+	AwardList   []OneItemConfig `bson:"AwardList"`
+}
+
+// OneItemConfig 单条配置
+type OneItemConfig struct {
+	Item         int   `bson:"Item"`         // 物品ID
+	AwardAmount  int   `bson:"AwardAmount"`  // 奖励数量
+	TargetAmount int64 `bson:"TargetAmount"` // 达成条件
+}
+
+// DDZGameRecord 赛事记录
+type DDZGameRecord struct {
+	UserId    int    //用户ID
+	MatchId   string //赛事ID
+	MatchType string //赛事类型
+	Desc      string //赛事
+	Level     int    //名次
+	Award     string //奖励
+	Count     int    //完成局数
+	Total     int64  //总得分
+	Last      int64  //尾副得分
+	Wins      int    //获胜次数
+	Period    int64  //累计时长
+	// Result    []Result //牌局详细
+	CreateDat int64 //时间
+	Status    int   // 战绩发奖状态
+}

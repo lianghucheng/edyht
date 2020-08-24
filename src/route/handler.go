@@ -327,12 +327,23 @@ func matchList(c *gin.Context) {
 	}
 	// 按照赛事id精准查询
 	if len(data.MatchID) > 0 {
-		tmp := db.GetMatch(data.MatchID)
+		tmp := db.GetMatch(bson.M{"sonmatchid": data.MatchID})
 		if tmp != nil {
 			// ret := []map[string]interface{}{}
 			// ret = append(ret, tmp)
 			resp = tmp
-			total = 1
+			total = len(tmp)
+		}
+		return
+	}
+	// 按照赛事id精准查询
+	if data.AccountID > 0 {
+		tmp, all := db.GetMatchByAccountID(data.AccountID, data.Page, data.Count)
+		if tmp != nil {
+			// ret := []map[string]interface{}{}
+			// ret = append(ret, tmp)
+			resp = tmp
+			total = all
 		}
 		return
 	}
@@ -2243,6 +2254,56 @@ func editRemark(c *gin.Context) {
 	if err != nil {
 		code = util.Retry
 		desc = "操作失败,请重试!"
+		return
+	}
+}
+
+// 获取每日福利配置
+func getDailyWelfareConfig(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	var list interface{}
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+			"list": list,
+		})
+	}()
+	ret, err := util.PostToGameResp(config.GetConfig().ActivityServer+"/getDailyWelfareConfig", JSON, "get")
+	if err != nil {
+		code = util.Retry
+		desc = ret["desc"].(string)
+		return
+	}
+	list = ret["config"]
+}
+
+func editDailyWelfareConfig(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	data := editDailyWelfareConfigReq{}
+	if err := c.ShouldBind(&data); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	if data.Config.WelfareType <= 0 {
+		code = util.Retry
+		desc = "请求参数出错!"
+		return
+	}
+	log.Debug("config:%+v", data.Config)
+	ret, err := util.PostToGameResp(config.GetConfig().ActivityServer+"/editDailyWelfareConfig", JSON, data.Config)
+	if err != nil {
+		code = util.Retry
+		desc = ret["desc"].(string)
 		return
 	}
 }

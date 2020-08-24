@@ -242,16 +242,16 @@ func GetMatchReport(matchID string, start, end int64) []map[string]interface{} {
 	return result
 }
 
-// GetMatch 获取单场赛事
-func GetMatch(matchID string) []util.MatchManager {
+// GetMatch 按条件搜索赛事
+func GetMatch(selector interface{}) []util.MatchManager {
 	s := gameDB.Ref()
 	defer gameDB.UnRef(s)
 
 	// one := map[string]interface{}{}
-	one := util.MatchManager{}
+	// one := []util.MatchManager{}
 	ret := []util.MatchManager{}
 	err := s.DB(GDB).C("match").Pipe([]bson.M{
-		{"$match": bson.M{"sonmatchid": matchID}},
+		{"$match": selector},
 		// {"$project": bson.M{
 		// 	"MatchType":   "$matchtype",
 		// 	"MatchName":   "$matchname",
@@ -270,13 +270,45 @@ func GetMatch(matchID string) []util.MatchManager {
 		// 	"allSignFee": bson.M{"$sum": "$SignFee"}, "awardNum": bson.M{"$sum": "$AwardNum"},
 		// "lastMoney": bson.M{"$sum": "$LastMoney"}}},
 		// {"$sort": bson.M{"CreateTime": -1}},
-	}).One(&one)
+	}).All(&ret)
 	if err != nil {
 		log.Error("get match fail %v", err)
 		return nil
 	}
-	ret = append(ret, one)
+	// ret = append(ret, one)
 	return ret
+}
+
+// GetMatchByAccountID 按玩家id搜索赛事
+func GetMatchByAccountID(accountID int, page, count int) ([]util.MatchManager, int) {
+	s := gameDB.Ref()
+	defer gameDB.UnRef(s)
+
+	if page == 0 {
+		page = 1
+	}
+	if count == 0 {
+		count = 10
+	}
+	// one := map[string]interface{}{}
+	// one := []util.MatchManager{}
+	user := ReadUserDataByAID(accountID)
+	log.Debug("user:%v", user)
+	ret := []util.MatchManager{}
+	matchRecord := []util.DDZGameRecord{}
+	total, _ := s.DB(GDB).C("gamerecord").Find(bson.M{"userid": user.UserID}).Count()
+	err := s.DB(GDB).C("gamerecord").Find(bson.M{"userid": user.UserID}).Sort("-createdat").Skip((page - 1) * count).Limit(count).All(&matchRecord)
+	log.Debug("matchrecord:%v", matchRecord)
+	if err != nil {
+		log.Error("get match fail %v", err)
+		return nil, total
+	}
+	for _, v := range matchRecord {
+		ones := GetMatch(bson.M{"sonmatchid": v.MatchId})
+		ret = append(ret, ones...)
+	}
+	// ret = append(ret, one)
+	return ret, total
 }
 
 // GetMatchList 获取某个时间段的赛事
