@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/szxby/tools/log"
 )
@@ -43,11 +44,20 @@ func init() {
 	if err != nil {
 		log.Fatal("init config fail:%v", err)
 	}
-	file := local + "/config/config.json"
+
+	procPath := string(os.Args[0])
+	n := strings.LastIndexByte(procPath, os.PathSeparator)
+	procName := procPath[n+1:]
+	fileName := procName + "_config.json"
+
+	s := string(os.PathSeparator)
+
+	file := local + s + "config" + s + fileName
+
 	f, err := os.Open(file)
 	if err != nil {
 		log.Error("init config from /config fail:%v", err)
-		file = "config.json"
+		file = fileName
 		f, err = os.Open(file)
 		if err != nil {
 			log.Fatal("init config fail:%v", err)
