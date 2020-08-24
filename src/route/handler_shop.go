@@ -41,6 +41,13 @@ func shopMerchantInsert(c *gin.Context) {
 		return
 	}
 
+	if shopMerchant.PayMin >= shopMerchant.PayMax {
+		code = util.PayLimitRangeError
+		desc = util.ErrMsg[code]
+		log.Error("The merchant type can not is nil")
+		return
+	}
+
 	id, err := db.MongoDBNextSeq("shopmerchant")
 	if err != nil {
 		code = util.MongoDBCreFail
