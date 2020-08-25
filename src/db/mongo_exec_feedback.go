@@ -22,7 +22,7 @@ func SaveFeedback(data *util.FeedBack) error {
 			} else {
 				mailType = rpc.MailTypeAward
 			}
-			propType := util.PropID2Type[data.AwardType]
+			propType := data.AwardType
 			annexes = append(annexes, rpc.Annex{
 				PropType: propType,
 				Num:      float64(data.AwardNum),

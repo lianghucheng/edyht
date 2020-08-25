@@ -3,7 +3,9 @@ package route
 import (
 	"bs/db"
 	"bs/param"
+	"bs/param/base"
 	"bs/util"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/szxby/tools/log"
 	"net/http"
@@ -213,5 +215,60 @@ func mailcontrolUpdate(c *gin.Context) {
 		desc = err.Error()
 		return
 	}
+	return
+}
+
+
+func mailcontrolSendAll(c *gin.Context) {
+	code := util.Success
+	desc := util.ErrMsg[util.Success]
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	req := new(param.MailcontrolSendAllReq)
+	code, desc = parseJsonParam(c.Request, req)
+	if code != util.Success {
+		code = util.FormatFail
+		desc = util.ErrMsg[code]
+		return
+	}
+
+	fails := []string{}
+	all := []string{}
+	for _, v := range req.Ids {
+		oid := base.OID{ID: v}
+		data, err := db.ReadMailcontrol(&oid)
+		if err != nil {
+			code = util.MongoReadFail
+			desc = util.ErrMsg[code]
+			return
+		}
+		all =append(all, data.Title)
+		data.Status = 1
+		data.Operator = db.RedisGetTokenUsrn(c.GetHeader("token"))
+		now := int(time.Now().Unix())
+		data.UpdatedAt = now
+		if err := db.SaveMailcontrol(data); err != nil {
+			code = util.MailcontrolFail
+			desc = err.Error()
+			fails = append(fails, data.Title)
+			continue
+		}
+	}
+
+	if len(fails) > 0 && len(fails) != len(req.Ids) {
+		desc = fmt.Sprintf("总共需要发送标题为以下邮件：%v\n标题为以下邮件发送失败：%v", all, fails)
+		return
+	}
+
+	if len(fails) == len(req.Ids) {
+		code = util.SendAllMailFail
+		desc = util.ErrMsg[code]
+		return
+	}
+
 	return
 }

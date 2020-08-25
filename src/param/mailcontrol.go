@@ -73,3 +73,7 @@ type MailcontrolUpdateReq struct {
 	Expire   int          //过期时间（单位：分钟）
 	Status   int          //状态，0是未发送，1是已发送
 }
+
+type MailcontrolSendAllReq struct {
+	Ids      []int              //记录唯一标识
+}
