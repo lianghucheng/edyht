@@ -1002,6 +1002,10 @@ func GetUserOptLog(accountID, page, count, optType int, start, end int64) ([]uti
 			ret[i].ShowAmount = util.FormatFloat(float64(ret[i].Amount)/100, 2)
 			ret[i].ShowBefore = util.FormatFloat(float64(ret[i].Before)/100, 2)
 			ret[i].ShowAfter = util.FormatFloat(float64(ret[i].After)/100, 2)
+		} else {
+			ret[i].ShowAmount = strconv.FormatInt(ret[i].Amount, 10)
+			ret[i].ShowBefore = strconv.FormatInt(ret[i].Before, 10)
+			ret[i].ShowAfter = strconv.FormatInt(ret[i].After, 10)
 		}
 	}
 	return ret, total

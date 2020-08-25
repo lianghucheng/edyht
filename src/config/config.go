@@ -57,7 +57,7 @@ func init() {
 	f, err := os.Open(file)
 	if err != nil {
 		log.Error("init config from /config fail:%v", err)
-		file = fileName
+		file = "config.json"
 		f, err = os.Open(file)
 		if err != nil {
 			log.Fatal("init config fail:%v", err)
