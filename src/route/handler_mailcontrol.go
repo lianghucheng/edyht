@@ -207,9 +207,12 @@ func mailcontrolUpdate(c *gin.Context) {
 	data.Annexes = req.Annexes
 	data.Expire = req.Expire
 	data.Status = req.Status
+	data.MailServiceType = req.MailServiceType
 	data.Operator = db.RedisGetTokenUsrn(c.GetHeader("token"))
 	now := int(time.Now().Unix())
-	data.UpdatedAt = now
+	if data.Status == 1 {
+		data.UpdatedAt = now
+	}
 	if err := db.SaveMailcontrol(data); err != nil {
 		code = util.MailcontrolFail
 		desc = err.Error()
