@@ -8,6 +8,7 @@ import (
 
 type MailcontrolInsertReq struct {
 	TargetID []int        //目标用户
+	MailServiceType int    //0是系统邮件，1是赛事邮件，2是活动邮件
 	Title    string       //标题
 	Content  string       //内容
 	Annexes  []util.Annex //附件
@@ -46,6 +47,7 @@ func (ctx *MailcontrolListReq) GetDataPipeline() []bson.M {
 type Mailcontrol struct {
 	ID       int          `bson:"_id"` //唯一标识
 	TargetID []int          //目标用户
+	MailServiceType int    //0是系统邮件，1是赛事邮件，2是活动邮件
 	Title    string       //标题
 	Content  string
 	Annexes  []util.Annex //附件
@@ -67,6 +69,7 @@ type MailcontrolListResp struct {
 type MailcontrolUpdateReq struct {
 	base.OID              //记录唯一标识
 	TargetID []int        //目标用户
+	MailServiceType int    //0是系统邮件，1是赛事邮件，2是活动邮件
 	Title    string       //标题
 	Content  string       //内容
 	Annexes  []util.Annex //附件

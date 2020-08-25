@@ -45,7 +45,7 @@ func SaveMailcontrol(data *util.Mailcontrol) error {
 			req := &rpc.MailBoxReq{
 				TargetID:        int64(userID),
 				MailType:        mailType,
-				MailServiceType: rpc.MailServiceTypeOfficial,
+				MailServiceType: data.MailServiceType,
 				Title:           data.Title,
 				Content:         data.Content,
 				Annexes:         annexes,
