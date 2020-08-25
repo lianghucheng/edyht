@@ -99,6 +99,7 @@ func bind(server *gin.Engine) {
 	server.POST("/mailcontrol/read", mailcontrolRead)
 	server.POST("/mailcontrol/list", mailcontrolList)
 	server.POST("/mailcontrol/update", mailcontrolUpdate)
+	server.POST("/mailcontrol/sendall", mailcontrolSendAll)
 }
 
 type loginData struct {

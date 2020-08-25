@@ -16,6 +16,7 @@ const (
 	PropIDNotExist        = 10012
 	MailcontrolFail       = 10013
 	PayLimitRangeError    = 10014
+	SendAllMailFail      = 10015
 )
 
 var ErrMsg = map[int]string{
@@ -34,4 +35,5 @@ var ErrMsg = map[int]string{
 	PropIDNotExist:        "道具id不存在",
 	MailcontrolFail:       "操作失败",
 	PayLimitRangeError:	"支付限额范围非法",
+	SendAllMailFail:	"一键发送邮件失败",
 }
