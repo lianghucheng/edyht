@@ -672,6 +672,10 @@ func GetOneUser(accountID int, nickname, phone string) (*util.UserData, error) {
 
 	data.Remark = GetRemark(data.AccountID)
 
+	// 参赛次数
+	matchCount, _ := gs.DB(GDB).C("gamerecord").Find(bson.M{"userid": data.UserID}).Count()
+	data.MatchCount = matchCount
+
 	return data, nil
 }
 
