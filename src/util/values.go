@@ -140,7 +140,8 @@ type UserData struct {
 	ChargeAmount      string          // 充值金额
 	LoginTime         int64           `bson:"logintime"`
 	MatchCount        int             `bson:"-"` // 参赛次数
-	AwardAvailable    float64         `bson:"-"` // 可提现奖金
+	AwardTotal        string          `bson:"-"` // 累计获得奖金
+	AwardAvailable    string          `bson:"-"` // 可提现奖金
 	SportCenter       SportCenterData // 体总数据
 	Remark            string          // 备注信息
 }
@@ -513,15 +514,15 @@ const (
 )
 
 type Mailcontrol struct {
-	ID       int     `bson:"_id"` //唯一标识
-	TargetID []int   //目标用户
-	MailServiceType int    //0是系统邮件，1是赛事邮件，2是活动邮件
-	Title    string  //标题
-	Content  string  //内容
-	Annexes  []Annex //附件
-	Expire   int     //过期时间（单位：分钟）
-	Status   int     //状态，0是未发送，1是已发送
-	Operator string  //操作人
+	ID              int     `bson:"_id"` //唯一标识
+	TargetID        []int   //目标用户
+	MailServiceType int     //0是系统邮件，1是赛事邮件，2是活动邮件
+	Title           string  //标题
+	Content         string  //内容
+	Annexes         []Annex //附件
+	Expire          int     //过期时间（单位：分钟）
+	Status          int     //状态，0是未发送，1是已发送
+	Operator        string  //操作人
 
 	CreatedAt int //创建时间戳，对应添加时间
 	UpdatedAt int //更新时间戳，对应发送时间

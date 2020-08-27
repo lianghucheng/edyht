@@ -699,45 +699,10 @@ func GetUserList(page, count int) ([]util.UserData, int) {
 		one.ChargeAmount = util.FormatFloat(float64(chargeAmount/100), 2)
 
 		// 查询累计获得奖金
-		award := map[string]interface{}{}
-		gs.DB(GDB).C("flowdata").Pipe([]bson.M{
-			{"$match": bson.M{"flowtype": 1}},
-			{"$match": bson.M{"userid": one.UserID}},
-			{"$project": bson.M{
-				"Total": "$changeamount",
-			}},
-			{"$group": bson.M{
-				"_id": "$accountid",
-				"all": bson.M{"$sum": "$Total"},
-			}},
-		}).One(&award)
-		var awardAmount float64
-		// log.Debug("fee:%v", reflect.TypeOf(fee["all"]))
-		if awardAdd, ok := award["all"].(float64); ok {
-			awardAmount = float64(awardAdd)
-		}
-		one.Fee = awardAmount
-		one.TakenFee = 0
+		one.AwardTotal = GetPlayerAwardTotal(one.UserID)
 
 		// 可提现奖金
-		award = map[string]interface{}{}
-		gs.DB(GDB).C("flowdata").Pipe([]bson.M{
-			{"$match": bson.M{"flowtype": 1, "status": 0}},
-			{"$match": bson.M{"userid": one.UserID}},
-			{"$project": bson.M{
-				"Total": "$changeamount",
-			}},
-			{"$group": bson.M{
-				"_id": "$accountid",
-				"all": bson.M{"$sum": "$Total"},
-			}},
-		}).One(&award)
-		var awardAvailable float64
-		// log.Debug("fee:%v", reflect.TypeOf(fee["all"]))
-		if awardAdd, ok := award["all"].(float64); ok {
-			awardAvailable = float64(awardAdd)
-		}
-		one.AwardAvailable = awardAvailable
+		one.AwardAvailable = GetPlayerAwardAvailable(one.UserID)
 
 		// 参赛次数
 		matchCount, _ := gs.DB(GDB).C("gamerecord").Find(bson.M{"userid": one.UserID}).Count()
@@ -779,25 +744,8 @@ func GetOneUser(accountID int, nickname, phone string) (*util.UserData, error) {
 	data.ChargeAmount = util.FormatFloat(float64(chargeAmount/100), 2)
 
 	// 查询累计获得奖金
-	award := map[string]interface{}{}
-	gs.DB(GDB).C("flowdata").Pipe([]bson.M{
-		{"$match": bson.M{"flowtype": 1}},
-		{"$match": bson.M{"userid": data.UserID}},
-		{"$project": bson.M{
-			"Total": "$changeamount",
-		}},
-		{"$group": bson.M{
-			"_id": "$accountid",
-			"all": bson.M{"$sum": "$Total"},
-		}},
-	}).One(&award)
-	var awardAmount float64
-	// log.Debug("fee:%v", reflect.TypeOf(fee["all"]))
-	if awardAdd, ok := award["all"].(float64); ok {
-		awardAmount = float64(awardAdd)
-	}
-	data.Fee = awardAmount
-	data.TakenFee = 0
+	data.AwardTotal = GetPlayerAwardTotal(data.UserID)
+	data.AwardAvailable = GetPlayerAwardAvailable(data.UserID)
 
 	data.Remark = GetRemark(data.AccountID)
 
@@ -1267,6 +1215,55 @@ func GetFirstViewData() map[string]interface{} {
 	return ret
 }
 
+// GetPlayerAwardAvailable 获取玩家可提现奖金
+func GetPlayerAwardAvailable(uid int) string {
+	gs := gameDB.Ref()
+	defer gameDB.UnRef(gs)
+	// 可提现奖金
+	award := map[string]interface{}{}
+	gs.DB(GDB).C("flowdata").Pipe([]bson.M{
+		{"$match": bson.M{"flowtype": 1, "status": 0}},
+		{"$match": bson.M{"userid": uid}},
+		{"$project": bson.M{
+			"Total": "$changeamount",
+		}},
+		{"$group": bson.M{
+			"_id": "$accountid",
+			"all": bson.M{"$sum": "$Total"},
+		}},
+	}).One(&award)
+	var awardAvailable string
+	if awardAdd, ok := award["all"].(float64); ok {
+		awardAvailable = util.FormatFloat(float64(awardAdd), 2)
+	}
+	return awardAvailable
+}
+
+// GetPlayerAwardTotal 获取玩家累计获得奖金
+func GetPlayerAwardTotal(uid int) string {
+	gs := gameDB.Ref()
+	defer gameDB.UnRef(gs)
+	// 查询累计获得奖金
+	award := map[string]interface{}{}
+	gs.DB(GDB).C("flowdata").Pipe([]bson.M{
+		{"$match": bson.M{"flowtype": 1}},
+		{"$match": bson.M{"userid": uid}},
+		{"$project": bson.M{
+			"Total": "$changeamount",
+		}},
+		{"$group": bson.M{
+			"_id": "$accountid",
+			"all": bson.M{"$sum": "$Total"},
+		}},
+	}).One(&award)
+	var awardAmount string
+	// log.Debug("fee:%v", reflect.TypeOf(fee["all"]))
+	if awardAdd, ok := award["all"].(float64); ok {
+		awardAmount = util.FormatFloat(float64(awardAdd), 2)
+	}
+	return awardAmount
+}
+
 // GetPlayerCharge 获取某一玩家的充值
 func GetPlayerCharge(accountID int) int64 {
 	gs := gameDB.Ref()
@@ -1290,7 +1287,7 @@ func GetPlayerCharge(accountID int) int64 {
 	}
 	fee2 := map[string]interface{}{}
 	gs.DB("czddz").C("alipayresult").Pipe([]bson.M{
-		{"$match": bson.M{"status": true, "userid": accountID + 1e8}},
+		{"$match": bson.M{"success": true, "userid": accountID + 1e8}},
 		{"$project": bson.M{
 			"TotalFee": "$totalamount",
 		}},
@@ -1328,7 +1325,7 @@ func GetTotalCharge(start int64) int64 {
 	}
 	fee2 := map[string]interface{}{}
 	gs.DB("czddz").C("alipayresult").Pipe([]bson.M{
-		{"$match": bson.M{"status": true, "createdat": bson.M{"$gt": start}}},
+		{"$match": bson.M{"success": true, "createdat": bson.M{"$gt": start}, "userid": bson.M{"$gt": 1e8}}},
 		{"$project": bson.M{
 			"TotalFee": "$totalamount",
 		}},
@@ -1337,6 +1334,7 @@ func GetTotalCharge(start int64) int64 {
 			"all": bson.M{"$sum": "$TotalFee"},
 		}},
 	}).One(&fee2)
+	log.Debug("czddz charge:%v", fee2)
 	if feeAdd, ok := fee2["all"].(float64); ok {
 		chargeAmount += int64(feeAdd * 100)
 	}
