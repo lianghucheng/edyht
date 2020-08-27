@@ -1289,7 +1289,7 @@ func GetPlayerCharge(accountID int) int64 {
 		chargeAmount += int64(feeAdd)
 	}
 	fee2 := map[string]interface{}{}
-	gs.DB("dzddz").C("alipayresult").Pipe([]bson.M{
+	gs.DB("czddz").C("alipayresult").Pipe([]bson.M{
 		{"$match": bson.M{"status": true, "userid": accountID + 1e8}},
 		{"$project": bson.M{
 			"TotalFee": "$totalamount",
@@ -1327,7 +1327,7 @@ func GetTotalCharge(start int64) int64 {
 		chargeAmount += int64(feeAdd)
 	}
 	fee2 := map[string]interface{}{}
-	gs.DB("dzddz").C("alipayresult").Pipe([]bson.M{
+	gs.DB("czddz").C("alipayresult").Pipe([]bson.M{
 		{"$match": bson.M{"status": true, "createdat": bson.M{"$gt": start}}},
 		{"$project": bson.M{
 			"TotalFee": "$totalamount",
