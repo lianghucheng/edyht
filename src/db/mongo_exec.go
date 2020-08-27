@@ -97,84 +97,13 @@ func GetMatchReport(matchID string, start, end int64) []map[string]interface{} {
 		return nil
 	}
 
-	// 查询时间范围内的数据总合
-	// allReport := struct {
-	// 	AllSignPlayer int
-	// 	AllSignFee    float64
-	// 	AllAward      float64
-	// 	AllLast       float64
-	// }{}
-	// allReport["AllSignPlayer"] = int(0)
-	// allReport["AllSignFee"] = float64(0)
-	// allReport["AllAward"] = float64(0)
-	// allReport["AllLast"] = float64(0)
 	AllSignPlayer := 0
 	var AllSignFee, AllAward, AllLast float64
 
-	// log.Debug("check,%v,%v", start, end)
 	result := make([]map[string]interface{}, 0)
 
-	/*
-		for i := end; i >= start; i = i - oneDay {
-			one := map[string]interface{}{}
-			// rt := time.Unix(i, 0).Format("2006-01-02")
-			// log.Debug("check,%v,%v", i, i+oneDay)
-			err := s.DB(GDB).C("match").Pipe([]bson.M{
-				{"$match": bson.M{"matchid": matchID}},
-				// {"$match": bson.M{"createtime": bson.M{"$gt": fmt.Sprintf("$%v", i), "$lte": fmt.Sprintf("$%v", i+oneDay)}}},
-				{"$match": bson.M{"createtime": bson.M{"$gt": i, "$lte": i + oneDay}}},
-				{"$project": bson.M{
-					// "RecordTime":  fmt.Sprintf("$%v", time.Unix(i, 0).Format("2006-01-02")),
-					"RecordTime":  "$createtime",
-					"SignInCount": bson.M{"$size": "$signinplayers"}, "_id": 0, "matchid": fmt.Sprintf("$%v", matchID),
-					"SignFee":  bson.M{"$multiply": []interface{}{bson.M{"$size": "$signinplayers"}, bson.M{"$divide": []interface{}{"$enterfee", util.CouponRate}}}},
-					"AwardNum": bson.M{"$size": "$award"},
-					"Money":    "$moneyaward",
-					"Coupon":   "$couponaward",
-					"LastMoney": bson.M{"$subtract": []interface{}{bson.M{
-						"$multiply": []interface{}{
-							bson.M{"$size": "$signinplayers"}, bson.M{"$divide": []interface{}{"$enterfee", util.CouponRate}}}},
-						// bson.M{"$add": []interface{}{"$moneyaward", bson.M{"$multiply": []interface{}{"$couponaward", util.CouponRate}}}}}}}},
-						"$moneyaward"}}}},
-				{"$group": bson.M{
-					"_id": "$matchid", "RecordTime": bson.M{"$first": "$RecordTime"}, "allMoney": bson.M{"$sum": "$Money"},
-					"allCoupon": bson.M{"$sum": "$Coupon"}, "allSign": bson.M{"$sum": "$SignInCount"},
-					"allSignFee": bson.M{"$sum": "$SignFee"}, "awardNum": bson.M{"$sum": "$AwardNum"},
-					"lastMoney": bson.M{"$sum": "$LastMoney"}}},
-				// {"$sort": bson.M{"count": -1}},
-			}).One(&one)
-			if err == mgo.ErrNotFound {
-				continue
-			}
-			if err != nil {
-				log.Error("get report fail:%v", err)
-				return nil
-			}
-			// 数据汇总
-			allReport["AllSignPlayer"] = allReport["AllSignPlayer"].(int) + one["allSign"].(int)
-			allReport["AllSignFee"] = allReport["AllSignFee"].(float64) + one["allSignFee"].(float64)
-			allReport["AllAward"] = allReport["AllAward"].(float64) + one["allMoney"].(float64)
-			allReport["AllLast"] = allReport["AllLast"].(float64) + one["lastMoney"].(float64)
-
-			one["allSignFee"] = util.Decimal(one["allSignFee"].(float64))
-			one["allMoney"] = util.Decimal(one["allMoney"].(float64))
-			one["lastMoney"] = util.Decimal(one["lastMoney"].(float64))
-			result = append(result, one)
-		}
-	*/
-
 	for i := end; i >= start; i = i - oneDay {
-		// all := []map[string]interface{}{}
-		// all := []struct {
-		// 	SignInCount int
-		// 	SignFee     float64
-		// 	AwardNum    int
-		// 	Money       float64
-		// 	AwardList   string
-		// 	LastMoney   float64
-		// }{}
 		all := []map[string]interface{}{}
-
 		err := s.DB(GDB).C("match").Pipe([]bson.M{
 			{"$match": bson.M{"matchid": matchID}},
 			{"$match": bson.M{"createtime": bson.M{"$gt": i, "$lte": i + oneDay}}},
@@ -196,12 +125,6 @@ func GetMatchReport(matchID string, start, end int64) []map[string]interface{} {
 			log.Error("get report fail:%v", err)
 			return nil
 		}
-		// log.Debug("all:%v", all)
-		// 数据汇总
-		// allReport["AllSignPlayer"] = allReport["AllSignPlayer"].(int) + one["allSign"].(int)
-		// allReport["AllSignFee"] = allReport["AllSignFee"].(float64) + one["allSignFee"].(float64)
-		// allReport["AllAward"] = allReport["AllAward"].(float64) + one["allMoney"].(float64)
-		// allReport["AllLast"] = allReport["AllLast"].(float64) + one["lastMoney"].(float64)
 		var oneSignPlayer, oneAwardNum int
 		var oneSignFee, oneAward, oneLast float64
 		awardCount := map[string]float64{}
