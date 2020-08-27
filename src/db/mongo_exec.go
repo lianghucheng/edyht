@@ -1194,7 +1194,8 @@ func GetPlayerCharge(accountID int) int64 {
 	// 查询充值
 	fee := map[string]interface{}{}
 	gs.DB(GDB).C("edyorder").Pipe([]bson.M{
-		{"$match": bson.M{"status": true, "accountid": accountID}},
+		{"$match": bson.M{"$or": []interface{}{bson.M{"status": true}, bson.M{"merchant": 2}}}},
+		{"$match": bson.M{"accountid": accountID}},
 		{"$project": bson.M{
 			"TotalFee": "$fee",
 		}},
@@ -1208,20 +1209,20 @@ func GetPlayerCharge(accountID int) int64 {
 	if feeAdd, ok := fee["all"].(int64); ok {
 		chargeAmount += int64(feeAdd)
 	}
-	fee2 := map[string]interface{}{}
-	gs.DB("czddz").C("alipayresult").Pipe([]bson.M{
-		{"$match": bson.M{"success": true, "userid": accountID + 1e8}},
-		{"$project": bson.M{
-			"TotalFee": "$totalamount",
-		}},
-		{"$group": bson.M{
-			"_id": "$userid",
-			"all": bson.M{"$sum": "$TotalFee"},
-		}},
-	}).One(&fee2)
-	if feeAdd, ok := fee2["all"].(float64); ok {
-		chargeAmount += int64(feeAdd * 100)
-	}
+	// fee2 := map[string]interface{}{}
+	// gs.DB("czddz").C("alipayresult").Pipe([]bson.M{
+	// 	{"$match": bson.M{"success": true, "userid": accountID + 1e8}},
+	// 	{"$project": bson.M{
+	// 		"TotalFee": "$totalamount",
+	// 	}},
+	// 	{"$group": bson.M{
+	// 		"_id": "$userid",
+	// 		"all": bson.M{"$sum": "$TotalFee"},
+	// 	}},
+	// }).One(&fee2)
+	// if feeAdd, ok := fee2["all"].(float64); ok {
+	// 	chargeAmount += int64(feeAdd * 100)
+	// }
 	return chargeAmount
 }
 
@@ -1232,7 +1233,8 @@ func GetTotalCharge(start int64) int64 {
 	// 查询充值
 	fee := map[string]interface{}{}
 	gs.DB(GDB).C("edyorder").Pipe([]bson.M{
-		{"$match": bson.M{"status": true, "createdat": bson.M{"$gt": start}}},
+		{"$match": bson.M{"$or": []interface{}{bson.M{"status": true}, bson.M{"merchant": 2}}}},
+		{"$match": bson.M{"createdat": bson.M{"$gt": start}}},
 		{"$project": bson.M{
 			"TotalFee": "$fee",
 		}},
@@ -1246,21 +1248,21 @@ func GetTotalCharge(start int64) int64 {
 	if feeAdd, ok := fee["all"].(int64); ok {
 		chargeAmount += int64(feeAdd)
 	}
-	fee2 := map[string]interface{}{}
-	gs.DB("czddz").C("alipayresult").Pipe([]bson.M{
-		{"$match": bson.M{"success": true, "createdat": bson.M{"$gt": start}, "userid": bson.M{"$gt": 1e8}}},
-		{"$project": bson.M{
-			"TotalFee": "$totalamount",
-		}},
-		{"$group": bson.M{
-			"_id": "$userid",
-			"all": bson.M{"$sum": "$TotalFee"},
-		}},
-	}).One(&fee2)
-	log.Debug("czddz charge:%v", fee2)
-	if feeAdd, ok := fee2["all"].(float64); ok {
-		chargeAmount += int64(feeAdd * 100)
-	}
+	// fee2 := map[string]interface{}{}
+	// gs.DB("czddz").C("alipayresult").Pipe([]bson.M{
+	// 	{"$match": bson.M{"success": true, "createdat": bson.M{"$gt": start}, "userid": bson.M{"$gt": 1e8}}},
+	// 	{"$project": bson.M{
+	// 		"TotalFee": "$totalamount",
+	// 	}},
+	// 	{"$group": bson.M{
+	// 		"_id": "$userid",
+	// 		"all": bson.M{"$sum": "$TotalFee"},
+	// 	}},
+	// }).One(&fee2)
+	// log.Debug("czddz charge:%v", fee2)
+	// if feeAdd, ok := fee2["all"].(float64); ok {
+	// 	chargeAmount += int64(feeAdd * 100)
+	// }
 	return chargeAmount
 }
 
