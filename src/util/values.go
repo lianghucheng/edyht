@@ -169,6 +169,7 @@ type BankCard struct {
 	Province    string
 	City        string
 	OpeningBank string
+	OpeningBankNo string
 }
 
 // UserMatchReview 用户后台的赛事列表总览
