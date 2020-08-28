@@ -233,8 +233,8 @@ func matchReport(c *gin.Context) {
 		desc = "非法请求页码！"
 		return
 	}
-	begin, err := time.Parse("2006-01-02", data.Start)
-	over, err := time.Parse("2006-01-02", data.End)
+	begin, err := time.ParseInLocation("2006-01-02", data.Start, time.Local)
+	over, err := time.ParseInLocation("2006-01-02", data.End, time.Local)
 	if err != nil || begin.After(over) {
 		log.Error("error time:%v,%v", data.Start, data.End)
 		code = util.Retry
@@ -354,8 +354,8 @@ func matchList(c *gin.Context) {
 		desc = "非法请求页码！"
 		return
 	}
-	begin, err := time.Parse("2006-01-02", data.Start)
-	over, err := time.Parse("2006-01-02", data.End)
+	begin, err := time.ParseInLocation("2006-01-02", data.Start, time.Local)
+	over, err := time.ParseInLocation("2006-01-02", data.End, time.Local)
 	if err != nil || begin.After(over) {
 		log.Error("error time:%v,%v", data.Start, data.End)
 		code = util.Retry
@@ -1019,8 +1019,8 @@ func getUserOptLog(c *gin.Context) {
 		desc = "非法请求页码！"
 		return
 	}
-	begin, err := time.Parse("2006-01-02", data.Start)
-	over, err := time.Parse("2006-01-02", data.End)
+	begin, err := time.ParseInLocation("2006-01-02", data.Start, time.Local)
+	over, err := time.ParseInLocation("2006-01-02", data.End, time.Local)
 	if err != nil || begin.After(over) {
 		log.Error("error time:%v,%v", data.Start, data.End)
 		code = util.Retry
