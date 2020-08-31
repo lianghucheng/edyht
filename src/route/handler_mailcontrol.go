@@ -221,7 +221,6 @@ func mailcontrolUpdate(c *gin.Context) {
 	return
 }
 
-
 func mailcontrolSendAll(c *gin.Context) {
 	code := util.Success
 	desc := util.ErrMsg[util.Success]
@@ -249,7 +248,7 @@ func mailcontrolSendAll(c *gin.Context) {
 			desc = util.ErrMsg[code]
 			return
 		}
-		all =append(all, data.Title)
+		all = append(all, data.Title)
 		data.Status = 1
 		data.Operator = db.RedisGetTokenUsrn(c.GetHeader("token"))
 		now := int(time.Now().Unix())

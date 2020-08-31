@@ -223,3 +223,38 @@ func RpcSetPropBaseConfig() error {
 	}
 	return nil
 }
+
+const setBankcard = "/bind/lianhanghao"
+
+func RpcSetBankcard(accountid, bankName, bankCardNo, province, city, openingBank, openingBankNo string) error {
+	log.Debug("RpcSetBankcard")
+	resp, err := http.Get(config.GetConfig().GameServer + setBankcard +
+		`?accountid=` + accountid +
+		`&bankName=` + bankName +
+		`&bankCardNo=` + bankCardNo +
+		`&province=` + province +
+		`&city=` + city +
+		`&openingBank=` + openingBank +
+		`&openingBankNo=` + openingBankNo)
+	if err != nil {
+		return err
+	}
+	buf, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		return err
+	}
+
+	m := struct {
+		Code   int
+		Errmsg string
+	}{}
+
+	if err := json.Unmarshal(buf, &m); err != nil {
+		return err
+	}
+	if m.Code != 0 {
+		return errors.New(fmt.Sprintf("request fail, the code is %v. the errmsg is %v. ", m.Code, m.Errmsg))
+	}
+	return nil
+}
