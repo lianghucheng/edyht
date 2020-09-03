@@ -100,6 +100,16 @@ func bind(server *gin.Engine) {
 	server.POST("/mailcontrol/list", mailcontrolList)
 	server.POST("/mailcontrol/update", mailcontrolUpdate)
 	server.POST("/mailcontrol/sendall", mailcontrolSendAll)
+
+	// 财务报表
+	server.POST("/getFisrtViewMap", getFisrtViewMap)
+	server.POST("/getMatchPercentMap", getMatchPercentMap)
+	server.GET("/getWeekBuyAndUse", getWeekBuyAndUse)
+	server.POST("/getItemUseList", getItemUseList)
+	server.POST("/getTotalCashoutPercent", getTotalCashoutPercent)
+	server.POST("/getChargeDetail", getChargeDetail)
+	server.POST("/getCashoutDetail", getCashoutDetail)
+	server.POST("/getMatchAwardPreview", getMatchAwardPreview)
 }
 
 type loginData struct {
@@ -285,4 +295,40 @@ type editRemarkReq struct {
 
 type editDailyWelfareConfigReq struct {
 	Config util.OneDailyWelfareConfig `json:"Config"`
+}
+
+type firstViewMapReq struct {
+	// MapType   int `json:"MapType"`
+	MapPeriod int `json:"MapPeriod" binding:"required"`
+}
+
+type matchPercentMapReq struct {
+	Start string `json:"Start"` // 查询开始时间,格式"2006-01-02""
+	End   string `json:"End"`   // 查询结束时间
+}
+
+type getItemUserListReq struct {
+	Page  int `json:"Page" binding:"required"`
+	Count int `json:"Count" binding:"required"`
+	Sort  int `json:"Sort"` // 1按购买次数降序,2按购买次数升序,3按周涨幅降序,4按周涨幅升升序
+}
+
+type totalCashoutPercentReq struct {
+	MapPeriod int `json:"MapPeriod" binding:"required"` // 1 总数据,2昨日,3上周,4本周,5上月,6本月,7全年
+}
+
+type chargeDetailReq struct {
+	Start string `json:"Start" binding:"required"` // 查询开始时间,格式"2006-01-02""
+	End   string `json:"End" binding:"required"`   // 查询结束时间
+	Page  int    `json:"Page" binding:"required"`
+	Count int    `json:"Count" binding:"required"`
+}
+
+type matchAwardPreviewReq struct {
+	Start     string `json:"Start" binding:"required"` // 查询开始时间,格式"2006-01-02""
+	End       string `json:"End" binding:"required"`   // 查询结束时间
+	Page      int    `json:"Page" binding:"required"`
+	Count     int    `json:"Count" binding:"required"`
+	MatchID   string `json:"MatchID"`
+	MatchName string `json:"MatchName"`
 }

@@ -8,12 +8,25 @@ import (
 
 // 设定好redis的key
 const (
-	TokenKey       = "token"       // token
-	MatchReportKey = "matchReport" // match report
-	MatchListKey   = "matchList"   // match list
-	TokenExportKey = "tokenExport" // token export
-	TokenUsrn      = "usrn"
-	WhiteList      = "whiteList" // whitelist
+	TokenKey          = "token"       // token
+	MatchReportKey    = "matchReport" // match report
+	MatchListKey      = "matchList"   // match list
+	TokenExportKey    = "tokenExport" // token export
+	TokenUsrn         = "usrn"
+	WhiteList         = "whiteList"         // whitelist
+	FirstView         = "firstView"         // 财务总览
+	MapAll            = "mapAll"            // 所有图
+	MapLastMoney      = "mapLastMoney"      // 剩余额图
+	MapTotalCharge    = "mapTotalCharge"    // 总充值图
+	MapTotalAward     = "mapTotalAward"     // 总奖金发放图
+	MapTotalCashout   = "mapTotalCashout"   // 总提现图
+	WeekItemBuy       = "weekItemBuy"       // 周购买
+	WeekItemUse       = "weekItemUse"       // 周消耗
+	ItemUseList       = "itemUseList"       // 道具购买列表
+	CashoutPercent    = "CashoutPercent"    // 提现数额次数占比
+	ChargeDetail      = "ChargeDetail"      // 充值明细
+	CashoutDetail     = "CashoutDetail"     // 提现明细
+	MatchAwardPreview = "MatchAwardPreview" // 赛事奖金总览
 )
 
 // 数据过期时间

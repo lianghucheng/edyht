@@ -2231,7 +2231,18 @@ func getFirstViewData(c *gin.Context) {
 			"data": data,
 		})
 	}()
-	data = db.GetFirstViewData()
+	redisData := db.RedisCommonGetData(db.FirstView)
+	if redisData != nil {
+		if err := json.Unmarshal(redisData, &data); err != nil {
+			code = util.Retry
+			desc = "查询出错!"
+			data = nil
+			return
+		}
+	} else {
+		data = db.GetFirstViewData()
+		db.RedisCommonSetData(db.FirstView, data)
+	}
 }
 
 // 首页数据
@@ -2306,4 +2317,393 @@ func editDailyWelfareConfig(c *gin.Context) {
 		desc = ret["desc"].(string)
 		return
 	}
+}
+
+// 财务报表总览总盈利图
+func getFisrtViewMap(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	var data interface{}
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+			"data": data,
+		})
+	}()
+	req := firstViewMapReq{}
+	if err := c.ShouldBind(&req); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	if req.MapPeriod > util.FirstViewMapYear || req.MapPeriod <= 0 {
+		code = util.Retry
+		desc = "请求参数有误!"
+		return
+	}
+	data = db.GetAllMap(req.MapPeriod)
+	// switch req.MapType {
+	// case util.FirstViewMapLastMoney:
+	// 	data = db.GetMapLastMoney(req.MapPeriod)
+	// case util.FirstViewMapTotalCharge:
+	// 	data = db.GetMapTotalCharge(req.MapPeriod)
+	// case util.FirstViewMapTotalAward:
+	// 	data = db.GetMapTotalAward(req.MapPeriod)
+	// case util.FirstViewMapTotalCashout:
+	// 	data = db.GetMapTotalCashout(req.MapPeriod)
+	// default:
+	// 	code = util.Retry
+	// 	desc = "请求参数有误!"
+	// 	return
+	// }
+}
+
+// 财务报表赛事奖金发放占比
+func getMatchPercentMap(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	var data interface{}
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+			"data": data,
+		})
+	}()
+	req := matchPercentMapReq{}
+	if err := c.ShouldBind(&req); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	begin, err := time.ParseInLocation("2006-01-02", req.Start, time.Local)
+	over, err := time.ParseInLocation("2006-01-02", req.End, time.Local)
+	if err != nil || begin.After(over) {
+		log.Error("error time:%v,%v", req.Start, req.End)
+		code = util.Retry
+		desc = "非法请求时间！"
+		return
+	}
+	if over.Sub(begin) > time.Duration(31*24*time.Hour) {
+		code = util.Retry
+		desc = "单次查询时间不能超过一个月！"
+		return
+	}
+	data = db.GetMatchPercent(begin.Unix(), over.Unix())
+}
+
+// 道具一周消耗/购买数量
+func getWeekBuyAndUse(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	var buy, use interface{}
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+			"buy":  buy,
+			"use":  use,
+		})
+	}()
+	buy = db.GetWeekItemBuy()
+	use = db.GetWeekItemUse()
+}
+
+// 道具购买列表
+func getItemUseList(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	var list interface{}
+	total := 0
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code":  code,
+			"desc":  desc,
+			"list":  list,
+			"total": total,
+		})
+	}()
+	req := getItemUserListReq{}
+	if err := c.ShouldBind(&req); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	itemList := db.GetItemUseList()
+	if itemList == nil {
+		code = util.Retry
+		desc = "获取失败,请重试!"
+		return
+	}
+	sortItemUseList(itemList, req.Sort)
+	total = len(itemList)
+
+	last := req.Page * req.Count
+	if (req.Page-1)*req.Count >= total {
+		log.Error("error page:%v,count:%v", req.Page, req.Count)
+		code = util.Retry
+		desc = "非法请求页码！"
+		return
+	}
+	if last > total {
+		last = total
+	}
+	list = itemList[(req.Page-1)*req.Count : last]
+}
+
+// getTotalCashoutPercent 获取一段时间提现数额次数占比
+func getTotalCashoutPercent(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	var data interface{}
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+			"data": data,
+		})
+	}()
+	req := totalCashoutPercentReq{}
+	if err := c.ShouldBind(&req); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	var start, end int64
+	switch req.MapPeriod {
+	case 1:
+		start = util.ServerStartTime
+		end = time.Now().Unix()
+	case 2:
+		start = util.GetZeroTime(time.Now().AddDate(0, 0, -1)).Unix()
+		end = util.GetZeroTime(time.Now()).Unix()
+	case 3:
+		start = util.GetFirstDateOfWeek(time.Now().AddDate(0, 0, -7)).Unix()
+		end = util.GetFirstDateOfWeek(time.Now()).Unix()
+	case 4:
+		start = util.GetFirstDateOfWeek(time.Now()).Unix()
+		end = time.Now().Unix()
+	case 5:
+		start = util.GetFirstDateOfMonth(util.GetFirstDateOfMonth(time.Now()).AddDate(0, 0, -1)).Unix()
+		end = util.GetFirstDateOfMonth(time.Now()).Unix()
+	case 6:
+		start = util.GetFirstDateOfMonth(time.Now()).Unix()
+		end = util.GetLastDateOfMonth(time.Now()).Unix() + 24*60*60
+	case 7:
+		start = util.GetFirstDateOfYear(time.Now()).Unix()
+		end = time.Now().Unix()
+	default:
+		code = util.Retry
+		desc = "请求参数错误!"
+		return
+	}
+	data = db.GetTotalCashoutPercent(start, end)
+}
+
+// 充值明细
+func getChargeDetail(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	var list interface{}
+	total := 0
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code":  code,
+			"desc":  desc,
+			"list":  list,
+			"total": total,
+		})
+	}()
+	req := chargeDetailReq{}
+	if err := c.ShouldBind(&req); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	begin, err := time.ParseInLocation("2006-01-02", req.Start, time.Local)
+	over, err := time.ParseInLocation("2006-01-02", req.End, time.Local)
+	if err != nil || begin.After(over) {
+		log.Error("error time:%v,%v", req.Start, req.End)
+		code = util.Retry
+		desc = "非法请求时间！"
+		return
+	}
+	if over.Sub(begin) > time.Duration(31*24*time.Hour) {
+		code = util.Retry
+		desc = "单次查询时间不能超过一个月！"
+		return
+	}
+
+	redisData := db.RedisCommonGetData(db.ChargeDetail + req.Start + req.End)
+	ret := []map[string]interface{}{}
+	if redisData == nil {
+		ret = db.GetChargeDetail(begin.Unix(), over.Unix())
+		db.RedisCommonSetData(db.ChargeDetail+req.Start+req.End, ret)
+	} else {
+		if err := json.Unmarshal(redisData, &ret); err != nil {
+			log.Error("err:%v", err)
+			code = util.Retry
+			desc = "查询出错,请重试!"
+			return
+		}
+	}
+	total = len(ret)
+	last := req.Page * req.Count
+	if (req.Page-1)*req.Count >= total {
+		log.Error("error page:%v,count:%v", req.Page, req.Count)
+		code = util.Retry
+		desc = "非法请求页码！"
+		return
+	}
+	if last > total {
+		last = total
+	}
+	list = ret[(req.Page-1)*req.Count : last]
+}
+
+// 提现明细
+func getCashoutDetail(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	var list interface{}
+	total := 0
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code":  code,
+			"desc":  desc,
+			"list":  list,
+			"total": total,
+		})
+	}()
+	req := chargeDetailReq{}
+	if err := c.ShouldBind(&req); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	begin, err := time.ParseInLocation("2006-01-02", req.Start, time.Local)
+	over, err := time.ParseInLocation("2006-01-02", req.End, time.Local)
+	if err != nil || begin.After(over) {
+		log.Error("error time:%v,%v", req.Start, req.End)
+		code = util.Retry
+		desc = "非法请求时间！"
+		return
+	}
+	if over.Sub(begin) > time.Duration(31*24*time.Hour) {
+		code = util.Retry
+		desc = "单次查询时间不能超过一个月！"
+		return
+	}
+
+	redisData := db.RedisCommonGetData(db.CashoutDetail + req.Start + req.End)
+	ret := []map[string]interface{}{}
+	if redisData == nil {
+		ret = db.GetCashoutDetail(begin.Unix(), over.Unix())
+		db.RedisCommonSetData(db.CashoutDetail+req.Start+req.End, ret)
+	} else {
+		if err := json.Unmarshal(redisData, &ret); err != nil {
+			log.Error("err:%v", err)
+			code = util.Retry
+			desc = "查询出错,请重试!"
+			return
+		}
+	}
+
+	total = len(ret)
+	last := req.Page * req.Count
+	if (req.Page-1)*req.Count >= total {
+		log.Error("error page:%v,count:%v", req.Page, req.Count)
+		code = util.Retry
+		desc = "非法请求页码！"
+		return
+	}
+	if last > total {
+		last = total
+	}
+	list = ret[(req.Page-1)*req.Count : last]
+}
+
+// 赛事奖金总览
+func getMatchAwardPreview(c *gin.Context) {
+	code := util.OK
+	desc := "OK"
+	var list interface{}
+	total := 0
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code":  code,
+			"desc":  desc,
+			"list":  list,
+			"total": total,
+		})
+	}()
+	req := matchAwardPreviewReq{}
+	if err := c.ShouldBind(&req); err != nil {
+		code = util.Retry
+		desc = err.Error()
+		return
+	}
+	begin, err := time.ParseInLocation("2006-01-02", req.Start, time.Local)
+	over, err := time.ParseInLocation("2006-01-02", req.End, time.Local)
+	if err != nil || begin.After(over) {
+		log.Error("error time:%v,%v", req.Start, req.End)
+		code = util.Retry
+		desc = "非法请求时间！"
+		return
+	}
+	if over.Sub(begin) > time.Duration(31*24*time.Hour) {
+		code = util.Retry
+		desc = "单次查询时间不能超过一个月！"
+		return
+	}
+
+	redisData := db.RedisCommonGetData(db.MatchAwardPreview + req.Start + req.End)
+	tmp := []map[string]interface{}{}
+	if redisData == nil {
+		tmp = db.GetMatchAwardPreview(begin.Unix(), over.Unix())
+		db.RedisCommonSetData(db.MatchAwardPreview+req.Start+req.End, tmp)
+	} else {
+		if err := json.Unmarshal(redisData, &tmp); err != nil {
+			log.Error("err:%v", err)
+			code = util.Retry
+			desc = "查询出错,请重试!"
+			return
+		}
+	}
+
+	ret := []map[string]interface{}{}
+	if len(req.MatchID) > 0 {
+		for _, v := range tmp {
+			if v["matchID"].(string) == req.MatchID {
+				ret = append(ret, v)
+			}
+		}
+	} else if len(req.MatchName) > 0 {
+		for _, v := range tmp {
+			if v["matchName"].(string) == req.MatchName {
+				ret = append(ret, v)
+			}
+		}
+	} else {
+		ret = tmp
+	}
+
+	total = len(ret)
+
+	if len(ret) == 0 {
+		return
+	}
+
+	last := req.Page * req.Count
+	if (req.Page-1)*req.Count >= total {
+		log.Error("error page:%v,count:%v", req.Page, req.Count)
+		code = util.Retry
+		desc = "非法请求页码！"
+		return
+	}
+	if last > total {
+		last = total
+	}
+	list = ret[(req.Page-1)*req.Count : last]
 }

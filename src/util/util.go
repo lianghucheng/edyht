@@ -91,6 +91,16 @@ func RoundFloat(num float64, decimal int) string {
 	// return fmt.Sprintf(format, num)
 }
 
+// GetFirstDateOfWeek 获取本周第一天零点
+func GetFirstDateOfWeek(d time.Time) time.Time {
+	weekDay := d.Weekday()
+	if weekDay == 0 {
+		weekDay = 7
+	}
+	d = d.AddDate(0, 0, -int(weekDay)+1)
+	return GetZeroTime(d)
+}
+
 // GetFirstDateOfMonth 获取本月第一天零点
 func GetFirstDateOfMonth(d time.Time) time.Time {
 	d = d.AddDate(0, 0, -d.Day()+1)
@@ -100,6 +110,12 @@ func GetFirstDateOfMonth(d time.Time) time.Time {
 // GetLastDateOfMonth 获取本月最后一天零点
 func GetLastDateOfMonth(d time.Time) time.Time {
 	return GetFirstDateOfMonth(d).AddDate(0, 1, -1)
+}
+
+// GetFirstDateOfYear 获取本年第一天零点
+func GetFirstDateOfYear(d time.Time) time.Time {
+	m := int(d.Month())
+	return GetFirstDateOfMonth(d.AddDate(0, -m+1, 0))
 }
 
 // GetZeroTime 获取某一天的0点时间
