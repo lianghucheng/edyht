@@ -123,6 +123,7 @@ type FlowData struct {
 	AtferTaxFee  float64
 	Desc         string
 	PassStatus   int //1是已通过，0是未通过
+	ActMoney     string
 }
 
 type UserData struct {

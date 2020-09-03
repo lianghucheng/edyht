@@ -100,6 +100,7 @@ func bind(server *gin.Engine) {
 	server.POST("/mailcontrol/list", mailcontrolList)
 	server.POST("/mailcontrol/update", mailcontrolUpdate)
 	server.POST("/mailcontrol/sendall", mailcontrolSendAll)
+	server.POST("/bankcard/set", bankcardSet)
 
 	// 财务报表
 	server.POST("/getFisrtViewMap", getFisrtViewMap)

@@ -7,12 +7,12 @@ import (
 )
 
 type MailcontrolInsertReq struct {
-	TargetID []int        //目标用户
-	MailServiceType int    //0是系统邮件，1是赛事邮件，2是活动邮件
-	Title    string       //标题
-	Content  string       //内容
-	Annexes  []util.Annex //附件
-	Expire   int          //过期时间（单位：分钟）
+	TargetID        []int        //目标用户
+	MailServiceType int          //0是系统邮件，1是赛事邮件，2是活动邮件
+	Title           string       //标题
+	Content         string       //内容
+	Annexes         []util.Annex //附件
+	Expire          int          //过期时间（单位：分钟）
 }
 
 type MailcontrolDeleteReq struct {
@@ -45,15 +45,15 @@ func (ctx *MailcontrolListReq) GetDataPipeline() []bson.M {
 }
 
 type Mailcontrol struct {
-	ID       int          `bson:"_id"` //唯一标识
-	TargetID []int          //目标用户
+	ID              int    `bson:"_id"` //唯一标识
+	TargetID        []int  //目标用户
 	MailServiceType int    //0是系统邮件，1是赛事邮件，2是活动邮件
-	Title    string       //标题
-	Content  string
-	Annexes  []util.Annex //附件
-	Expire   int          //过期时间（单位：分钟）
-	Status   int          //状态，0是未发送，1是已发送
-	Operator string       //操作人
+	Title           string //标题
+	Content         string
+	Annexes         []util.Annex //附件
+	Expire          int          //过期时间（单位：分钟）
+	Status          int          //状态，0是未发送，1是已发送
+	Operator        string       //操作人
 
 	CreatedAt int //创建时间戳，对应添加时间
 	UpdatedAt int //更新时间戳，对应发送时间，0表示从未更新过
@@ -67,16 +67,16 @@ type MailcontrolListResp struct {
 }
 
 type MailcontrolUpdateReq struct {
-	base.OID              //记录唯一标识
-	TargetID []int        //目标用户
-	MailServiceType int    //0是系统邮件，1是赛事邮件，2是活动邮件
-	Title    string       //标题
-	Content  string       //内容
-	Annexes  []util.Annex //附件
-	Expire   int          //过期时间（单位：分钟）
-	Status   int          //状态，0是未发送，1是已发送
+	base.OID                     //记录唯一标识
+	TargetID        []int        //目标用户
+	MailServiceType int          //0是系统邮件，1是赛事邮件，2是活动邮件
+	Title           string       //标题
+	Content         string       //内容
+	Annexes         []util.Annex //附件
+	Expire          int          //过期时间（单位：分钟）
+	Status          int          //状态，0是未发送，1是已发送
 }
 
 type MailcontrolSendAllReq struct {
-	Ids      []int              //记录唯一标识
+	Ids []int //记录唯一标识
 }

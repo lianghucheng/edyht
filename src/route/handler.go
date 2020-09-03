@@ -2707,3 +2707,29 @@ func getMatchAwardPreview(c *gin.Context) {
 	}
 	list = ret[(req.Page-1)*req.Count : last]
 }
+
+func bankcardSet(c *gin.Context) {
+	code := util.Success
+	desc := util.ErrMsg[util.Success]
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"desc": desc,
+		})
+	}()
+	req := new(param.BankNoReq)
+	code, desc = parseJsonParam(c.Request, req)
+	if code != util.Success {
+		code = util.FormatFail
+		desc = util.ErrMsg[code]
+		return
+	}
+
+	log.Debug("%v", *req)
+
+	if err := rpc.RpcSetBankcard(fmt.Sprintf("%v", req.Accountid), req.BankName, req.BankCardNo, req.Province, req.City, req.OpeningBank, req.OpeningBankNo); err != nil {
+		code = 1
+		desc = err.Error()
+	}
+
+}
