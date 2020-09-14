@@ -18,8 +18,11 @@ const (
 	PlayerIconDir = string(os.PathSeparator) + "upload" + string(os.PathSeparator) + "playerIcon" + string(os.PathSeparator)
 )
 
-// CouponRate 点券与rmb比例
-const CouponRate = 1
+// 一些常量
+const (
+	CouponRate            = 1 // CouponRate 点券与rmb比例
+	ServerStartTime int64 = 1594983600
+)
 
 // 赛事状态
 const (
@@ -34,6 +37,22 @@ const (
 const (
 	MatchSourceSportsCenter = iota + 1 // 体总
 	MatchSourceBackstage               // 后台
+)
+
+// 财务报表首页图
+const (
+	FirstViewMapLastMoney    = iota + 1 // 剩余数额图
+	FirstViewMapTotalCharge             // 总充值图
+	FirstViewMapTotalAward              // 总奖金发放
+	FirstViewMapTotalCashout            // 总提现图
+)
+
+// 财务报表首页请求周期
+const (
+	FirstViewMapDay = iota + 1
+	FirstViewMapWeek
+	FirstViewMapMonth
+	FirstViewMapYear
 )
 
 // User 用户类

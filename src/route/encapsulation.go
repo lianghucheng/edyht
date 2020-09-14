@@ -3,6 +3,8 @@ package route
 import (
 	"bs/config"
 	"bs/db"
+	"bs/util"
+	"strconv"
 	"strings"
 )
 
@@ -44,4 +46,50 @@ func ExportFiter(path, token string) bool {
 		}
 	}
 	return true
+}
+
+// 物品购买列表排序
+func sortItemUseList(list []map[string]interface{}, sort int) {
+	switch sort {
+	case 1:
+		for i := 0; i < len(list); i++ {
+			for j := i + 1; j < len(list); j++ {
+				if util.GetInt(list[i]["all"]) < util.GetInt(list[j]["all"]) {
+					list[i], list[j] = list[j], list[i]
+				}
+			}
+		}
+	case 2:
+		for i := 0; i < len(list); i++ {
+			for j := i + 1; j < len(list); j++ {
+				if util.GetInt(list[i]["all"]) > util.GetInt(list[j]["all"]) {
+					list[i], list[j] = list[j], list[i]
+				}
+			}
+		}
+	case 3:
+		for i := 0; i < len(list); i++ {
+			for j := i + 1; j < len(list); j++ {
+				s := list[i]["weekRaise"].(string)
+				s2 := list[j]["weekRaise"].(string)
+				si, _ := strconv.Atoi(s[:len(s)-1])
+				sj, _ := strconv.Atoi(s2[:len(s)-1])
+				if si < sj {
+					list[i], list[j] = list[j], list[i]
+				}
+			}
+		}
+	case 4:
+		for i := 0; i < len(list); i++ {
+			for j := i + 1; j < len(list); j++ {
+				s := list[i]["weekRaise"].(string)
+				s2 := list[j]["weekRaise"].(string)
+				si, _ := strconv.Atoi(s[:len(s)-1])
+				sj, _ := strconv.Atoi(s2[:len(s)-1])
+				if si > sj {
+					list[i], list[j] = list[j], list[i]
+				}
+			}
+		}
+	}
 }
