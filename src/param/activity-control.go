@@ -37,10 +37,10 @@ func (ctx *ActivityControlListReq) GetPipeline() []bson.M {
 	pipeline := []bson.M{{"$match": bson.M{"deletedat": 0}}}
 	pipeline = append(pipeline, ctx.TimeRange.GetPipeline()...)
 	if ctx.Condition != nil {
-		if s, ok := ctx.Condition.(map[string]interface{})["status"].(float64);ok && s == 1 {
+		if s, ok := ctx.Condition.(map[string]interface{})["status"].(float64); ok && s == 1 {
 			pipeline = append(pipeline, GetUpPipeline()...)
 		}
-		if s, ok := ctx.Condition.(map[string]interface{})["status"].(float64);ok && s == 2 {
+		if s, ok := ctx.Condition.(map[string]interface{})["status"].(float64); ok && s == 2 {
 			pipeline = append(pipeline, GetDownPipeline()...)
 		}
 	}
@@ -53,10 +53,10 @@ func (ctx *ActivityControlListReq) GetDataPipeline() []bson.M {
 	pipeline = append(pipeline, bson.M{"$sort": bson.M{"order": -1}})
 	pipeline = append(pipeline, ctx.TimeRange.GetPipeline()...)
 	if ctx.Condition != nil {
-		if s, ok := ctx.Condition.(map[string]interface{})["status"].(float64);ok && s == 1 {
+		if s, ok := ctx.Condition.(map[string]interface{})["status"].(float64); ok && s == 1 {
 			pipeline = append(pipeline, GetUpPipeline()...)
 		}
-		if s, ok := ctx.Condition.(map[string]interface{})["status"].(float64);ok && s == 2 {
+		if s, ok := ctx.Condition.(map[string]interface{})["status"].(float64); ok && s == 2 {
 			pipeline = append(pipeline, GetDownPipeline()...)
 		}
 	}

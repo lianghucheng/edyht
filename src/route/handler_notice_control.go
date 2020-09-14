@@ -177,7 +177,6 @@ func noticeControlList(c *gin.Context) {
 		return
 	}
 
-
 	for k := range *rt {
 		now := int(time.Now().Unix())
 		if (*rt)[k].PrevUpedAt > now || (*rt)[k].PrevDownedAt < now {
@@ -230,6 +229,7 @@ func noticeControlUpdate(c *gin.Context) {
 	data.Content = req.Content
 	data.Signature = req.Signature
 	data.Status = req.Status
+	data.Img = req.Img
 	data.Operator = db.RedisGetTokenUsrn(c.GetHeader("token"))
 
 	now = int(time.Now().Unix())

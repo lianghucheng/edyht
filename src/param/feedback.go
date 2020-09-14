@@ -69,7 +69,7 @@ type Feedback struct {
 	AwardType       int    //0是未选择，10002是报名券，10003是报名券碎片
 	AwardNum        int    //奖励数量
 	MailContent     string //邮箱内容
-	Operator 		string //操作人
+	Operator        string //操作人
 
 	CreatedAt int64 //创建时间戳，0表示未创建
 	UpdatedAt int64 //更新时间戳，0表示未更新

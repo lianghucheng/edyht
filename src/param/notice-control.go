@@ -14,6 +14,7 @@ type NoticeControlInsertReq struct {
 	PrevDownedAt int    //下架时间戳
 	Content      string //公告内容
 	Signature    string //公告落款
+	Img          string //公告内容
 }
 
 type NoticeControlDeleteReq struct {
@@ -38,10 +39,10 @@ func (ctx *NoticeControlListReq) GetPipeline() []bson.M {
 	pipeline := []bson.M{{"$match": bson.M{"deletedat": 0}}}
 	pipeline = append(pipeline, ctx.TimeRange.GetPipeline()...)
 	if ctx.Condition != nil {
-		if s, ok := ctx.Condition.(map[string]interface{})["status"].(float64);ok && s == 1 {
+		if s, ok := ctx.Condition.(map[string]interface{})["status"].(float64); ok && s == 1 {
 			pipeline = append(pipeline, GetUpPipeline()...)
 		}
-		if s, ok := ctx.Condition.(map[string]interface{})["status"].(float64);ok && s == 2 {
+		if s, ok := ctx.Condition.(map[string]interface{})["status"].(float64); ok && s == 2 {
 			pipeline = append(pipeline, GetDownPipeline()...)
 		}
 	}
@@ -54,10 +55,10 @@ func (ctx *NoticeControlListReq) GetDataPipeline() []bson.M {
 	pipeline = append(pipeline, bson.M{"$sort": bson.M{"order": -1}})
 	pipeline = append(pipeline, ctx.TimeRange.GetPipeline()...)
 	if ctx.Condition != nil {
-		if s, ok := ctx.Condition.(map[string]interface{})["status"].(float64);ok && s == 1 {
+		if s, ok := ctx.Condition.(map[string]interface{})["status"].(float64); ok && s == 1 {
 			pipeline = append(pipeline, GetUpPipeline()...)
 		}
-		if s, ok := ctx.Condition.(map[string]interface{})["status"].(float64);ok && s == 2 {
+		if s, ok := ctx.Condition.(map[string]interface{})["status"].(float64); ok && s == 2 {
 			pipeline = append(pipeline, GetDownPipeline()...)
 		}
 	}
@@ -75,6 +76,7 @@ type NoticeControl struct {
 	PrevDownedAt int    //下架时间戳
 	Operator     string //操作人
 	Content      string //公告内容
+	Img          string //公告内容
 	Signature    string //公告落款
 }
 
@@ -95,14 +97,14 @@ type NoticeControlUpdateReq struct {
 	Content      string //公告内容
 	Signature    string //公告落款
 	Status       int    //状态
+	Img          string //公告内容
 }
-
 
 func GetUpPipeline() []bson.M {
 	now := int(time.Now().Unix())
 	return []bson.M{
 		{
-			"$match":bson.M{"status": 1, "prevdownedat":bson.M{"$gt": now}, "prevupedat": bson.M{"$lt": now}},
+			"$match": bson.M{"status": 1, "prevdownedat": bson.M{"$gt": now}, "prevupedat": bson.M{"$lt": now}},
 		},
 	}
 }
@@ -111,10 +113,10 @@ func GetDownPipeline() []bson.M {
 	now := int(time.Now().Unix())
 	return []bson.M{
 		{
-			"$match":bson.M{"$or": []bson.M{
-				{"prevdownedat":bson.M{"$lt": now}},
+			"$match": bson.M{"$or": []bson.M{
+				{"prevdownedat": bson.M{"$lt": now}},
 				{"prevupedat": bson.M{"$gt": now}},
-				{"status": 2, "prevdownedat":bson.M{"$gt": now}, "prevupedat": bson.M{"$lt": now}},
+				{"status": 2, "prevdownedat": bson.M{"$gt": now}, "prevupedat": bson.M{"$lt": now}},
 			}},
 		},
 	}

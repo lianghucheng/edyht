@@ -119,7 +119,7 @@ func bind(server *gin.Engine) {
 	server.POST("/notice-control/read", noticeControlRead)
 	server.POST("/notice-control/list", noticeControlList)
 	server.POST("/notice-control/update", noticeControlUpdate)
-	
+
 	// 财务报表
 	server.POST("/getFisrtViewMap", getFisrtViewMap)
 	server.POST("/getMatchPercentMap", getMatchPercentMap)

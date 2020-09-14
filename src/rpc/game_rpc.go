@@ -274,8 +274,8 @@ const HorseStart = "/horse/start"
 
 func RpcHorseStart(data *util.HorseRaceLampControl) error {
 	log.Debug("RpcHorseStart")
-	t := (data.Duration/12) * 12
-	if data.Duration & 12 != 0 {
+	t := (data.Duration / 12) * 12
+	if data.Duration%12 != 0 {
 		t += 12
 	}
 	rpcMsg := &RPC_HorseLamp{

@@ -458,7 +458,7 @@ type FeedBack struct {
 	MailContent     string //邮箱内容
 	ReadStatus      bool   //false是未查看，true是已查看
 	ReplyStatus     bool   //false是未回复，true是已回复
-	Operator 		string //操作人
+	Operator        string //操作人
 
 	CreatedAt int64
 	UpdatedAt int64
@@ -596,8 +596,8 @@ type NoticeControl struct {
 	Operator     string //操作人
 	Content      string //公告内容
 	Signature    string //公告落款
-
-	CreatedAt int
-	UpdatedAt int
-	DeletedAt int
+	Img          string //公告内容
+	CreatedAt    int
+	UpdatedAt    int
+	DeletedAt    int
 }
