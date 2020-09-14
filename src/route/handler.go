@@ -2327,7 +2327,7 @@ func bankcardSet(c *gin.Context) {
 
 	log.Debug("%v", *req)
 
-	if err := rpc.RpcSetBankcard(fmt.Sprintf("%v",req.Accountid), req.BankName, req.BankCardNo, req.Province, req.City, req.OpeningBank, req.OpeningBankNo); err != nil {
+	if err := rpc.RpcSetBankcard(fmt.Sprintf("%v", req.Accountid), req.BankName, req.BankCardNo, req.Province, req.City, req.OpeningBank, req.OpeningBankNo); err != nil {
 		code = 1
 		desc = err.Error()
 	}

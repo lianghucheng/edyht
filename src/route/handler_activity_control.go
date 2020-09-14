@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func propBaseConfigInsert(c *gin.Context) {
+func activityControlInsert(c *gin.Context) {
 	code := util.Success
 	desc := util.ErrMsg[util.Success]
 	defer func() {
@@ -19,27 +19,27 @@ func propBaseConfigInsert(c *gin.Context) {
 			"desc": desc,
 		})
 	}()
-	req := new(param.PropBaseConfigInsertReq)
+	req := new(param.ActivityControlInsertReq)
 	code, desc = parseJsonParam(c.Request, req)
 	if code != util.Success {
 		code = util.FormatFail
 		desc = util.ErrMsg[code]
 		return
 	}
-	data := new(util.PropBaseConfig)
+	data := new(util.ActivityControl)
 	if err := transfer(req, data); err != nil {
 		code = util.ModelTransferFail
 		desc = util.ErrMsg[code]
 		log.Error(err.Error())
 		return
 	}
-	if data.PropID <= 0 {
+	if data.Title == "" {
 		code = util.ModelTransferFail
 		desc = util.ErrMsg[code]
 		log.Error("The merchant type can not is nil")
 		return
 	}
-	id, err := db.MongoDBNextSeq("propbaseconfig")
+	id, err := db.MongoDBNextSeq("activitycontrol")
 	if err != nil {
 		code = util.MongoDBCreFail
 		desc = util.ErrMsg[code]
@@ -49,25 +49,18 @@ func propBaseConfigInsert(c *gin.Context) {
 
 	data.ID = id
 	now := int(time.Now().Unix())
-	data.UpdatedAt = now
 	data.CreatedAt = now
-	data.Operator = db.RedisGetTokenUsrn(c.GetHeader("token"))
-	propType, ok := util.PropID2Type[req.PropID]
-	if !ok {
-		code = util.PropIDNotExist
-		desc = util.ErrMsg[code]
-		return
-	}
-	data.PropType = propType
-	if err := db.SavePropBaseConfig(data); err != nil {
-		code = util.PropBaseConfCacheFail
-		desc = util.ErrMsg[code]
+	data.Status = 1
+
+	if err := db.SaveActivityControl(data); err != nil {
+		code = util.Fail
+		desc = err.Error()
 		log.Error(err.Error())
 		return
 	}
 	return
 }
-func propBaseConfigDelete(c *gin.Context) {
+func activityControlDelete(c *gin.Context) {
 	code := util.Success
 	desc := util.ErrMsg[util.Success]
 	defer func() {
@@ -76,31 +69,38 @@ func propBaseConfigDelete(c *gin.Context) {
 			"desc": desc,
 		})
 	}()
-	req := new(param.PropBaseConfigDeleteReq)
+	req := new(param.ActivityControlDeleteReq)
 	code, desc = parseJsonParam(c.Request, req)
 	if code != util.Success {
 		code = util.FormatFail
 		desc = util.ErrMsg[code]
 		return
 	}
-	data, err := db.ReadPropBaseConfig(req)
+	data, err := db.ReadActivityControl(req)
 	if err != nil {
 		code = util.MongoReadFail
 		desc = util.ErrMsg[code]
 		return
 	}
+
 	now := int(time.Now().Unix())
-	data.DeletedAt = now
-	data.Operator = db.RedisGetTokenUsrn(c.GetHeader("token"))
-	if err := db.SavePropBaseConfig(data); err != nil {
-		code = util.PropBaseConfCacheFail
+
+	if data.Status < 2 && data.PrevUpedAt < now && data.PrevDownedAt > now {
+		code = util.AlreadyUp
 		desc = util.ErrMsg[code]
+		return
+	}
+
+	data.DeletedAt = now
+	if err := db.SaveActivityControl(data); err != nil {
+		code = util.Fail
+		desc = err.Error()
 		log.Error(err.Error())
 		return
 	}
 	return
 }
-func propBaseConfigRead(c *gin.Context) {
+func activityControlRead(c *gin.Context) {
 	code := util.Success
 	desc := util.ErrMsg[util.Success]
 	var resp interface{}
@@ -111,7 +111,7 @@ func propBaseConfigRead(c *gin.Context) {
 			"resp": resp,
 		})
 	}()
-	req := new(param.PropBaseConfigReadReq)
+	req := new(param.ActivityControlReadReq)
 	code, desc = parseJsonParam(c.Request, req)
 	if code != util.Success {
 		code = util.FormatFail
@@ -119,14 +119,14 @@ func propBaseConfigRead(c *gin.Context) {
 		return
 	}
 
-	data, err := db.ReadPropBaseConfig(req)
+	data, err := db.ReadActivityControl(req)
 	if err != nil {
 		code = util.Fail
 		desc = err.Error()
 		return
 	}
 
-	rt := new(param.PropBaseConfig)
+	rt := new(param.ActivityControl)
 	if err := transfer(data, rt); err != nil {
 		code = util.ModelTransferFail
 		desc = util.ErrMsg[code]
@@ -134,13 +134,13 @@ func propBaseConfigRead(c *gin.Context) {
 		return
 	}
 
-	resp = param.PropBaseConfigReadResp{
-		PropBaseConfig: *rt,
+	resp = param.ActivityControlReadResp{
+		ActivityControl: *rt,
 	}
 
 	return
 }
-func propBaseConfigList(c *gin.Context) {
+func activityControlList(c *gin.Context) {
 	code := util.Success
 	desc := util.ErrMsg[util.Success]
 	var resp interface{}
@@ -151,40 +151,47 @@ func propBaseConfigList(c *gin.Context) {
 			"resp": resp,
 		})
 	}()
-	req := new(param.PropBaseConfigListReq)
+	req := new(param.ActivityControlListReq)
 	code, desc = parseJsonParam(c.Request, req)
 	if code != util.Success {
 		code = util.FormatFail
 		desc = util.ErrMsg[code]
 		return
 	}
-	datas, err := db.ReadPropBaseConfigList(req)
+	datas, err := db.ReadActivityControlList(req)
 	if err != nil {
 		code = util.MongoReadFail
 		desc = util.ErrMsg[code]
 		return
 	}
-	total, err := db.ReadPropBaseConfigCount(req)
+	total, err := db.ReadActivityControlCount(req)
 	if err != nil {
-		code = util.MongoReadFail
+		code = util.MailcontrolFail
 		desc = util.ErrMsg[code]
 		return
 	}
-	rt := new([]param.PropBaseConfig)
+	rt := new([]param.ActivityControl)
 	if err := transfer(datas, rt); err != nil {
 		code = util.FormatFail
 		desc = util.ErrMsg[code]
 		return
 	}
 
-	resp = &param.PropBaseConfigListResp{
-		Page:            req.Page,
-		Per:             req.Per,
-		Total:           total,
-		PropBaseConfigs: rt,
+	for k := range *rt {
+		now := int(time.Now().Unix())
+		if (*rt)[k].PrevUpedAt > now || (*rt)[k].PrevDownedAt < now {
+			(*rt)[k].Status = 2
+		}
+	}
+
+	resp = &param.ActivityControlListResp{
+		Page:             req.Page,
+		Per:              req.Per,
+		Total:            total,
+		ActivityControls: rt,
 	}
 }
-func propBaseConfigUpdate(c *gin.Context) {
+func activityControlUpdate(c *gin.Context) {
 	code := util.Success
 	desc := util.ErrMsg[util.Success]
 	defer func() {
@@ -193,28 +200,41 @@ func propBaseConfigUpdate(c *gin.Context) {
 			"desc": desc,
 		})
 	}()
-	req := new(param.PropBaseConfigUpdateReq)
+	req := new(param.ActivityControlUpdateReq)
 	code, desc = parseJsonParam(c.Request, req)
 	if code != util.Success {
 		code = util.FormatFail
 		desc = util.ErrMsg[code]
 		return
 	}
-	data, err := db.ReadPropBaseConfig(req)
+	data, err := db.ReadActivityControl(req)
 	if err != nil {
 		code = util.MongoReadFail
 		desc = util.ErrMsg[code]
 		return
 	}
 
-	data.Name = req.Name
-	data.ImgUrl = req.ImgUrl
-	data.Operator = db.RedisGetTokenUsrn(c.GetHeader("token"))
 	now := int(time.Now().Unix())
-	data.UpdatedAt = now
-	if err := db.SavePropBaseConfig(data); err != nil {
-		code = util.PropBaseConfCacheFail
+	if data.PrevUpedAt > now || data.PrevDownedAt < now {
+		code = util.NotInTimeRange
 		desc = util.ErrMsg[code]
+		return
+	}
+
+	data.Order = req.Order
+	data.Title = req.Title
+	data.Img = req.Img
+	data.Matchid = req.Matchid
+	data.Link = req.Link
+	data.Status = req.Status
+	data.PrevUpedAt = req.PrevUpedAt
+	data.PrevDownedAt = req.PrevDownedAt
+
+	now = int(time.Now().Unix())
+	data.UpdatedAt = now
+	if err := db.SaveActivityControl(data); err != nil {
+		code = util.MailcontrolFail
+		desc = err.Error()
 		return
 	}
 	return

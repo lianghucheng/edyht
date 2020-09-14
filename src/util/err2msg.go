@@ -17,6 +17,8 @@ const (
 	MailcontrolFail       = 10013
 	PayLimitRangeError    = 10014
 	SendAllMailFail       = 10015
+	NotInTimeRange 		  = 10016
+	AlreadyUp  			  = 10017
 )
 
 var ErrMsg = map[int]string{
@@ -36,4 +38,6 @@ var ErrMsg = map[int]string{
 	MailcontrolFail:       "操作失败",
 	PayLimitRangeError:    "支付限额范围非法",
 	SendAllMailFail:       "一键发送邮件失败",
+	NotInTimeRange:		   "不再有效范围内",
+	AlreadyUp: 			   "已上架",
 }

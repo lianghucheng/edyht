@@ -101,6 +101,24 @@ func bind(server *gin.Engine) {
 	server.POST("/mailcontrol/update", mailcontrolUpdate)
 	server.POST("/mailcontrol/sendall", mailcontrolSendAll)
 	server.POST("/bankcard/set", bankcardSet)
+
+	server.POST("/horse-lamp/insert", horselampInsert)
+	server.POST("/horse-lamp/delete", horselampDelete)
+	//server.POST("/horse-lamp/read", horselampRead)
+	server.POST("/horse-lamp/list", horselampList)
+	server.POST("/horse-lamp/update", horselampUpdate)
+
+	server.POST("/activity-control/insert", activityControlInsert)
+	server.POST("/activity-control/delete", activityControlDelete)
+	server.POST("/activity-control/read", activityControlRead)
+	server.POST("/activity-control/list", activityControlList)
+	server.POST("/activity-control/update", activityControlUpdate)
+
+	server.POST("/notice-control/insert", noticeControlInsert)
+	server.POST("/notice-control/delete", noticeControlDelete)
+	server.POST("/notice-control/read", noticeControlRead)
+	server.POST("/notice-control/list", noticeControlList)
+	server.POST("/notice-control/update", noticeControlUpdate)
 }
 
 type loginData struct {

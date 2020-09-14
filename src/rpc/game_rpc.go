@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"bs/config"
+	"bs/util"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -254,6 +255,116 @@ func RpcSetBankcard(accountid, bankName, bankCardNo, province, city, openingBank
 		return err
 	}
 	if m.Code != 0 {
+		return errors.New(fmt.Sprintf("request fail, the code is %v. the errmsg is %v. ", m.Code, m.Errmsg))
+	}
+	return nil
+}
+
+type RPC_HorseLamp struct {
+	ID           int
+	Template     string
+	ExpiredAt    int    //过期时间戳
+	TakeEffectAt int    //发布时间戳
+	Duration     int    //间隔时长，单位s
+	LinkMatchID  string //关联赛事id
+	Level        int
+}
+
+const HorseStart = "/horse/start"
+
+func RpcHorseStart(data *util.HorseRaceLampControl) error {
+	log.Debug("RpcHorseStart")
+	t := (data.Duration/12) * 12
+	if data.Duration & 12 != 0 {
+		t += 12
+	}
+	rpcMsg := &RPC_HorseLamp{
+		ID:           data.ID,
+		Template:     data.Content,
+		ExpiredAt:    data.ExpiredAt,
+		TakeEffectAt: data.TakeEffectAt,
+		Duration:     t,
+		LinkMatchID:  data.LinkMatchID,
+		Level:        data.Level,
+	}
+	b, err := json.Marshal(rpcMsg)
+	if err != nil {
+		log.Debug(err.Error())
+		return err
+	}
+	req, err := http.NewRequest("GET", config.GetConfig().GameServer+HorseStart, bytes.NewBuffer(b))
+	if err != nil {
+		log.Debug(err.Error())
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	c := &http.Client{}
+	resp, err := c.Do(req)
+	if err != nil {
+		log.Debug(err.Error())
+		return err
+	}
+	buf, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		return err
+	}
+
+	m := struct {
+		Code   int
+		Errmsg string
+	}{}
+
+	if err := json.Unmarshal(buf, &m); err != nil {
+		return err
+	}
+	if m.Code != util.Success {
+		return errors.New(fmt.Sprintf("request fail, the code is %v. the errmsg is %v. ", m.Code, m.Errmsg))
+	}
+	return nil
+}
+
+const HorseStop = "/horse/stop"
+
+func RpcHorseStop(data *util.HorseRaceLampControl) error {
+	log.Debug("RpcHorseStart")
+	rpcMsg := new(RPC_HorseLamp)
+	if err := util.Transfer(data, rpcMsg); err != nil {
+		log.Debug(err.Error())
+		return err
+	}
+	b, err := json.Marshal(rpcMsg)
+	if err != nil {
+		log.Debug(err.Error())
+		return err
+	}
+	req, err := http.NewRequest("GET", config.GetConfig().GameServer+HorseStop, bytes.NewBuffer(b))
+	if err != nil {
+		log.Debug(err.Error())
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	c := &http.Client{}
+	resp, err := c.Do(req)
+	if err != nil {
+		log.Debug(err.Error())
+		return err
+	}
+	buf, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		return err
+	}
+
+	m := struct {
+		Code   int
+		Errmsg string
+	}{}
+
+	if err := json.Unmarshal(buf, &m); err != nil {
+		return err
+	}
+	if m.Code != util.Success {
 		return errors.New(fmt.Sprintf("request fail, the code is %v. the errmsg is %v. ", m.Code, m.Errmsg))
 	}
 	return nil

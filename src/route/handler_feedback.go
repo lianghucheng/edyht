@@ -218,6 +218,11 @@ func feedbackUpdate(c *gin.Context) {
 		data.MailContent = req.MailContent
 		data.ReadStatus = req.ReadStatus
 		data.ReplyStatus = req.ReplyStatus
+
+		if req.ReplyStatus {
+			data.Operator = db.RedisGetTokenUsrn(c.GetHeader("token"))
+		}
+
 		if err := db.SaveFeedback(data); err != nil {
 			code = util.Fail
 			desc = err.Error()

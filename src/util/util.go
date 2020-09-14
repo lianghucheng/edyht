@@ -206,3 +206,16 @@ func GetInt(data interface{}) int {
 		return 0
 	}
 }
+
+func Transfer(src interface{}, dir interface{}) error {
+	b, err := json.Marshal(src)
+	if err != nil {
+		log.Error(err.Error())
+		return err
+	}
+	if err := json.Unmarshal(b, dir); err != nil {
+		log.Error(err.Error())
+		return err
+	}
+	return nil
+}

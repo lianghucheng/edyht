@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func propBaseConfigInsert(c *gin.Context) {
+func horselampInsert(c *gin.Context) {
 	code := util.Success
 	desc := util.ErrMsg[util.Success]
 	defer func() {
@@ -19,27 +19,27 @@ func propBaseConfigInsert(c *gin.Context) {
 			"desc": desc,
 		})
 	}()
-	req := new(param.PropBaseConfigInsertReq)
+	req := new(param.HorseLampInsertReq)
 	code, desc = parseJsonParam(c.Request, req)
 	if code != util.Success {
 		code = util.FormatFail
 		desc = util.ErrMsg[code]
 		return
 	}
-	data := new(util.PropBaseConfig)
+	data := new(util.HorseRaceLampControl)
 	if err := transfer(req, data); err != nil {
 		code = util.ModelTransferFail
 		desc = util.ErrMsg[code]
 		log.Error(err.Error())
 		return
 	}
-	if data.PropID <= 0 {
+	if data.Name == "" {
 		code = util.ModelTransferFail
 		desc = util.ErrMsg[code]
 		log.Error("The merchant type can not is nil")
 		return
 	}
-	id, err := db.MongoDBNextSeq("propbaseconfig")
+	id, err := db.MongoDBNextSeq("horselampcontrol")
 	if err != nil {
 		code = util.MongoDBCreFail
 		desc = util.ErrMsg[code]
@@ -49,25 +49,18 @@ func propBaseConfigInsert(c *gin.Context) {
 
 	data.ID = id
 	now := int(time.Now().Unix())
-	data.UpdatedAt = now
 	data.CreatedAt = now
 	data.Operator = db.RedisGetTokenUsrn(c.GetHeader("token"))
-	propType, ok := util.PropID2Type[req.PropID]
-	if !ok {
-		code = util.PropIDNotExist
-		desc = util.ErrMsg[code]
-		return
-	}
-	data.PropType = propType
-	if err := db.SavePropBaseConfig(data); err != nil {
-		code = util.PropBaseConfCacheFail
-		desc = util.ErrMsg[code]
+
+	if err := db.SaveHorseLamp(data); err != nil {
+		code = util.MailcontrolFail
+		desc = err.Error()
 		log.Error(err.Error())
 		return
 	}
 	return
 }
-func propBaseConfigDelete(c *gin.Context) {
+func horselampDelete(c *gin.Context) {
 	code := util.Success
 	desc := util.ErrMsg[util.Success]
 	defer func() {
@@ -76,14 +69,14 @@ func propBaseConfigDelete(c *gin.Context) {
 			"desc": desc,
 		})
 	}()
-	req := new(param.PropBaseConfigDeleteReq)
+	req := new(param.HorseLampDeleteReq)
 	code, desc = parseJsonParam(c.Request, req)
 	if code != util.Success {
 		code = util.FormatFail
 		desc = util.ErrMsg[code]
 		return
 	}
-	data, err := db.ReadPropBaseConfig(req)
+	data, err := db.ReadHorseLamp(req)
 	if err != nil {
 		code = util.MongoReadFail
 		desc = util.ErrMsg[code]
@@ -91,16 +84,15 @@ func propBaseConfigDelete(c *gin.Context) {
 	}
 	now := int(time.Now().Unix())
 	data.DeletedAt = now
-	data.Operator = db.RedisGetTokenUsrn(c.GetHeader("token"))
-	if err := db.SavePropBaseConfig(data); err != nil {
-		code = util.PropBaseConfCacheFail
-		desc = util.ErrMsg[code]
+	if err := db.SaveHorseLamp(data); err != nil {
+		code = util.MailcontrolFail
+		desc = err.Error()
 		log.Error(err.Error())
 		return
 	}
 	return
 }
-func propBaseConfigRead(c *gin.Context) {
+func horselampRead(c *gin.Context) {
 	code := util.Success
 	desc := util.ErrMsg[util.Success]
 	var resp interface{}
@@ -111,7 +103,7 @@ func propBaseConfigRead(c *gin.Context) {
 			"resp": resp,
 		})
 	}()
-	req := new(param.PropBaseConfigReadReq)
+	req := new(param.HorseLampReadReq)
 	code, desc = parseJsonParam(c.Request, req)
 	if code != util.Success {
 		code = util.FormatFail
@@ -119,14 +111,14 @@ func propBaseConfigRead(c *gin.Context) {
 		return
 	}
 
-	data, err := db.ReadPropBaseConfig(req)
+	data, err := db.ReadHorseLamp(req)
 	if err != nil {
 		code = util.Fail
 		desc = err.Error()
 		return
 	}
 
-	rt := new(param.PropBaseConfig)
+	rt := new(param.HorseLamp)
 	if err := transfer(data, rt); err != nil {
 		code = util.ModelTransferFail
 		desc = util.ErrMsg[code]
@@ -134,13 +126,13 @@ func propBaseConfigRead(c *gin.Context) {
 		return
 	}
 
-	resp = param.PropBaseConfigReadResp{
-		PropBaseConfig: *rt,
+	resp = param.HorseLampReadResp{
+		HorseLamp: *rt,
 	}
 
 	return
 }
-func propBaseConfigList(c *gin.Context) {
+func horselampList(c *gin.Context) {
 	code := util.Success
 	desc := util.ErrMsg[util.Success]
 	var resp interface{}
@@ -151,40 +143,40 @@ func propBaseConfigList(c *gin.Context) {
 			"resp": resp,
 		})
 	}()
-	req := new(param.PropBaseConfigListReq)
+	req := new(param.HorseLampListReq)
 	code, desc = parseJsonParam(c.Request, req)
 	if code != util.Success {
 		code = util.FormatFail
 		desc = util.ErrMsg[code]
 		return
 	}
-	datas, err := db.ReadPropBaseConfigList(req)
+	datas, err := db.ReadHorseLampList(req)
 	if err != nil {
 		code = util.MongoReadFail
 		desc = util.ErrMsg[code]
 		return
 	}
-	total, err := db.ReadPropBaseConfigCount(req)
+	total, err := db.ReadHorseLampCount(req)
 	if err != nil {
-		code = util.MongoReadFail
+		code = util.MailcontrolFail
 		desc = util.ErrMsg[code]
 		return
 	}
-	rt := new([]param.PropBaseConfig)
+	rt := new([]param.HorseLamp)
 	if err := transfer(datas, rt); err != nil {
 		code = util.FormatFail
 		desc = util.ErrMsg[code]
 		return
 	}
 
-	resp = &param.PropBaseConfigListResp{
-		Page:            req.Page,
-		Per:             req.Per,
-		Total:           total,
-		PropBaseConfigs: rt,
+	resp = &param.HorseLampListResp{
+		Page:      req.Page,
+		Per:       req.Per,
+		Total:     total,
+		HorseLamp: rt,
 	}
 }
-func propBaseConfigUpdate(c *gin.Context) {
+func horselampUpdate(c *gin.Context) {
 	code := util.Success
 	desc := util.ErrMsg[util.Success]
 	defer func() {
@@ -193,14 +185,14 @@ func propBaseConfigUpdate(c *gin.Context) {
 			"desc": desc,
 		})
 	}()
-	req := new(param.PropBaseConfigUpdateReq)
+	req := new(param.HorseLampUpdateReq)
 	code, desc = parseJsonParam(c.Request, req)
 	if code != util.Success {
 		code = util.FormatFail
 		desc = util.ErrMsg[code]
 		return
 	}
-	data, err := db.ReadPropBaseConfig(req)
+	data, err := db.ReadHorseLamp(req)
 	if err != nil {
 		code = util.MongoReadFail
 		desc = util.ErrMsg[code]
@@ -208,13 +200,20 @@ func propBaseConfigUpdate(c *gin.Context) {
 	}
 
 	data.Name = req.Name
-	data.ImgUrl = req.ImgUrl
+	data.Level = req.Level
+	data.ExpiredAt = req.ExpiredAt
+	data.TakeEffectAt = req.TakeEffectAt
+	data.Duration = req.Duration
+	data.LinkMatchID = req.LinkMatchID
+	data.Content = req.Content
 	data.Operator = db.RedisGetTokenUsrn(c.GetHeader("token"))
+	data.Status = req.Status
+
 	now := int(time.Now().Unix())
 	data.UpdatedAt = now
-	if err := db.SavePropBaseConfig(data); err != nil {
-		code = util.PropBaseConfCacheFail
-		desc = util.ErrMsg[code]
+	if err := db.SaveHorseLamp(data); err != nil {
+		code = util.MailcontrolFail
+		desc = err.Error()
 		return
 	}
 	return

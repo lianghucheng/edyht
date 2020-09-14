@@ -248,6 +248,19 @@ func initCollection() {
 	if err != nil {
 		log.Fatal("ensure counter error: %v", err)
 	}
+
+	err = db.EnsureCounter(DB, "counters", "horselampcontrol")
+	if err != nil {
+		log.Fatal("ensure counter error: %v", err)
+	}
+	err = db.EnsureCounter(DB, "counters", "activitycontrol")
+	if err != nil {
+		log.Fatal("ensure counter error: %v", err)
+	}
+	err = db.EnsureCounter(DB, "counters", "noticecontrol")
+	if err != nil {
+		log.Fatal("ensure counter error: %v", err)
+	}
 }
 
 // GetDB return init mongodb
