@@ -2377,3 +2377,11 @@ func GetMatchAwardPreview(start, end int64) []map[string]interface{} {
 	log.Debug("ret:%v", ret)
 	return ret
 }
+
+func SaveUserIpHistory() {
+
+}
+
+func ReadUserIpHistoryByAccount(account string) {
+
+}

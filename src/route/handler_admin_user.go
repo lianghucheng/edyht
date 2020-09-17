@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func activityControlInsert(c *gin.Context) {
+func userInsert(c *gin.Context) {
 	code := util.Success
 	desc := util.ErrMsg[util.Success]
 	defer func() {
@@ -19,27 +19,28 @@ func activityControlInsert(c *gin.Context) {
 			"desc": desc,
 		})
 	}()
-	req := new(param.ActivityControlInsertReq)
+	req := new(param.UserInsertReq)
 	code, desc = parseJsonParam(c.Request, req)
 	if code != util.Success {
 		code = util.FormatFail
 		desc = util.ErrMsg[code]
 		return
 	}
-	data := new(util.ActivityControl)
+	data := new(util.User)
 	if err := transfer(req, data); err != nil {
 		code = util.ModelTransferFail
 		desc = util.ErrMsg[code]
 		log.Error(err.Error())
 		return
 	}
-	if data.Title == "" {
+	if data.Account == "" {
 		code = util.ModelTransferFail
 		desc = util.ErrMsg[code]
 		log.Error("The merchant type can not is nil")
 		return
 	}
-	id, err := db.MongoDBNextSeq("activitycontrol")
+
+	id, err := db.MongoDBNextSeq("user")
 	if err != nil {
 		code = util.MongoDBCreFail
 		desc = util.ErrMsg[code]
@@ -50,17 +51,17 @@ func activityControlInsert(c *gin.Context) {
 	data.ID = id
 	now := int(time.Now().Unix())
 	data.CreatedAt = now
-	data.Status = 1
+	data.Operator = db.RedisGetTokenUsrn(c.GetHeader("token"))
 
-	if err := db.SaveActivityControl(data); err != nil {
-		code = util.Fail
+	if err := db.SaveUser(data); err != nil {
+		code = util.MailcontrolFail
 		desc = err.Error()
 		log.Error(err.Error())
 		return
 	}
 	return
 }
-func activityControlDelete(c *gin.Context) {
+func userDelete(c *gin.Context) {
 	code := util.Success
 	desc := util.ErrMsg[util.Success]
 	defer func() {
@@ -69,38 +70,30 @@ func activityControlDelete(c *gin.Context) {
 			"desc": desc,
 		})
 	}()
-	req := new(param.ActivityControlDeleteReq)
+	req := new(param.UserDeleteReq)
 	code, desc = parseJsonParam(c.Request, req)
 	if code != util.Success {
 		code = util.FormatFail
 		desc = util.ErrMsg[code]
 		return
 	}
-	data, err := db.ReadActivityControl(req)
+	data, err := db.ReadUser(req)
 	if err != nil {
 		code = util.MongoReadFail
 		desc = util.ErrMsg[code]
 		return
 	}
-
 	now := int(time.Now().Unix())
-
-	if data.Status < 2 && data.PrevUpedAt < now && data.PrevDownedAt > now {
-		code = util.AlreadyUp
-		desc = util.ErrMsg[code]
-		return
-	}
-
 	data.DeletedAt = now
-	if err := db.SaveActivityControl(data); err != nil {
-		code = util.Fail
+	if err := db.SaveUser(data); err != nil {
+		code = util.MailcontrolFail
 		desc = err.Error()
 		log.Error(err.Error())
 		return
 	}
 	return
 }
-func activityControlRead(c *gin.Context) {
+func userRead(c *gin.Context) {
 	code := util.Success
 	desc := util.ErrMsg[util.Success]
 	var resp interface{}
@@ -111,7 +104,7 @@ func activityControlRead(c *gin.Context) {
 			"resp": resp,
 		})
 	}()
-	req := new(param.ActivityControlReadReq)
+	req := new(param.UserReadReq)
 	code, desc = parseJsonParam(c.Request, req)
 	if code != util.Success {
 		code = util.FormatFail
@@ -119,14 +112,14 @@ func activityControlRead(c *gin.Context) {
 		return
 	}
 
-	data, err := db.ReadActivityControl(req)
+	data, err := db.ReadUser(req)
 	if err != nil {
 		code = util.Fail
 		desc = err.Error()
 		return
 	}
 
-	rt := new(param.ActivityControl)
+	rt := new(param.User)
 	if err := transfer(data, rt); err != nil {
 		code = util.ModelTransferFail
 		desc = util.ErrMsg[code]
@@ -134,13 +127,14 @@ func activityControlRead(c *gin.Context) {
 		return
 	}
 
-	resp = param.ActivityControlReadResp{
-		ActivityControl: *rt,
+	resp = param.UserReadResp{
+		User: *rt,
 	}
 
 	return
 }
-func activityControlList(c *gin.Context) {
+func userList(c *gin.Context) {
+	log.Debug("################:  " + c.Request.Host)
 	code := util.Success
 	desc := util.ErrMsg[util.Success]
 	var resp interface{}
@@ -151,47 +145,40 @@ func activityControlList(c *gin.Context) {
 			"resp": resp,
 		})
 	}()
-	req := new(param.ActivityControlListReq)
+	req := new(param.UserListReq)
 	code, desc = parseJsonParam(c.Request, req)
 	if code != util.Success {
 		code = util.FormatFail
 		desc = util.ErrMsg[code]
 		return
 	}
-	datas, err := db.ReadActivityControlList(req)
+	datas, err := db.ReadUserList(req)
 	if err != nil {
 		code = util.MongoReadFail
 		desc = util.ErrMsg[code]
 		return
 	}
-	total, err := db.ReadActivityControlCount(req)
+	total, err := db.ReadUserCount(req)
 	if err != nil {
 		code = util.MailcontrolFail
 		desc = util.ErrMsg[code]
 		return
 	}
-	rt := new([]param.ActivityControl)
+	rt := new([]param.User)
 	if err := transfer(datas, rt); err != nil {
 		code = util.FormatFail
 		desc = util.ErrMsg[code]
 		return
 	}
 
-	for k := range *rt {
-		now := int(time.Now().Unix())
-		if (*rt)[k].PrevUpedAt > now || (*rt)[k].PrevDownedAt < now {
-			(*rt)[k].Status = 2
-		}
-	}
-
-	resp = &param.ActivityControlListResp{
-		Page:             req.Page,
-		Per:              req.Per,
-		Total:            total,
-		ActivityControls: rt,
+	resp = &param.UserListResp{
+		Page:      req.Page,
+		Per:       req.Per,
+		Total:     total,
+		Users: rt,
 	}
 }
-func activityControlUpdate(c *gin.Context) {
+func userUpdate(c *gin.Context) {
 	code := util.Success
 	desc := util.ErrMsg[util.Success]
 	defer func() {
@@ -200,42 +187,31 @@ func activityControlUpdate(c *gin.Context) {
 			"desc": desc,
 		})
 	}()
-	req := new(param.ActivityControlUpdateReq)
+	req := new(param.UserUpdateReq)
 	code, desc = parseJsonParam(c.Request, req)
 	if code != util.Success {
 		code = util.FormatFail
 		desc = util.ErrMsg[code]
 		return
 	}
-	data, err := db.ReadActivityControl(req)
+	data, err := db.ReadUser(req)
 	if err != nil {
 		code = util.MongoReadFail
 		desc = util.ErrMsg[code]
 		return
 	}
 
-	now := int(time.Now().Unix())
-	if req.PrevUpedAt > now || req.PrevDownedAt < now {
-		code = util.NotInTimeRange
-		desc = util.ErrMsg[code]
-		return
-	}
-
-	data.Order = req.Order
-	data.Title = req.Title
-	data.Img = req.Img
-	data.Matchid = req.Matchid
-	data.Link = req.Link
+	data.Account = req.Account
+	data.Password = req.Password
+	data.Role = req.Role
+	data.Power = req.Power
+	data.Owner = req.Owner
 	data.Status = req.Status
-	data.PrevUpedAt = req.PrevUpedAt
-	data.PrevDownedAt = req.PrevDownedAt
-	if now < req.PrevUpedAt || now > req.PrevDownedAt {
-		data.Status = 1
-	}
+	data.Operator = db.RedisGetTokenUsrn(c.GetHeader("token"))
 
-	now = int(time.Now().Unix())
+	now := int(time.Now().Unix())
 	data.UpdatedAt = now
-	if err := db.SaveActivityControl(data); err != nil {
+	if err := db.SaveUser(data); err != nil {
 		code = util.MailcontrolFail
 		desc = err.Error()
 		return

@@ -33,7 +33,7 @@ func noticeControlInsert(c *gin.Context) {
 		log.Error(err.Error())
 		return
 	}
-	if data.ColTitle == "" {
+	if data.Img == "" {
 		code = util.ModelTransferFail
 		desc = util.ErrMsg[code]
 		log.Error("The merchant type can not is nil")
@@ -215,7 +215,7 @@ func noticeControlUpdate(c *gin.Context) {
 	}
 
 	now := int(time.Now().Unix())
-	if data.PrevUpedAt > now || data.PrevDownedAt < now {
+	if req.PrevUpedAt > now || req.PrevDownedAt < now {
 		code = util.NotInTimeRange
 		desc = util.ErrMsg[code]
 		return
@@ -231,6 +231,9 @@ func noticeControlUpdate(c *gin.Context) {
 	data.Status = req.Status
 	data.Img = req.Img
 	data.Operator = db.RedisGetTokenUsrn(c.GetHeader("token"))
+	if now < req.PrevUpedAt || now > req.PrevDownedAt {
+		data.Status = 1
+	}
 
 	now = int(time.Now().Unix())
 	data.UpdatedAt = now

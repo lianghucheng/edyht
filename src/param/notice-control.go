@@ -52,7 +52,7 @@ func (ctx *NoticeControlListReq) GetPipeline() []bson.M {
 func (ctx *NoticeControlListReq) GetDataPipeline() []bson.M {
 	pipeline := []bson.M{}
 	pipeline = append(pipeline, bson.M{"$match": bson.M{"deletedat": 0}})
-	pipeline = append(pipeline, bson.M{"$sort": bson.M{"order": -1}})
+	pipeline = append(pipeline, bson.M{"$sort": bson.M{"order": 1}})
 	pipeline = append(pipeline, ctx.TimeRange.GetPipeline()...)
 	if ctx.Condition != nil {
 		if s, ok := ctx.Condition.(map[string]interface{})["status"].(float64); ok && s == 1 {

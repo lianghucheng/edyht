@@ -129,6 +129,12 @@ func bind(server *gin.Engine) {
 	server.POST("/getChargeDetail", getChargeDetail)
 	server.POST("/getCashoutDetail", getCashoutDetail)
 	server.POST("/getMatchAwardPreview", getMatchAwardPreview)
+
+	server.POST("/admin-user/insert", userInsert)
+	server.POST("/admin-user/delete", userDelete)
+	server.POST("/admin-user/read", userRead)
+	server.POST("/admin-user/list", userList)
+	server.POST("/admin-user/update", userUpdate)
 }
 
 type loginData struct {

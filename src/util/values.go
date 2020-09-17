@@ -57,9 +57,19 @@ const (
 
 // User 用户类
 type User struct {
-	Account  string `bson:"account"`
-	Password string `bson:"password"`
-	Role     int    `bson:"role"`
+	ID       int    `bson:"_id"`//唯一标识
+	Account  string //联系方式
+	Password string //密码
+	Role     int    //角色，1为boss，2为运营，3为客服
+	Power    int	//权限
+	Owner 	 string //角色拥有者
+	LastIp   string //登陆ip
+	Operator string //操作人
+	Status   int 	//状态，0为开启，1为关闭
+
+	CreatedAt int
+	UpdatedAt int
+	DeletedAt int
 }
 
 // MatchManager 比赛类
@@ -600,4 +610,9 @@ type NoticeControl struct {
 	CreatedAt    int
 	UpdatedAt    int
 	DeletedAt    int
+}
+
+type UserIpHistory struct {
+	Account string
+	Ip 	 	string
 }

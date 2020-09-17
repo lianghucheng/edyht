@@ -1,9 +1,11 @@
 package util
 
 import (
+	"bs/db"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"github.com/garyburd/redigo/redis"
 	"math"
 	"math/rand"
 	"os"
@@ -234,4 +236,20 @@ func Transfer(src interface{}, dir interface{}) error {
 		return err
 	}
 	return nil
+}
+
+func CheckSms(account, code string) int {
+	codeRedis, err := db.GetCaptchaCache(account)
+	if err != nil {
+		if err == redis.ErrNil {
+			return 10
+		} else {
+			return 2
+		}
+	}
+	if code != codeRedis {
+		return 9
+	}
+
+	return 0
 }

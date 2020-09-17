@@ -3,6 +3,7 @@ package db
 import (
 	"bs/param"
 	"bs/param/base"
+	"bs/rpc"
 	"bs/util"
 	"github.com/szxby/tools/log"
 	"gopkg.in/mgo.v2/bson"
@@ -10,8 +11,8 @@ import (
 
 func SaveActivityControl(data *util.ActivityControl) error {
 	log.Debug("存跑马灯控制台配置:%+v", *data)
-
 	save(DB, data, "activitycontrol", data.ID)
+	rpc.RpcActivityNotify()
 	return nil
 }
 

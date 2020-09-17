@@ -369,3 +369,15 @@ func RpcHorseStop(data *util.HorseRaceLampControl) error {
 	}
 	return nil
 }
+
+const ActivityNotify = "/activity/notify"
+func RpcActivityNotify() {
+	http.Get(config.GetConfig().GameServer+ActivityNotify)
+}
+
+
+const NoticeNotify = "/notice/notify"
+func RpcNoticeNotify() {
+	http.Get(config.GetConfig().GameServer+NoticeNotify)
+}
+

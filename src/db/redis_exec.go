@@ -2,6 +2,7 @@ package db
 
 import (
 	"encoding/json"
+	"github.com/garyburd/redigo/redis"
 
 	"github.com/szxby/tools/log"
 )
@@ -193,4 +194,9 @@ func RedisCommonDelData(key string) {
 		log.Error("del data fail:%v", err)
 		return
 	}
+}
+
+func GetCaptchaCache(account string) (captcha string, err error) {
+	captcha, err = redis.String(Do("GET", "captcha:"+account))
+	return
 }
