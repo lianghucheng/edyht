@@ -9,6 +9,8 @@ import (
 func bind(server *gin.Engine) {
 	server.POST("/login", login)
 	server.OPTIONS("/login", login)
+	server.POST("/smslogin", smslogin)
+	server.OPTIONS("/smslogin", smslogin)
 	server.POST("/matchManagerList", matchManagerList)
 	server.POST("/addMatch", addMatch)
 	server.POST("/editMatch", editMatch)
@@ -135,6 +137,7 @@ func bind(server *gin.Engine) {
 	server.POST("/admin-user/read", userRead)
 	server.POST("/admin-user/list", userList)
 	server.POST("/admin-user/update", userUpdate)
+	server.POST("/code", handleCode)
 }
 
 type loginData struct {

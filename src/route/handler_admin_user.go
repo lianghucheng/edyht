@@ -40,7 +40,7 @@ func userInsert(c *gin.Context) {
 		return
 	}
 
-	id, err := db.MongoDBNextSeq("user")
+	id, err := db.MongoDBNextSeq("users")
 	if err != nil {
 		code = util.MongoDBCreFail
 		desc = util.ErrMsg[code]
@@ -51,7 +51,9 @@ func userInsert(c *gin.Context) {
 	data.ID = id
 	now := int(time.Now().Unix())
 	data.CreatedAt = now
+	data.Password = util.CalculateHash(req.PlaintextPass)
 	data.Operator = db.RedisGetTokenUsrn(c.GetHeader("token"))
+	data.Power = []int{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 
 	if err := db.SaveUser(data); err != nil {
 		code = util.MailcontrolFail
@@ -134,7 +136,6 @@ func userRead(c *gin.Context) {
 	return
 }
 func userList(c *gin.Context) {
-	log.Debug("################:  " + c.Request.Host)
 	code := util.Success
 	desc := util.ErrMsg[util.Success]
 	var resp interface{}
@@ -195,6 +196,8 @@ func userUpdate(c *gin.Context) {
 		return
 	}
 	data, err := db.ReadUser(req)
+
+	log.Debug("&&&&&&&&&&   %+v", *data)
 	if err != nil {
 		code = util.MongoReadFail
 		desc = util.ErrMsg[code]
@@ -202,7 +205,7 @@ func userUpdate(c *gin.Context) {
 	}
 
 	data.Account = req.Account
-	data.Password = req.Password
+	data.PlaintextPass = req.PlaintextPass
 	data.Role = req.Role
 	data.Power = req.Power
 	data.Owner = req.Owner

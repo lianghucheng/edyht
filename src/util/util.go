@@ -1,15 +1,14 @@
 package util
 
 import (
-	"bs/db"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"github.com/garyburd/redigo/redis"
 	"math"
 	"math/rand"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -238,18 +237,22 @@ func Transfer(src interface{}, dir interface{}) error {
 	return nil
 }
 
-func CheckSms(account, code string) int {
-	codeRedis, err := db.GetCaptchaCache(account)
-	if err != nil {
-		if err == redis.ErrNil {
-			return 10
-		} else {
-			return 2
-		}
+// 验证是否手机
+func PhoneRegexp(phone string) bool {
+	b := false
+	if phone != "" {
+		reg := regexp.MustCompile(`^(86)*0*1\d{10}$`)
+		b = reg.FindString(phone) != ""
 	}
-	if code != codeRedis {
-		return 9
-	}
+	return b
+}
 
-	return 0
+var numbers = []rune("0123456789")
+
+func RandomNumber(length int) string {
+	b := make([]rune, length)
+	for i := range b {
+		b[i] = numbers[rand.Intn(10)]
+	}
+	return string(b)
 }

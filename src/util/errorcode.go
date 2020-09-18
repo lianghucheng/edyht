@@ -5,4 +5,5 @@ const (
 	OK = iota
 	Retry
 	TokenExpire
+	SmsCodeLogin
 )

@@ -207,11 +207,11 @@ func init() {
 
 func initCollection() {
 	db := mongoDB
-	err := db.EnsureUniqueIndex(DB, "users", []string{"account"})
-	if err != nil {
-		log.Fatal("ensure uid index error: %v", err)
-	}
-	err = db.EnsureCounter(DB, "counters", "flowdata")
+	//err := db.EnsureUniqueIndex(DB, "users", []string{"account"})
+	//if err != nil {
+	//	log.Fatal("ensure uid index error: %v", err)
+	//}
+	err := db.EnsureCounter(DB, "counters", "flowdata")
 	if err != nil {
 		log.Fatal("ensure counter error: %v", err)
 	}
@@ -258,6 +258,10 @@ func initCollection() {
 		log.Fatal("ensure counter error: %v", err)
 	}
 	err = db.EnsureCounter(DB, "counters", "noticecontrol")
+	if err != nil {
+		log.Fatal("ensure counter error: %v", err)
+	}
+	err = db.EnsureCounter(DB, "counters", "users")
 	if err != nil {
 		log.Fatal("ensure counter error: %v", err)
 	}

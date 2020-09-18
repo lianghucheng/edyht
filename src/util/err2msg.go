@@ -19,6 +19,7 @@ const (
 	SendAllMailFail       = 10015
 	NotInTimeRange        = 10016
 	AlreadyUp             = 10017
+	SmsCodeErr			  = 10018
 )
 
 var ErrMsg = map[int]string{
@@ -40,4 +41,5 @@ var ErrMsg = map[int]string{
 	SendAllMailFail:       "一键发送邮件失败",
 	NotInTimeRange:        "不再有效范围内",
 	AlreadyUp:             "已上架",
+	SmsCodeErr:			   "短信验证码错误",
 }

@@ -55,7 +55,7 @@ func tokenAuthMiddleWare() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		if path != "/login" && !PassTokenAuth(path) {
+		if path != "/login"&& path != "/smslogin" && path != "/code" && !PassTokenAuth(path) {
 			role := db.RedisGetToken(token)
 			db.RedisDelTokenExport(token)
 			log.Debug("redis中的权限  %v", role)

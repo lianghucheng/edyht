@@ -7,7 +7,7 @@ import (
 
 type UserInsertReq struct {
 	Account  string //联系方式
-	Password string //密码
+	PlaintextPass string //密码
 	Role     int    //角色，1为boss，2为运营，3为客服
 	Owner 	 string //角色拥有者
 }
@@ -30,14 +30,14 @@ type UserListReq struct {
 }
 
 func (ctx *UserListReq) GetPipeline() []bson.M {
-	pipeline := []bson.M{{"$match": bson.M{"deletedat": 0, "role" : 0}}}
+	pipeline := []bson.M{{"$match": bson.M{"deletedat": 0, "role" : bson.M{"$ne":0}}}}
 	pipeline = append(pipeline, base.GetPipeline(ctx.Condition)...)
 	return pipeline
 }
 
 func (ctx *UserListReq) GetDataPipeline() []bson.M {
 	pipeline := []bson.M{}
-	pipeline = append(pipeline, bson.M{"$match": bson.M{"deletedat": 0, "role" : 0}})
+	pipeline = append(pipeline, bson.M{"$match": bson.M{"deletedat": 0, "role" : bson.M{"$ne":0}}})
 	pipeline = append(pipeline, bson.M{"$sort": bson.M{"createdat": -1}})
 	pipeline = append(pipeline, base.GetPipeline(ctx.Condition)...)
 	pipeline = append(pipeline, ctx.DivPage.GetPipeline()...)
@@ -47,9 +47,9 @@ func (ctx *UserListReq) GetDataPipeline() []bson.M {
 type User struct {
 	ID       int    `bson:"_id"`//唯一标识
 	Account  string //联系方式
-	Password string //密码
+	PlaintextPass string //密码
 	Role     int    //角色，1为boss，2为运营，3为客服
-	Power    int	//权限
+	Power    []int
 	Owner 	 string //角色拥有者
 	LastIp   string //登陆ip
 	Operator string //操作人
@@ -68,9 +68,15 @@ type UserListResp struct {
 type UserUpdateReq struct {
 	base.OID        //记录唯一标识
 	Account  string //联系方式
-	Password string //密码
+	PlaintextPass string //密码
 	Role     int    //角色，1为boss，2为运营，3为客服
-	Power    int	//权限
+	Power    []int
 	Owner 	 string //角色拥有者
 	Status   int 	//状态，0为开启，1为关闭
+}
+
+type UserSmsCodeLoginReq struct {
+	Account string//手机号
+	Code string//验证码
+	SmsToken string //验证码token
 }

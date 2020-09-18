@@ -21,7 +21,7 @@ func GetUser(account string) (user *util.User) {
 	s := mongoDB.Ref()
 	defer mongoDB.UnRef(s)
 	user = new(util.User)
-	err := s.DB(DB).C("users").Find(bson.M{"account": account}).One(user)
+	err := s.DB(DB).C("users").Find(bson.M{"account": account, "deletedat": 0}).One(user)
 	if err != nil {
 		log.Error("get user %v err:%v", account, err)
 		return nil
@@ -2378,10 +2378,19 @@ func GetMatchAwardPreview(start, end int64) []map[string]interface{} {
 	return ret
 }
 
-func SaveUserIpHistory() {
-
+func SaveUserIpHistory(data *util.UserIpHistory) error {
+	se := mongoDB.Ref()
+	defer mongoDB.UnRef(se)
+	return se.DB(DB).C("user_ip_history").Insert(data)
 }
 
-func ReadUserIpHistoryByAccount(account string) {
-
+func ReadUserIpHistory(id int, ip string) (*util.UserIpHistory, error) {
+	se := mongoDB.Ref()
+	defer mongoDB.UnRef(se)
+	data := new(util.UserIpHistory)
+	if err := se.DB(DB).C("user_ip_history").Find(bson.M{"userid": id, "ip":ip}).One(data); err != nil {
+		log.Error(err.Error())
+		return nil,err
+	}
+	return data,nil
 }

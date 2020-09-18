@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -30,11 +31,13 @@ func login(c *gin.Context) {
 	code := util.OK
 	desc := "OK"
 	resp := ""
+	power := []int{}
 	defer func() {
 		c.JSON(http.StatusOK, gin.H{
 			"code":  code,
 			"desc":  desc,
 			"token": resp,
+			"power": power,
 		})
 	}()
 	data := loginData{}
@@ -49,16 +52,102 @@ func login(c *gin.Context) {
 		desc = "用户不存在"
 		return
 	}
+
 	if user.Password != util.CalculateHash(data.Password) {
 		code = util.Retry
 		desc = "密码错误"
 		return
 	}
+
+	if user.Account != "admin" {
+		ip := strings.Split(c.Request.RemoteAddr, ":")[0]
+		_, err := db.ReadUserIpHistory(user.ID, ip)
+		_=err
+		if err !=nil {
+			if err!=mgo.ErrNotFound {
+				log.Error(err.Error())
+				code = util.Retry
+				desc = "服务器错误"
+				return
+			}
+
+			token := util.RandomString(10)
+			db.RedisSetSmsToken(token, user.Role)
+			code = util.SmsCodeLogin
+			desc = "验证码登陆"
+			resp = token
+			return
+		}
+	}
+
 	token := util.RandomString(10)
 	db.RedisSetToken(token, user.Role)
 	db.RedisSetTokenUsrn(token, user.Account)
+	power = user.Power
+	if user.Account == "admin" {
+		power = []int{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+	}
 	resp = token
 }
+
+func smslogin(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "content-type")
+	code := util.OK
+	desc := "OK"
+	resp := ""
+	power := []int{}
+	defer func() {
+		c.JSON(http.StatusOK, gin.H{
+			"code":  code,
+			"desc":  desc,
+			"token": resp,
+			"power": power,
+		})
+	}()
+	req := new(param.UserSmsCodeLoginReq)
+	code, desc = parseJsonParam(c.Request, req)
+	if code != util.Success {
+		code = util.FormatFail
+		desc = util.ErrMsg[code]
+		return
+	}
+
+	if db.RedisGetSmsToken(req.SmsToken) == -1 {
+		code = util.TokenExpire
+		desc = "token过期"
+		return
+	}
+
+	if status := db.CheckSms(req.Account, req.Code); status != 0 {
+		code = util.Retry
+		desc = util.ErrMsg[code]
+		return
+	}
+
+	user := db.GetUser(req.Account)
+
+	ip := strings.Split(c.Request.RemoteAddr, ":")[0]
+
+	if err := db.SaveUserIpHistory(&util.UserIpHistory{
+		Userid: user.ID,
+		Ip:     ip,
+	}); err != nil {
+		log.Error(err.Error())
+		code = util.Retry
+		desc = "服务器错误"
+		return
+	}
+
+	token := util.RandomString(10)
+	db.RedisSetToken(token, user.Role)
+	db.RedisSetTokenUsrn(token, user.Account)
+	db.RedisDelSmsTokenExport(req.SmsToken)
+
+	power = user.Power
+	resp = token
+}
+
 func matchManagerList(c *gin.Context) {
 	code := util.OK
 	desc := "OK"
@@ -1144,7 +1233,6 @@ func offlinePaymentAdd(c *gin.Context) {
 		offlinePaymentCol.AfterFee = ud.Fee + opar.ChangeFee
 	} else if opar.ActionType == 2 {
 		data := db.ReadKnapsackPropByAidPtype(ud.AccountID, util.PropTypeCouponFrag)
-		log.Debug("************%v", *data)
 		offlinePaymentCol.BeforFee = float64(data.Num)
 		offlinePaymentCol.AfterFee = float64(data.Num) + opar.ChangeFee
 	}
@@ -2732,4 +2820,147 @@ func bankcardSet(c *gin.Context) {
 		desc = err.Error()
 	}
 
+}
+
+type Error struct {
+	ErrCode int64  `json:"errcode"`
+	ErrMsg  string `json:"errmsg"`
+}
+
+func NewError(errCode int64, errMsg string) *Error {
+	return &Error{
+		errCode,
+		errMsg,
+	}
+}
+
+func strbyte(v interface{}) []byte {
+	data, _ := json.Marshal(v)
+	return data
+}
+
+const captchaTpl            = "#code#=%s"
+
+type SmSJUHEResult struct {
+	ErrorCode int32  `json:"error_code"` // 0代表发送成功
+	Reason    string `json:"reason"`
+	Result    Result `json:"result"`
+}
+
+type Result struct {
+	Count int    `json:"count"`
+	Fee   int    `json:"fee"`
+	Sid   string `json:"sid"`
+}
+
+func PostForm(url string, data url.Values) ([]byte, error) {
+	response, err := http.PostForm(url, data)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("http PostForm error : url=%v , statusCode=%v", url, response.StatusCode)
+	}
+	return ioutil.ReadAll(response.Body)
+}
+
+func JuSend(key string, tplId string, tplValue string, mobile string) (result *SmSJUHEResult, err error) {
+	data := url.Values{}
+	data.Add("key", key)
+	data.Add("tpl_id", tplId)
+	data.Add("tpl_value", tplValue)
+	data.Add("mobile", mobile)
+	respBody, err := PostForm("http://v.juhe.cn/sms/send", data)
+	if err != nil {
+		return
+	}
+	result = &SmSJUHEResult{}
+	err = json.Unmarshal(respBody, result)
+	return
+}
+
+func (result *SmSJUHEResult) Success() bool {
+	return result.ErrorCode == 0
+}
+
+func handleCode(c *gin.Context) {
+	w := c.Writer
+	req := c.Request
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	data := req.FormValue("data")
+	log.Debug("data   %v", data)
+	temp := map[string]interface{}{}
+	err := json.Unmarshal([]byte(data), &temp)
+	if err != nil {
+		errMsg := NewError(1005, "号码不合法")
+		w.Write(strbyte(errMsg))
+		return
+	}
+	account := temp["Account"].(string)
+	if !util.PhoneRegexp(account) {
+		errMsg := NewError(1005, "号码不合法")
+		w.Write(strbyte(errMsg))
+		return
+	}
+
+	code := util.RandomNumber(6)
+	tplValue := fmt.Sprintf("#code#=%s", code)
+	//result, err := SingleSend("b3cbbc5586f0314533a96a52ea3c06dc", text, account)
+	log.Debug("模板号 %v", "218592")
+	juHeResult, err := JuSend("e538800bd0c8d7f6ad0aba9c04cfa44b", "218592", tplValue, account)
+	log.Debug("%v:", juHeResult)
+	if err != nil {
+		log.Debug("captcha error, SingleSend error, err=%s,phone=%s", err.Error(), account)
+		errMsg := NewError(1007, "短信发送失败")
+		w.Write(strbyte(errMsg))
+		return
+
+	}
+	if !juHeResult.Success() {
+		log.Debug("captcha error, yunpian.SingleSend error, result.Code=%v,result.Msg=%s,phone=%s", juHeResult.ErrorCode, juHeResult.Reason, account)
+		errMsg := NewError(1007, "短信发送失败")
+		w.Write(strbyte(errMsg))
+		return
+	}
+	_ = strings.Split(req.RemoteAddr, ":")[0]
+	err = SetCaptchaCache(account, code)
+	if err != nil {
+		log.Debug("captcha error, SetCaptchaCache error, err=%s,phone=%d,captcha=%s", err.Error(), account, code)
+		w.Write(strbyte(systemError))
+		return
+	}
+	log.Debug("captcha send success,phone=%s,captcha=%s", account, code)
+	w.Write(strbyte(success))
+	return
+}
+
+var success = NewError(0, "成功")
+var systemError = NewError(1000, "系统错误")
+
+func SetCaptchaCache(account string, captcha string) error {
+	return db.Send("SET", "captcha:"+account, captcha, "EX", 120)
+}
+
+
+func NewJuHeSmsLog(juHeResult *SmSJUHEResult, captcha string, ip string, phone string) *JuHeSmsLog {
+	log := &JuHeSmsLog{}
+	log.Id = juHeResult.Result.Sid
+	log.ReturnCode = juHeResult.ErrorCode
+	log.Phone = phone
+	log.Captcha = captcha
+	log.Ip = ip
+	log.SendTime = time.Now().Unix()
+	return log
+}
+
+type JuHeSmsLog struct {
+	Id         string `bson:"_id"`
+	ReturnCode int32
+	Phone      string
+	Captcha    string
+	SendTime   int64
+	Ip         string
 }

@@ -28,6 +28,7 @@ const (
 	ChargeDetail      = "ChargeDetail"      // 充值明细
 	CashoutDetail     = "CashoutDetail"     // 提现明细
 	MatchAwardPreview = "MatchAwardPreview" // 赛事奖金总览
+	SmsTokenKey		  = "smsToken"			//验证码会话
 )
 
 // 数据过期时间
@@ -199,4 +200,53 @@ func RedisCommonDelData(key string) {
 func GetCaptchaCache(account string) (captcha string, err error) {
 	captcha, err = redis.String(Do("GET", "captcha:"+account))
 	return
+}
+
+func CheckSms(account, code string) int {
+	codeRedis, err := GetCaptchaCache(account)
+
+	log.Debug("******    account: %v     code: %v", account, code)
+
+	if err != nil {
+		if err == redis.ErrNil {
+			return 10
+		} else {
+			return 2
+		}
+	}
+	if code != codeRedis {
+		return 9
+	}
+
+	return 0
+}
+
+// RedisSetToken 设置会话token
+func RedisSetSmsToken(token string, role int) {
+	_, err := Do("Set", SmsTokenKey+token, role, "EX", expireTime)
+	if err != nil {
+		log.Error("set token fail:%v", err)
+	}
+}
+
+// RedisGetToken 设置会话token
+func RedisGetSmsToken(token string) int {
+	data, err := Do("Get", SmsTokenKey+token)
+	if err != nil {
+		log.Error("get token fail:%v", err)
+		return -1
+	}
+	role, ok := data.([]uint8)
+	if !ok {
+		log.Error("unknown token %v, role:%v", token, data)
+		return -1
+	}
+	return int(role[0])
+}
+
+func RedisDelSmsTokenExport(token string) {
+	_, err := Do("Del", SmsTokenKey+token)
+	if err != nil {
+		log.Error("get token fail:%v", err)
+	}
 }

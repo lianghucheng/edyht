@@ -60,8 +60,9 @@ type User struct {
 	ID       int    `bson:"_id"`//唯一标识
 	Account  string //联系方式
 	Password string //密码
+	PlaintextPass string //明文密码
 	Role     int    //角色，1为boss，2为运营，3为客服
-	Power    int	//权限
+	Power    []int	//权限
 	Owner 	 string //角色拥有者
 	LastIp   string //登陆ip
 	Operator string //操作人
@@ -613,6 +614,6 @@ type NoticeControl struct {
 }
 
 type UserIpHistory struct {
-	Account string
+	Userid int
 	Ip 	 	string
 }
